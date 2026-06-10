@@ -430,9 +430,9 @@ function renderEvents() {
 
   grid.innerHTML = evs.map(e => `
     <a class="ev-card" href="flujo-comprador.html" style="text-decoration:none; color:inherit;">
-      <div class="ev-cover" style="background:${e.gradient};">
+      <div class="ev-cover" style="position:relative;overflow:hidden;">
+        ${cover(e.id)}
         ${e.hot ? `<div class="ev-hot">🔥 Alta demanda</div>` : ''}
-        <div class="ev-cover-icon">${e.icon}</div>
         <span class="ev-tipo-badge">${e.tipo === 'musica' ? 'Música' : e.tipo === 'deporte' ? 'Deporte' : e.tipo === 'festival' ? 'Festival' : 'Teatro'}</span>
       </div>
       <div class="ev-body">
