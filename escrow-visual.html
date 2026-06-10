@@ -169,10 +169,34 @@
   #toast { position:fixed; bottom:28px; right:28px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 18px; font-size:0.84rem; display:flex; align-items:center; gap:10px; box-shadow:0 8px 32px rgba(0,0,0,.5); z-index:9999; transform:translateY(80px); opacity:0; transition:all .3s cubic-bezier(.34,1.56,.64,1); pointer-events:none; }
   #toast.show { transform:translateY(0); opacity:1; }
 
+  /* ── FUNDS RELEASE SECTION ── */
+  .funds-release-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px 22px; }
+  .funds-flow { display:grid; grid-template-columns:1fr auto 1fr; gap:0; align-items:center; }
+  .funds-node { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center; transition:border-color .4s, box-shadow .4s; }
+  .funds-node.active { border-color:rgba(34,197,94,.4); box-shadow:0 0 20px rgba(34,197,94,.12); }
+  .funds-arrow-center { padding:0 16px; text-align:center; }
+  .funds-arrow-icon { font-size:1.8rem; color:var(--gold); transition:all .4s; }
+  .funds-arrow-lbl { font-size:0.62rem; color:var(--text-dim); margin-top:4px; white-space:nowrap; }
+
+  /* ── SELLER NOTIFICATION ── */
+  .seller-notif { position:fixed; top:70px; right:24px; z-index:8000; max-width:340px; background:var(--surface); border:1.5px solid rgba(34,197,94,.45); border-radius:16px; padding:0; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,.6), 0 0 0 1px rgba(34,197,94,.1); transform:translateX(380px); opacity:0; transition:transform .5s cubic-bezier(.34,1.56,.64,1), opacity .4s; pointer-events:none; }
+  .seller-notif.open { transform:translateX(0); opacity:1; pointer-events:auto; }
+  .sn-header { background:linear-gradient(135deg, rgba(34,197,94,.15), rgba(34,197,94,.07)); padding:12px 16px 10px; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(34,197,94,.2); }
+  .sn-icon { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#22c55e,#16a34a); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+  .sn-title { font-weight:800; font-size:0.88rem; color:var(--green); }
+  .sn-sub { font-size:0.68rem; color:var(--text-dim); margin-top:1px; }
+  .sn-body { padding:12px 16px 14px; }
+  .sn-amount { font-size:1.6rem; font-weight:800; color:var(--green); margin-bottom:4px; }
+  .sn-detail { font-size:0.74rem; color:var(--text-dim); line-height:1.5; }
+  .sn-close { position:absolute; top:10px; right:12px; background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:1rem; padding:2px 6px; }
+  .sn-pulse { animation:snPulse 1.5s ease-out; }
+  @keyframes snPulse { 0%,100%{box-shadow:0 12px 40px rgba(0,0,0,.6)} 40%{box-shadow:0 12px 40px rgba(0,0,0,.6), 0 0 0 8px rgba(34,197,94,.15), 0 0 0 16px rgba(34,197,94,.06)} }
+
   /* responsive */
   @media(max-width:800px) {
     .dual-panel { grid-template-columns:1fr; }
     .status-steps { overflow-x:auto; }
+    .seller-notif { right:12px; left:12px; max-width:none; }
   }
 </style>
 </head>
@@ -392,6 +416,54 @@
     </div>
   </div>
 
+  <!-- ══ FLUJO DE FONDOS ══ -->
+  <div class="funds-release-wrap" id="fundsSection">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-size:0.92rem;font-weight:800;display:flex;align-items:center;gap:8px;">💸 Flujo de fondos <span id="fundsBadge" style="font-size:0.65rem;font-weight:700;padding:2px 9px;border-radius:10px;background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.3);">EN CUSTODIA</span></div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:3px;">$85.000 bloqueados hasta confirmación del comprador</div>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text-dim);text-align:right;">
+        <div>Escrow ID: <span style="font-family:monospace;color:var(--teal-light);">#ESC-2301</span></div>
+        <div style="margin-top:2px;">Bloqueado: <span style="color:var(--text);">hoy 14:02</span></div>
+      </div>
+    </div>
+
+    <div class="funds-flow">
+      <!-- COMPRADOR -->
+      <div class="funds-node" id="fundsNodeBuyer">
+        <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-bottom:10px;">Comprador</div>
+        <div style="font-size:2rem;margin-bottom:6px;" id="fundsIconBuyer">💳</div>
+        <div style="font-size:0.78rem;font-weight:700;" id="fundsLabelBuyer">$85.000 pagados</div>
+        <div style="font-size:0.68rem;color:var(--text-dim);margin-top:3px;" id="fundsSublabelBuyer">Débito ya procesado</div>
+        <div style="margin-top:8px;">
+          <span id="fundsBadgeBuyer" style="font-size:0.62rem;font-weight:700;padding:2px 8px;border-radius:8px;background:rgba(59,130,246,.1);color:#93c5fd;border:1px solid rgba(59,130,246,.25);">✅ Cobrado</span>
+        </div>
+      </div>
+
+      <!-- CENTRO: ESCROW -->
+      <div class="funds-arrow-center">
+        <div class="funds-arrow-icon" id="fundsArrowIcon">🔐</div>
+        <div class="funds-arrow-lbl" id="fundsArrowLbl">En custodia</div>
+      </div>
+
+      <!-- VENDEDOR -->
+      <div class="funds-node" id="fundsNodeSeller">
+        <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-bottom:10px;">Vendedor</div>
+        <div style="font-size:2rem;margin-bottom:6px;" id="fundsIconSeller">⏳</div>
+        <div style="font-size:0.78rem;font-weight:700;" id="fundsLabelSeller">$80.750 pendientes</div>
+        <div style="font-size:0.68rem;color:var(--text-dim);margin-top:3px;" id="fundsSublabelSeller">Esperando confirmación</div>
+        <div style="margin-top:8px;">
+          <span id="fundsBadgeSeller" style="font-size:0.62rem;font-weight:700;padding:2px 8px;border-radius:8px;background:rgba(100,116,139,.12);color:var(--muted);border:1px solid var(--border);">⏳ Pendiente</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;background:rgba(13,148,136,.05);border:1px solid rgba(13,148,136,.15);border-radius:8px;padding:10px 14px;font-size:0.74rem;color:var(--text-dim);line-height:1.6;" id="fundsInfoNote">
+      <strong style="color:var(--teal-light);">¿Cómo funciona el escrow de fondos?</strong> El pago del comprador está bloqueado en la cuenta de custodia de FanChain. Ni el vendedor ni FanChain pueden accederlo hasta que el comprador confirme la recepción de la entrada. Al confirmar, se libera automáticamente y neto de comisión se acredita al CBU del vendedor.
+    </div>
+  </div>
+
   <!-- ══ PANEL DE DISPUTA (oculto hasta que se abra) ══ -->
   <div class="dispute-panel" id="disputePanel">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -436,18 +508,64 @@
 
 <!-- ══ OVERLAY: LIBERADO ══ -->
 <div class="released-overlay" id="releasedOverlay">
-  <div class="released-box">
-    <div style="font-size:3.5rem;margin-bottom:16px;" id="releaseIcon">🎉</div>
-    <div style="font-size:1.4rem;font-weight:800;margin-bottom:8px;" id="releaseTitle">¡Transacción completada!</div>
-    <div style="font-size:0.85rem;color:var(--text-dim);margin-bottom:24px;line-height:1.6;" id="releaseDesc">El escrow fue liberado y los fondos se acreditarán en el CBU del vendedor dentro de las 48hs hábiles.</div>
-    <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px 18px;margin-bottom:20px;">
-      <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:4px;">Hash del bloque final</div>
-      <div style="font-family:monospace;font-size:0.7rem;color:var(--green);word-break:break-all;line-height:1.5;" id="releaseFinalHash"></div>
+  <div class="released-box" style="max-width:480px;">
+    <div style="font-size:3rem;margin-bottom:12px;">🎉</div>
+    <div style="font-size:1.4rem;font-weight:800;margin-bottom:6px;">¡Transacción completada!</div>
+    <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:20px;line-height:1.6;">El contrato de escrow se ejecutó automáticamente. Ambas partes recibieron lo suyo.</div>
+
+    <!-- Dual outcome cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+      <div style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.25);border-radius:12px;padding:14px;text-align:center;">
+        <div style="font-size:1.6rem;margin-bottom:6px;">🎫</div>
+        <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#93c5fd;margin-bottom:4px;">Comprador</div>
+        <div style="font-weight:800;font-size:0.88rem;margin-bottom:3px;">Entrada recibida</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">QR disponible en tu dashboard · Platea F12 B44</div>
+      </div>
+      <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:14px;text-align:center;">
+        <div style="font-size:1.6rem;margin-bottom:6px;">💰</div>
+        <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--green);margin-bottom:4px;">Vendedor</div>
+        <div style="font-weight:800;font-size:0.88rem;margin-bottom:3px;">$80.750 liberados</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">Acreditación en CBU ····9021 · 48hs hábiles</div>
+      </div>
+    </div>
+
+    <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.18);border-radius:10px;padding:12px 16px;margin-bottom:18px;">
+      <div style="font-size:0.68rem;color:var(--text-dim);margin-bottom:4px;">Hash del bloque final</div>
+      <div style="font-family:monospace;font-size:0.68rem;color:var(--green);word-break:break-all;line-height:1.5;" id="releaseFinalHash"></div>
     </div>
     <div style="display:flex;gap:10px;">
       <button onclick="closeRelease()" style="flex:1;background:var(--teal);color:#fff;border:none;border-radius:10px;padding:12px;font-size:0.88rem;font-weight:700;cursor:pointer;">Ver mi entrada 🎫</button>
       <button onclick="closeRelease()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px;font-size:0.88rem;cursor:pointer;">Volver al inicio</button>
     </div>
+  </div>
+</div>
+
+<!-- ══ NOTIFICACIÓN VENDEDOR ══ -->
+<div class="seller-notif" id="sellerNotif">
+  <button class="sn-close" onclick="document.getElementById('sellerNotif').classList.remove('open')">✕</button>
+  <div class="sn-header">
+    <div class="sn-icon">🔔</div>
+    <div>
+      <div class="sn-title">¡Tus fondos fueron liberados!</div>
+      <div class="sn-sub">@lucas_g · Fan Pro</div>
+    </div>
+  </div>
+  <div class="sn-body">
+    <div class="sn-amount">$80.750</div>
+    <div class="sn-detail">Acreditación en proceso hacia tu<br><strong style="color:var(--text);">CBU ████████ 9021</strong><br><span style="color:var(--text-dim);">Tiempo estimado: dentro de 48hs hábiles</span></div>
+    <div style="margin-top:12px;display:flex;gap:6px;">
+      <div style="flex:1;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:8px 10px;text-align:center;">
+        <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:2px;">VENDISTE</div>
+        <div style="font-size:0.82rem;font-weight:700;">Coldplay</div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">Platea · F12 B44</div>
+      </div>
+      <div style="flex:1;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:8px 10px;text-align:center;">
+        <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:2px;">COMISIÓN</div>
+        <div style="font-size:0.82rem;font-weight:700;color:var(--muted);">−$4.250</div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">FanChain 5%</div>
+      </div>
+    </div>
+    <button onclick="document.getElementById('sellerNotif').classList.remove('open')" style="margin-top:10px;width:100%;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:var(--green);border-radius:8px;padding:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">Ver mis cobros →</button>
   </div>
 </div>
 
@@ -716,14 +834,16 @@ function confirmReceipt() {
   CHAIN_DATA[6] = { ...CHAIN_DATA[6], tag:null, hash:'f6091234567890abcdef1234567890abcdef1234567890abcdef1234567890ab', actor:'Contrato escrow', ts:'10/06/2026 · 14:39:53', extra:'$80.750 → CBU ········9021 · Confirmación en blockchain' };
   renderChain(CHAIN_DATA);
 
-  // Animate vault → transfer
+  // Animate vault → QR transfer
   animateVaultTransfer();
+  // Animate funds release (slight delay so both animate visibly)
+  setTimeout(() => animateFundsRelease(), 300);
 
-  // Show release overlay after short delay
+  // Show release overlay after animations
   setTimeout(() => {
     document.getElementById('releaseFinalHash').textContent = finalHash;
     document.getElementById('releasedOverlay').classList.add('open');
-  }, 1400);
+  }, 1800);
 }
 
 function animateVaultTransfer() {
@@ -767,6 +887,59 @@ function animateVaultTransfer() {
     document.getElementById('vaultSellerBadge').style.color = '#f87171';
     document.getElementById('vaultSellerBadge').style.borderColor = 'rgba(239,68,68,.2)';
   }, 600);
+}
+
+function animateFundsRelease() {
+  // Fase 1: liberando fondos
+  document.getElementById('fundsBadge').textContent = 'LIBERANDO…';
+  document.getElementById('fundsBadge').style.background = 'rgba(59,130,246,.12)';
+  document.getElementById('fundsBadge').style.color = '#93c5fd';
+  document.getElementById('fundsBadge').style.borderColor = 'rgba(59,130,246,.3)';
+  document.getElementById('fundsArrowIcon').textContent = '→';
+  document.getElementById('fundsArrowIcon').style.color = 'var(--green)';
+  document.getElementById('fundsArrowIcon').style.fontSize = '2.2rem';
+  document.getElementById('fundsArrowLbl').textContent = 'Transfiriendo fondos';
+  document.getElementById('fundsIconSeller').textContent = '⌛';
+  document.getElementById('fundsLabelSeller').textContent = 'Procesando acreditación…';
+
+  // Fase 2: fondos liberados
+  setTimeout(() => {
+    document.getElementById('fundsBadge').textContent = 'LIBERADOS ✅';
+    document.getElementById('fundsBadge').style.background = 'rgba(34,197,94,.1)';
+    document.getElementById('fundsBadge').style.color = 'var(--green)';
+    document.getElementById('fundsBadge').style.borderColor = 'rgba(34,197,94,.3)';
+
+    document.getElementById('fundsArrowIcon').textContent = '✅';
+    document.getElementById('fundsArrowIcon').style.color = 'var(--green)';
+    document.getElementById('fundsArrowLbl').textContent = 'Fondos liberados';
+
+    document.getElementById('fundsNodeSeller').classList.add('active');
+    document.getElementById('fundsIconSeller').textContent = '💰';
+    document.getElementById('fundsLabelSeller').textContent = '$80.750 liberados';
+    document.getElementById('fundsSublabelSeller').textContent = 'Acreditando en CBU ····9021';
+    document.getElementById('fundsBadgeSeller').textContent = '✅ Acreditando';
+    document.getElementById('fundsBadgeSeller').style.background = 'rgba(34,197,94,.1)';
+    document.getElementById('fundsBadgeSeller').style.color = 'var(--green)';
+    document.getElementById('fundsBadgeSeller').style.borderColor = 'rgba(34,197,94,.3)';
+
+    // Note update
+    document.getElementById('fundsInfoNote').innerHTML = '<strong style="color:var(--green);">✅ Fondos liberados</strong> — El contrato de escrow ejecutó la liberación automáticamente. $80.750 neto de comisión están en camino al CBU del vendedor. El vendedor recibirá una notificación de acreditación de su banco en las próximas 48hs hábiles.';
+    document.getElementById('fundsInfoNote').style.borderColor = 'rgba(34,197,94,.25)';
+    document.getElementById('fundsInfoNote').style.background = 'rgba(34,197,94,.05)';
+
+    // Mostrar notificación al vendedor
+    setTimeout(() => showSellerNotification(), 400);
+  }, 700);
+}
+
+function showSellerNotification() {
+  const notif = document.getElementById('sellerNotif');
+  notif.classList.add('open');
+  // Pulso de atención
+  setTimeout(() => notif.classList.add('sn-pulse'), 100);
+  setTimeout(() => notif.classList.remove('sn-pulse'), 1700);
+  // Auto-cierre después de 12 segundos
+  setTimeout(() => notif.classList.remove('open'), 12000);
 }
 
 // ── DISPUTA ──
