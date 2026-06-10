@@ -1,0 +1,2428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FanChain — Panel Organizador</title>
+<style>
+  :root {
+    --bg: #0b1120;
+    --surface: #131f35;
+    --surface2: #1a2a45;
+    --surface3: #1e3254;
+    --border: #1e3254;
+    --teal: #0d9488;
+    --teal2: #0f766e;
+    --teal-light: #14b8a6;
+    --teal-glow: rgba(13,148,136,0.15);
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+    --gold: #f59e0b;
+    --green: #22c55e;
+    --red: #ef4444;
+    --purple: #7c3aed;
+    --orange: #f97316;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; }
+
+  /* ── TOPNAV ── */
+  .topnav { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; height:58px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .logo { font-size:1.2rem; font-weight:700; color:var(--teal-light); }
+  .logo span { color:var(--text); }
+  .nav-right { display:flex; align-items:center; gap:12px; }
+  .org-badge { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-size:0.82rem; }
+  .org-dot { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); }
+  .avatar-mini { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--purple),#9333ea); display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; color:#fff; border:2px solid var(--purple); cursor:pointer; }
+
+  /* ── LAYOUT ── */
+  .layout { max-width:1200px; margin:0 auto; padding:24px 20px; display:flex; gap:24px; }
+  .sidebar { width:210px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; }
+  .sb-btn { display:flex; align-items:center; gap:10px; padding:9px 14px; border-radius:var(--radius-sm); border:none; background:none; color:var(--muted2); font-size:0.86rem; cursor:pointer; transition:all .2s; width:100%; text-align:left; }
+  .sb-btn:hover { color:var(--text); background:var(--surface2); }
+  .sb-btn.active { color:var(--teal-light); background:var(--teal-glow); font-weight:600; }
+  .sb-icon { width:20px; text-align:center; font-size:1rem; }
+  .sb-badge { margin-left:auto; background:var(--red); color:#fff; font-size:0.62rem; padding:2px 6px; border-radius:10px; font-weight:700; }
+  .sb-divider { height:1px; background:var(--border); margin:4px 0; }
+  .sb-section { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; padding:10px 14px 4px; }
+
+  /* ── MAIN ── */
+  .main { flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .tab-pane { display:none; flex-direction:column; gap:16px; }
+  .tab-pane.active { display:flex; }
+
+  /* ── CARDS ── */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+  .section-label { font-size:0.7rem; color:var(--teal-light); font-weight:700; text-transform:uppercase; letter-spacing:.8px; }
+
+  /* ── STAT CARDS ── */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; cursor:pointer; transition:border-color .2s, background .2s; }
+  .stat-card:hover { border-color:var(--teal); background:var(--surface2); }
+  .stat-icon { font-size:1.4rem; margin-bottom:6px; }
+  .stat-val { font-size:1.5rem; font-weight:800; color:var(--text); line-height:1; margin-bottom:4px; }
+  .stat-lbl { font-size:0.72rem; color:var(--muted2); }
+  .stat-delta { font-size:0.7rem; margin-top:4px; font-weight:600; }
+  .delta-up { color:var(--green); }
+  .delta-down { color:var(--red); }
+
+  /* ── TABLE ── */
+  .data-table { width:100%; border-collapse:collapse; }
+  .data-table th { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; padding:8px 12px; text-align:left; border-bottom:1px solid var(--border); }
+  .data-table td { padding:10px 12px; font-size:0.82rem; border-bottom:1px solid rgba(255,255,255,.03); }
+  .data-table tr:last-child td { border-bottom:none; }
+  .data-table tr:hover td { background:rgba(255,255,255,.02); }
+
+  /* ── PILLS / BADGES ── */
+  .pill { display:inline-flex; align-items:center; gap:4px; font-size:0.68rem; font-weight:700; padding:3px 8px; border-radius:20px; }
+  .pill-green { background:rgba(34,197,94,.15); color:var(--green); }
+  .pill-gold { background:rgba(245,158,11,.15); color:var(--gold); }
+  .pill-red { background:rgba(239,68,68,.12); color:var(--red); }
+  .pill-teal { background:var(--teal-glow); color:var(--teal-light); }
+  .pill-purple { background:rgba(124,58,237,.15); color:#a78bfa; }
+
+  /* ── BUTTONS ── */
+  .btn-primary { background:var(--teal); color:#fff; border:none; border-radius:8px; padding:9px 18px; font-size:0.84rem; font-weight:600; cursor:pointer; transition:background .2s; }
+  .btn-primary:hover { background:var(--teal2); }
+  .btn-outline { background:none; border:1px solid var(--border); color:var(--muted2); border-radius:8px; padding:8px 16px; font-size:0.82rem; cursor:pointer; transition:all .2s; }
+  .btn-outline:hover { border-color:var(--teal); color:var(--teal-light); }
+  .action-btn { background:var(--surface2); border:1px solid var(--border); color:var(--muted2); border-radius:6px; padding:5px 12px; font-size:0.75rem; cursor:pointer; transition:all .2s; }
+  .action-btn:hover { border-color:var(--teal); color:var(--teal-light); }
+
+  /* ── HEATMAP VENUE ── */
+  .venue-wrap { position:relative; width:100%; }
+  .venue-svg { width:100%; max-height:340px; }
+  .sector-block { cursor:pointer; transition:opacity .2s; }
+  .sector-block:hover { opacity:.85; }
+
+  /* ── TOGGLE ── */
+  .toggle-row { display:flex; background:var(--surface2); border-radius:8px; padding:3px; gap:2px; width:fit-content; }
+  .toggle-btn { padding:6px 16px; border-radius:6px; border:none; background:none; color:var(--muted2); font-size:0.8rem; cursor:pointer; transition:all .2s; }
+  .toggle-btn.active { background:var(--teal); color:#fff; font-weight:600; }
+
+  /* ── ALERT ITEM ── */
+  .alert-item { display:flex; align-items:flex-start; gap:12px; padding:12px 14px; background:var(--surface2); border-radius:8px; border-left:3px solid var(--gold); }
+  .alert-item.red { border-left-color:var(--red); }
+  .alert-item.green { border-left-color:var(--green); }
+  .alert-item.teal { border-left-color:var(--teal); }
+
+  /* ── CONFIG FORM ── */
+  .config-row { display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--border); }
+  .config-row:last-child { border-bottom:none; }
+  .config-label { font-size:0.85rem; font-weight:600; }
+  .config-desc { font-size:0.75rem; color:var(--muted); margin-top:2px; }
+  .config-val { font-size:0.85rem; color:var(--teal-light); font-weight:700; }
+  input[type=range] { -webkit-appearance:none; width:130px; height:4px; background:var(--surface3); border-radius:2px; outline:none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--teal); cursor:pointer; }
+  .toggle-switch { position:relative; width:40px; height:22px; }
+  .toggle-switch input { opacity:0; width:0; height:0; }
+  .toggle-switch .slider { position:absolute; inset:0; background:var(--surface3); border-radius:11px; cursor:pointer; transition:.3s; }
+  .toggle-switch .slider:before { content:''; position:absolute; width:16px; height:16px; left:3px; top:3px; background:var(--muted2); border-radius:50%; transition:.3s; }
+  .toggle-switch input:checked + .slider { background:var(--teal); }
+  .toggle-switch input:checked + .slider:before { transform:translateX(18px); background:#fff; }
+
+  /* ── CHART BAR ── */
+  .bar-wrap { display:flex; align-items:flex-end; gap:6px; height:80px; }
+  .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .bar { width:100%; border-radius:4px 4px 0 0; background:var(--teal); transition:height .3s; min-height:4px; }
+  .bar-lbl { font-size:0.6rem; color:var(--muted); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar { height:6px; background:var(--surface3); border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:3px; background:var(--teal); transition:width .4s; }
+
+  /* ── TOAST ── */
+  .toast { position:fixed; bottom:28px; right:28px; background:var(--surface); border:1px solid var(--teal); border-radius:10px; padding:12px 18px; display:flex; align-items:center; gap:10px; font-size:0.84rem; z-index:999; transform:translateY(80px); opacity:0; transition:all .3s; pointer-events:none; }
+  .toast.show { transform:translateY(0); opacity:1; }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .ev-filter { padding:6px 16px; border-radius:20px; border:1px solid var(--border); background:none; color:var(--muted2); font-size:0.8rem; cursor:pointer; transition:all .2s; }
+  .ev-filter.active, .ev-filter:hover { border-color:var(--teal); color:var(--teal-light); background:var(--teal-glow); font-weight:600; }
+  .ev-card { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:18px; display:flex; flex-direction:column; gap:12px; transition:border-color .2s; }
+  .ev-card:hover { border-color:rgba(20,184,166,.3); }
+  .date-pill { padding:4px 10px; border-radius:20px; font-size:0.72rem; border:1px solid var(--border); background:none; color:var(--muted2); cursor:pointer; transition:all .2s; }
+  .date-pill.sel { border-color:var(--teal); background:var(--teal-glow); color:var(--teal-light); font-weight:600; }
+</style>
+</head>
+<body>
+
+<!-- TOPNAV -->
+<nav class="topnav">
+  <div class="logo">Fan<span>Chain</span> <span style="font-size:0.75rem; color:var(--muted); font-weight:400; margin-left:6px;">/ Panel Organizador</span></div>
+  <div class="nav-right">
+    <div class="org-badge">
+      <div class="org-dot"></div>
+      <span style="color:var(--muted2);">DF Entertainment</span>
+      <span style="font-size:0.7rem; background:var(--teal-glow); color:var(--teal-light); padding:2px 7px; border-radius:10px; font-weight:700; margin-left:4px;">Verificado</span>
+    </div>
+    <div class="avatar-mini">DF</div>
+  </div>
+</nav>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-section">Evento activo</div>
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-bottom:4px;">
+      <div style="font-size:0.8rem; font-weight:700;">Coldplay · River</div>
+      <div style="font-size:0.7rem; color:var(--muted); margin-top:2px;">14 jun 2025 · 20:00hs</div>
+      <div style="margin-top:8px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:var(--muted); margin-bottom:3px;"><span>Reventa activa</span><span style="color:var(--green);">247 ops</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:62%;"></div></div>
+      </div>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-section">Navegación</div>
+    <button class="sb-btn active" onclick="showTab('overview')" id="sb-overview">
+      <span class="sb-icon">📊</span> Dashboard
+    </button>
+    <button class="sb-btn" onclick="showTab('sectores')" id="sb-sectores">
+      <span class="sb-icon">🗺️</span> Mapa de sectores
+    </button>
+    <button class="sb-btn" onclick="showTab('transacciones')" id="sb-transacciones">
+      <span class="sb-icon">📋</span> Transacciones
+    </button>
+    <button class="sb-btn" onclick="showTab('ingresos')" id="sb-ingresos">
+      <span class="sb-icon">💰</span> Mis ingresos
+    </button>
+    <div class="sb-divider"></div>
+    <button class="sb-btn" onclick="showTab('alertas')" id="sb-alertas">
+      <span class="sb-icon">🔔</span> Alertas
+      <span class="sb-badge">2</span>
+    </button>
+    <button class="sb-btn" onclick="showTab('configuracion')" id="sb-configuracion">
+      <span class="sb-icon">⚙️</span> Configuración
+    </button>
+    <div class="sb-divider"></div>
+    <button class="sb-btn" onclick="openEventsModal()">
+      <span class="sb-icon">🎫</span> Mis eventos
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ══ TAB: DASHBOARD OVERVIEW ══ -->
+    <div class="tab-pane active" id="tab-overview">
+
+      <!-- Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="section-label" style="margin-bottom:2px;">Dashboard en tiempo real</div>
+          <div style="font-size:1.05rem; font-weight:700;" id="hdr-event-name">Coldplay — Music Of The Spheres · 14 jun 2025</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <div style="font-size:0.72rem; color:var(--green); display:flex; align-items:center; gap:5px;"><span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--green); animation:blink 2s infinite;"></span>En vivo</div>
+          <button class="btn-outline" style="font-size:0.78rem; padding:7px 14px;" onclick="showToast('Exportando reporte PDF...', '📄')">📄 Exportar</button>
+        </div>
+      </div>
+
+      <!-- Stat cards — fila 1: 3 cards -->
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
+        <div class="stat-card" onclick="showTab('transacciones')">
+          <div class="stat-icon">🔄</div>
+          <div class="stat-val">247</div>
+          <div class="stat-lbl">Transacciones hoy</div>
+          <div class="stat-delta delta-up">▲ +18 última hora</div>
+        </div>
+        <div class="stat-card" onclick="showTab('ingresos')">
+          <div class="stat-icon">💰</div>
+          <div class="stat-val" style="color:var(--green);">$412.800</div>
+          <div class="stat-lbl">Mis ingresos (comisión)</div>
+          <div class="stat-delta delta-up">▲ +$28.500 hoy</div>
+        </div>
+        <div class="stat-card" onclick="showTab('sectores')">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-val" style="color:var(--gold);">$185.000</div>
+          <div class="stat-lbl">Precio prom. campo</div>
+          <div class="stat-delta delta-up">▲ +12% vs. precio original</div>
+        </div>
+      </div>
+
+      <!-- Stat card — fila 2: alertas horizontal ancho completo -->
+      <div class="stat-card" style="display:flex; align-items:center; gap:20px; border-color:rgba(239,68,68,.35); background:rgba(239,68,68,.04); cursor:pointer;" onclick="showTab('alertas')">
+        <div style="font-size:2rem; flex-shrink:0;">⚠️</div>
+        <div style="flex:1; min-width:0;">
+          <div class="stat-lbl" style="font-size:0.7rem; margin-bottom:3px;">Alertas activas</div>
+          <div style="font-size:0.82rem; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Sector VIP sobre límite · Campo con volumen inusual</div>
+        </div>
+        <div style="text-align:right; flex-shrink:0;">
+          <div class="stat-val" style="color:var(--red); font-size:2rem; line-height:1;">2</div>
+          <div style="font-size:0.68rem; color:var(--gold); margin-top:2px; font-weight:600;">Requieren atención</div>
+        </div>
+        <button class="btn-outline" style="flex-shrink:0; font-size:0.76rem; padding:7px 16px; border-color:rgba(239,68,68,.5); color:var(--red);" onclick="event.stopPropagation(); showTab('alertas')">Ver alertas →</button>
+      </div>
+
+      <!-- Mini mapa del venue -->
+      <div class="card" style="cursor:pointer; border-color:rgba(20,184,166,.25); transition:border-color .2s;" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='rgba(20,184,166,.25)'" onclick="showTab('sectores')">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+          <div class="section-label">Mapa del venue · Estadio Monumental</div>
+          <span style="font-size:0.72rem; color:var(--teal-light);">Ver mapa completo →</span>
+        </div>
+        <div style="display:flex; gap:20px; align-items:center;">
+          <svg viewBox="0 0 280 165" style="width:240px; flex-shrink:0;" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="4" width="272" height="157" rx="26" fill="#0f1a2e" stroke="#1e3254" stroke-width="1.5"/>
+            <!-- Popular Norte -->
+            <rect x="52" y="7" width="176" height="30" rx="4" fill="rgba(249,115,22,0.7)" stroke="rgba(249,115,22,0.4)" stroke-width="1"/>
+            <text x="140" y="26" text-anchor="middle" fill="white" font-size="8" font-weight="700">POPULAR NORTE</text>
+            <!-- Popular Sur -->
+            <rect x="52" y="128" width="176" height="30" rx="4" fill="rgba(59,130,246,0.65)" stroke="rgba(59,130,246,0.4)" stroke-width="1"/>
+            <text x="140" y="148" text-anchor="middle" fill="white" font-size="8" font-weight="700">POPULAR SUR</text>
+            <!-- Platea Oeste -->
+            <rect x="8" y="42" width="40" height="81" rx="4" fill="rgba(245,158,11,0.6)" stroke="rgba(245,158,11,0.35)" stroke-width="1"/>
+            <text x="28" y="87" text-anchor="middle" fill="white" font-size="7" font-weight="700" transform="rotate(-90,28,87)">PLATEA OESTE</text>
+            <!-- VIP / Platea Este -->
+            <rect x="232" y="42" width="40" height="35" rx="4" fill="rgba(239,68,68,0.75)" stroke="rgba(239,68,68,0.5)" stroke-width="1"/>
+            <text x="252" y="57" text-anchor="middle" fill="white" font-size="7" font-weight="700">VIP</text>
+            <text x="252" y="68" text-anchor="middle" fill="#fca5a5" font-size="6">⚠️</text>
+            <rect x="232" y="81" width="40" height="42" rx="4" fill="rgba(249,115,22,0.6)" stroke="rgba(249,115,22,0.4)" stroke-width="1"/>
+            <text x="252" y="107" text-anchor="middle" fill="white" font-size="6" font-weight="700" transform="rotate(90,252,107)">PLATEA E</text>
+            <!-- Campo -->
+            <rect x="56" y="42" width="172" height="81" rx="4" fill="rgba(249,115,22,0.35)"/>
+            <!-- Pitch -->
+            <rect x="90" y="55" width="100" height="55" rx="2" fill="#166534" stroke="#15803d" stroke-width="0.8"/>
+            <line x1="140" y1="55" x2="140" y2="110" stroke="#15803d" stroke-width="0.6"/>
+            <circle cx="140" cy="82" r="10" fill="none" stroke="#15803d" stroke-width="0.6"/>
+          </svg>
+          <div style="flex:1; display:flex; flex-direction:column; gap:7px;">
+            <div style="font-size:0.72rem; color:var(--muted2); line-height:1.8;">
+              <span style="display:inline-block; width:9px; height:9px; border-radius:2px; background:#f97316; margin-right:5px; vertical-align:middle;"></span>En reventa activa<br>
+              <span style="display:inline-block; width:9px; height:9px; border-radius:2px; background:#3b82f6; margin-right:5px; vertical-align:middle;"></span>Venta oficial disponible<br>
+              <span style="display:inline-block; width:9px; height:9px; border-radius:2px; background:rgba(239,68,68,0.85); margin-right:5px; vertical-align:middle;"></span>Sobre límite ⚠️
+            </div>
+            <div style="margin-top:4px; display:flex; flex-direction:column; gap:3px;">
+              <div style="font-size:0.7rem; color:var(--muted);">Capacidad total <span style="color:var(--text); font-weight:700;">84.000</span></div>
+              <div style="font-size:0.7rem; color:var(--muted);">Sectores con alerta <span style="color:var(--red); font-weight:700;">1 (VIP)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Precio por sector + volumen -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+        <!-- Precios por sector -->
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <div class="section-label">Precio promedio por sector</div>
+            <span class="pill pill-green">🟢 Live</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+                <span style="font-weight:600;">Campo</span>
+                <span style="color:var(--gold); font-weight:700;">$185.000 <span style="font-size:0.68rem; color:var(--red);">▲ +23%</span></span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:92%; background:var(--gold);"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+                <span style="font-weight:600;">VIP</span>
+                <span style="color:var(--red); font-weight:700;">$320.000 <span style="font-size:0.68rem;">▲ +45% ⚠️</span></span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:100%; background:var(--red);"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+                <span style="font-weight:600;">Platea Alta</span>
+                <span style="color:var(--teal-light); font-weight:700;">$98.000 <span style="font-size:0.68rem; color:var(--green);">▲ +8%</span></span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:49%;"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+                <span style="font-weight:600;">Platea Baja</span>
+                <span style="color:var(--teal-light); font-weight:700;">$125.000 <span style="font-size:0.68rem; color:var(--green);">▲ +15%</span></span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:63%;"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+                <span style="font-weight:600;">Tribuna</span>
+                <span style="color:var(--muted2); font-weight:700;">$52.000 <span style="font-size:0.68rem; color:var(--muted);">▲ +4%</span></span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:26%; background:var(--muted);"></div></div>
+            </div>
+          </div>
+          <div style="margin-top:12px; padding:8px 12px; background:var(--surface2); border-radius:6px; font-size:0.72rem; color:var(--muted2);">📌 Precio original de referencia: Campo $150.000 · VIP $220.000 · Platea $80.000 · Tribuna $50.000</div>
+        </div>
+
+        <!-- Volumen últimas 8hs -->
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div class="section-label">Volumen de transacciones</div>
+            <div class="toggle-row" id="vol-toggle">
+              <button class="toggle-btn active" onclick="setVolToggle('8h', this)">8hs</button>
+              <button class="toggle-btn" onclick="setVolToggle('24h', this)">24hs</button>
+              <button class="toggle-btn" onclick="setVolToggle('7d', this)">7 días</button>
+            </div>
+          </div>
+          <canvas id="volChart" height="130"></canvas>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:14px;">
+            <div style="text-align:center; background:var(--surface2); border-radius:6px; padding:8px;">
+              <div style="font-size:1rem; font-weight:800; color:var(--teal-light);">247</div>
+              <div style="font-size:0.65rem; color:var(--muted);">Total ops</div>
+            </div>
+            <div style="text-align:center; background:var(--surface2); border-radius:6px; padding:8px;">
+              <div style="font-size:1rem; font-weight:800; color:var(--green);">$28.4M</div>
+              <div style="font-size:0.65rem; color:var(--muted);">Volumen total</div>
+            </div>
+            <div style="text-align:center; background:var(--surface2); border-radius:6px; padding:8px;">
+              <div style="font-size:1rem; font-weight:800; color:var(--gold);">$114.980</div>
+              <div style="font-size:0.65rem; color:var(--muted);">Ticket promedio</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Últimas transacciones (preview) -->
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div class="section-label">Últimas transacciones</div>
+          <button class="action-btn" onclick="showTab('transacciones')">Ver todas →</button>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th><th>Sector</th><th>Precio reventa</th><th>Precio original</th><th>Δ%</th><th>Hora</th><th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace;">#FAN-4481</td>
+              <td>Campo</td>
+              <td style="color:var(--gold); font-weight:700;">$190.000</td>
+              <td style="color:var(--muted);">$150.000</td>
+              <td><span class="pill pill-gold">+27%</span></td>
+              <td style="color:var(--muted);">18:42</td>
+              <td><span class="pill pill-green">Completada</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace;">#FAN-4480</td>
+              <td>VIP</td>
+              <td style="color:var(--red); font-weight:700;">$340.000</td>
+              <td style="color:var(--muted);">$220.000</td>
+              <td><span class="pill pill-red">+55%</span></td>
+              <td style="color:var(--muted);">18:38</td>
+              <td><span class="pill pill-green">Completada</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace;">#FAN-4479</td>
+              <td>Platea Baja</td>
+              <td style="color:var(--teal-light); font-weight:700;">$128.000</td>
+              <td style="color:var(--muted);">$110.000</td>
+              <td><span class="pill pill-teal">+16%</span></td>
+              <td style="color:var(--muted);">18:35</td>
+              <td><span class="pill pill-green">Completada</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace;">#FAN-4478</td>
+              <td>Platea Alta</td>
+              <td style="color:var(--teal-light); font-weight:700;">$95.000</td>
+              <td style="color:var(--muted);">$80.000</td>
+              <td><span class="pill pill-teal">+19%</span></td>
+              <td style="color:var(--muted);">18:31</td>
+              <td><span class="pill pill-teal">En escrow</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /tab-overview -->
+
+
+    <!-- ══ TAB: MAPA DE SECTORES ══ -->
+    <div class="tab-pane" id="tab-sectores">
+
+      <!-- Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="section-label" style="margin-bottom:2px;">Mapa de sectores · Estadio Monumental</div>
+          <div style="font-size:0.8rem; color:var(--muted2);">Distribución de entradas por sector: venta oficial y reventa activa en tiempo real.</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+          <div class="toggle-row" id="map-mode-toggle">
+            <button class="toggle-btn active" onclick="setMapMode('ambos', this)">Oficial + Reventa</button>
+            <button class="toggle-btn" onclick="setMapMode('oficial', this)">Solo oficial</button>
+            <button class="toggle-btn" onclick="setMapMode('reventa', this)">Solo reventa</button>
+          </div>
+          <select id="sector-select" onchange="selectSector(this.value)" style="background:var(--surface2); border:1px solid var(--teal); color:var(--teal-light); border-radius:6px; padding:7px 12px; font-size:0.8rem; cursor:pointer; outline:none; min-width:220px;">
+            <option value="campo">🏟️ Campo</option>
+            <option value="popular-norte">👥 Popular Belgrano Norte</option>
+            <option value="popular-sur">👥 Popular San Martín Sur</option>
+            <option value="platea-baja-oeste">💺 Platea Baja Oeste</option>
+            <option value="platea-baja-este">💺 Platea Baja Este</option>
+            <option value="vip">⭐ VIP / Palcos</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Métricas de capacidad -->
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center;">
+          <div style="font-size:1.4rem; font-weight:800; color:var(--text);" id="metric-1-val">84.000</div>
+          <div style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:3px;" id="metric-1-lbl">Capacidad total</div>
+        </div>
+        <div style="background:var(--surface); border:1px solid rgba(59,130,246,.3); border-radius:10px; padding:14px; text-align:center;">
+          <div style="font-size:1.4rem; font-weight:800; color:#60a5fa;" id="metric-2-val">8.230</div>
+          <div style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:3px;" id="metric-2-lbl">Oficial disponible</div>
+          <div style="font-size:0.65rem; color:#60a5fa; margin-top:2px;" id="metric-2-sub">9.8% del total</div>
+        </div>
+        <div style="background:var(--surface); border:1px solid rgba(34,197,94,.25); border-radius:10px; padding:14px; text-align:center;">
+          <div style="font-size:1.4rem; font-weight:800; color:var(--green);" id="metric-3-val">71.540</div>
+          <div style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:3px;" id="metric-3-lbl">Vendidas oficial</div>
+          <div style="font-size:0.65rem; color:var(--green); margin-top:2px;" id="metric-3-sub">85.2% del total</div>
+        </div>
+        <div style="background:var(--surface); border:1px solid rgba(249,115,22,.3); border-radius:10px; padding:14px; text-align:center;">
+          <div style="font-size:1.4rem; font-weight:800; color:var(--orange);" id="metric-4-val">4.230</div>
+          <div style="font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:3px;" id="metric-4-lbl">En reventa activa</div>
+          <div style="font-size:0.65rem; color:var(--orange); margin-top:2px;" id="metric-4-sub">5.0% del total</div>
+        </div>
+      </div>
+
+      <!-- Mapa + detalle lateral -->
+      <div style="display:grid; grid-template-columns:1fr 310px; gap:16px; align-items:start;">
+
+        <!-- Venue SVG — Estadio Monumental estilo planta -->
+        <div class="card" style="padding:20px;">
+
+          <!-- Leyenda -->
+          <div style="display:flex; gap:16px; margin-bottom:14px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--muted2);">
+              <span style="display:inline-block; width:11px; height:11px; border-radius:2px; background:#3b82f6;"></span> Venta oficial disponible
+            </div>
+            <div style="display:flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--muted2);">
+              <span style="display:inline-block; width:11px; height:11px; border-radius:2px; background:rgba(34,197,94,0.5);"></span> Vendidas (agotadas oficial)
+            </div>
+            <div style="display:flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--muted2);">
+              <span style="display:inline-block; width:11px; height:11px; border-radius:2px; background:#f97316;"></span> En reventa activa
+            </div>
+            <div style="display:flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--muted2);">
+              <span style="display:inline-block; width:11px; height:11px; border-radius:2px; background:#ef4444;"></span> Reventa sobre límite ⚠️
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+            <button onclick="openMapModal()" style="background:var(--surface2); border:1px solid var(--teal); color:var(--teal-light); border-radius:7px; padding:6px 14px; font-size:0.76rem; cursor:pointer; display:flex; align-items:center; gap:5px;" onmouseover="this.style.background='var(--teal-glow)'" onmouseout="this.style.background='var(--surface2)'">⤢ Ver mapa ampliado</button>
+          </div>
+
+          <svg viewBox="0 0 680 490" style="width:100%;" xmlns="http://www.w3.org/2000/svg">
+
+            <!-- Fondo estadio -->
+            <rect x="10" y="10" width="660" height="470" rx="50" fill="#0a1628" stroke="#1e3254" stroke-width="2"/>
+
+            <!-- ── POPULAR NORTE (arriba) ── agotado oficial + algo reventa -->
+            <rect x="80" y="14" width="520" height="85" rx="12" fill="rgba(34,197,94,0.28)" stroke="rgba(34,197,94,0.5)" stroke-width="1.5" class="sector-block" onclick="selectSector('popular-norte')" style="cursor:pointer;"/>
+            <!-- franja reventa encima -->
+            <rect x="80" y="14" width="150" height="85" rx="12" fill="rgba(249,115,22,0.45)" class="sector-block" onclick="selectSector('popular-norte')" style="cursor:pointer;"/>
+            <text x="340" y="48" text-anchor="middle" fill="white" font-size="12" font-weight="800">POPULAR BELGRANO</text>
+            <text x="340" y="64" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="9">15.000 personas · 820 en reventa · 240 disp. oficial</text>
+
+            <!-- ── POPULAR SUR (abajo) ── oficial disponible mayoritario -->
+            <rect x="80" y="391" width="520" height="85" rx="12" fill="rgba(59,130,246,0.55)" stroke="rgba(59,130,246,0.5)" stroke-width="1.5" class="sector-block" onclick="selectSector('popular-sur')" style="cursor:pointer;"/>
+            <!-- franja reventa pequeña -->
+            <rect x="80" y="391" width="80" height="85" rx="12" fill="rgba(249,115,22,0.4)" class="sector-block" onclick="selectSector('popular-sur')" style="cursor:pointer;"/>
+            <text x="340" y="427" text-anchor="middle" fill="white" font-size="12" font-weight="800">POPULAR SAN MARTÍN</text>
+            <text x="340" y="443" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="9">12.000 personas · 210 en reventa · 2.100 disp. oficial</text>
+
+            <!-- ── PLATEA BAJA OESTE (izquierda interior) ── -->
+            <rect x="14" y="135" width="95" height="220" rx="10" fill="rgba(245,158,11,0.5)" stroke="rgba(245,158,11,0.4)" stroke-width="1.5" class="sector-block" onclick="selectSector('platea-baja-oeste')" style="cursor:pointer;"/>
+            <!-- franja oficial restante -->
+            <rect x="14" y="285" width="95" height="70" rx="10" fill="rgba(59,130,246,0.45)" class="sector-block" onclick="selectSector('platea-baja-oeste')" style="cursor:pointer;"/>
+            <text x="61" y="248" text-anchor="middle" fill="white" font-size="9" font-weight="700" transform="rotate(-90,61,248)">PLATEA BAJA OESTE</text>
+
+            <!-- ── PLATEA ALTA OESTE (izquierda exterior, delgada) ── -->
+            <!-- se muestra como un borde/banda extra fuera del estadio - simplificado dentro -->
+
+            <!-- ── VIP / PALCOS (derecha superior) ── reventa sobre límite -->
+            <rect x="571" y="103" width="95" height="110" rx="10" fill="rgba(239,68,68,0.75)" stroke="#ef4444" stroke-width="2" class="sector-block" onclick="selectSector('vip')" style="cursor:pointer;"/>
+            <text x="618" y="148" text-anchor="middle" fill="white" font-size="11" font-weight="800">VIP</text>
+            <text x="618" y="163" text-anchor="middle" fill="#fca5a5" font-size="9">PALCOS</text>
+            <text x="618" y="177" text-anchor="middle" fill="#fca5a5" font-size="9">⚠️ +45%</text>
+
+            <!-- ── PLATEA BAJA ESTE (derecha) ── -->
+            <rect x="571" y="217" width="95" height="168" rx="10" fill="rgba(249,115,22,0.55)" stroke="rgba(249,115,22,0.4)" stroke-width="1.5" class="sector-block" onclick="selectSector('platea-baja-este')" style="cursor:pointer;"/>
+            <rect x="571" y="325" width="95" height="60" rx="10" fill="rgba(59,130,246,0.4)" class="sector-block" onclick="selectSector('platea-baja-este')" style="cursor:pointer;"/>
+            <text x="618" y="305" text-anchor="middle" fill="white" font-size="9" font-weight="700" transform="rotate(90,618,305)">PLATEA BAJA ESTE</text>
+
+            <!-- ── CAMPO (piso, alrededor del campo de juego) ── todo en reventa -->
+            <rect x="120" y="105" width="440" height="280" rx="8" fill="rgba(249,115,22,0.35)" stroke="rgba(249,115,22,0.3)" stroke-width="1" class="sector-block" onclick="selectSector('campo')" style="cursor:pointer;"/>
+            <text x="190" y="125" text-anchor="middle" fill="rgba(249,115,22,0.9)" font-size="8" font-weight="700">CAMPO</text>
+
+            <!-- ── CAMPO DE JUEGO (verde) ── -->
+            <rect x="200" y="130" width="280" height="230" rx="6" fill="#14532d" stroke="#166534" stroke-width="2"/>
+            <!-- líneas del campo -->
+            <line x1="200" y1="245" x2="480" y2="245" stroke="#166534" stroke-width="1.2"/>
+            <circle cx="340" cy="245" r="35" fill="none" stroke="#166534" stroke-width="1.2"/>
+            <circle cx="340" cy="245" r="3" fill="#166534"/>
+            <!-- área norte -->
+            <rect x="265" y="130" width="150" height="45" fill="none" stroke="#166534" stroke-width="1"/>
+            <rect x="298" y="130" width="84" height="25" fill="none" stroke="#166534" stroke-width="1"/>
+            <!-- área sur -->
+            <rect x="265" y="315" width="150" height="45" fill="none" stroke="#166534" stroke-width="1"/>
+            <rect x="298" y="335" width="84" height="25" fill="none" stroke="#166534" stroke-width="1"/>
+            <!-- escenario (Coldplay) -->
+            <rect x="255" y="335" width="170" height="22" rx="4" fill="#0d9488" opacity=".85"/>
+            <text x="340" y="350" text-anchor="middle" fill="white" font-size="9" font-weight="700">ESCENARIO</text>
+
+            <!-- Labels de capacidad sobre sectores -->
+            <text x="120" y="480" text-anchor="middle" fill="#64748b" font-size="8">Platea Baja Oeste</text>
+            <text x="560" y="480" text-anchor="middle" fill="#64748b" font-size="8">Este + VIP</text>
+
+          </svg>
+        </div>
+
+        <!-- Panel lateral -->
+        <div style="display:flex; flex-direction:column; gap:12px;">
+
+          <!-- Sector seleccionado -->
+          <div class="card" id="sector-detail">
+            <div class="section-label" style="margin-bottom:8px;">Sector seleccionado</div>
+            <div style="font-size:1.05rem; font-weight:800; margin-bottom:2px;" id="sd-name">Campo</div>
+            <div style="font-size:0.72rem; color:var(--muted); margin-bottom:12px;" id="sd-cap">Capacidad: 15.000 personas</div>
+            <div style="display:flex; flex-direction:column; gap:7px;">
+              <div style="display:flex; justify-content:space-between; font-size:0.78rem; padding:7px 10px; background:var(--surface2); border-radius:6px;">
+                <span style="color:var(--muted);">Oficial disponible</span>
+                <span style="font-weight:700; color:#60a5fa;" id="sd-disp">0 entradas</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:0.78rem; padding:7px 10px; background:var(--surface2); border-radius:6px;">
+                <span style="color:var(--muted);">Vendidas oficial</span>
+                <span style="font-weight:700; color:var(--green);" id="sd-sold">14.540 entradas</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:0.78rem; padding:7px 10px; background:var(--surface2); border-radius:6px;">
+                <span style="color:var(--muted);">En reventa activa</span>
+                <span style="font-weight:700; color:var(--orange);" id="sd-rev">462 entradas</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:0.78rem; padding:7px 10px; background:var(--surface2); border-radius:6px;">
+                <span style="color:var(--muted);">Precio reventa prom.</span>
+                <span style="font-weight:700; color:var(--gold);" id="sd-price">$185.000</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:0.78rem; padding:7px 10px; background:var(--surface2); border-radius:6px;">
+                <span style="color:var(--muted);">Variación vs. original</span>
+                <span style="font-weight:700; color:var(--gold);" id="sd-delta">+23%</span>
+              </div>
+            </div>
+            <div style="margin-top:10px;">
+              <div style="font-size:0.68rem; color:var(--muted); margin-bottom:5px;">Ocupación total</div>
+              <div class="progress-bar" style="height:8px; margin-bottom:4px;">
+                <div id="sd-bar-sold" class="progress-fill" style="width:97%; background:var(--green);"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:0.65rem; color:var(--muted);">
+                <span>Vendido: <span style="color:var(--green);" id="sd-pct-sold">97%</span></span>
+                <span>Reventa: <span style="color:var(--orange);" id="sd-pct-rev">3.1%</span></span>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px; margin-top:10px;">
+              <button id="btn-butacas" class="btn-primary" style="width:100%; font-size:0.76rem;" onclick="openSeatModal()">🪑 Ver butacas numeradas</button>
+              <button class="btn-outline" style="width:100%; font-size:0.76rem;" onclick="showTab('configuracion')">⚙️ Ajustar límite de reventa</button>
+            </div>
+          </div>
+
+          <!-- Resumen global -->
+          <div class="card">
+            <div class="section-label" style="margin-bottom:10px;">Ranking por reventa</div>
+            <div style="display:flex; flex-direction:column; gap:7px;">
+              <div style="display:flex; align-items:center; gap:8px; font-size:0.78rem;">
+                <span style="color:var(--red); font-weight:800; width:14px;">1</span>
+                <span style="flex:1;">VIP / Palcos</span>
+                <span class="pill pill-red">462 · +45% ⚠️</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; font-size:0.78rem;">
+                <span style="color:var(--gold); font-weight:800; width:14px;">2</span>
+                <span style="flex:1;">Campo</span>
+                <span class="pill pill-gold">1.240 · +23%</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; font-size:0.78rem;">
+                <span style="color:var(--teal-light); font-weight:800; width:14px;">3</span>
+                <span style="flex:1;">Platea Baja Oeste</span>
+                <span class="pill pill-teal">820 · +15%</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; font-size:0.78rem;">
+                <span style="color:var(--muted2); font-weight:800; width:14px;">4</span>
+                <span style="flex:1;">Popular Belgrano</span>
+                <span class="pill pill-teal">820 · +8%</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; font-size:0.78rem;">
+                <span style="color:var(--muted); font-weight:800; width:14px;">5</span>
+                <span style="flex:1;">Popular San Martín</span>
+                <span style="font-size:0.68rem; color:var(--muted);">210 · +4%</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /tab-sectores -->
+
+
+    <!-- ══ TAB: TRANSACCIONES ══ -->
+    <div class="tab-pane" id="tab-transacciones">
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="section-label" style="margin-bottom:2px;">Transacciones</div>
+          <div style="font-size:0.8rem; color:var(--muted2);">Historial completo de operaciones en el mercado secundario de tu evento.</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <select style="background:var(--surface2); border:1px solid var(--teal); color:var(--teal-light); border-radius:6px; padding:6px 10px; font-size:0.78rem; cursor:pointer;" onchange="showToast('Filtrando por sector...', '🗂️')">
+            <option>Todos los sectores</option>
+            <option>Campo</option>
+            <option>VIP</option>
+            <option>Platea Baja</option>
+            <option>Platea Alta</option>
+            <option>Tribuna</option>
+          </select>
+          <button class="btn-outline" style="font-size:0.78rem; padding:7px 14px;" onclick="showToast('Exportando CSV...', '📊')">⬇ CSV</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0; overflow:hidden;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID Transacción</th><th>Sector</th><th>Vendedor</th><th>Precio reventa</th><th>Precio original</th><th>Δ%</th><th>Mi comisión</th><th>Hora</th><th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="txn-tbody">
+            <tr>
+              <td style="color:var(--muted); font-family:monospace; font-size:0.75rem;">#FAN-4481</td>
+              <td>Campo</td>
+              <td style="color:var(--muted2);">🥈 MarinaR</td>
+              <td style="color:var(--gold); font-weight:700;">$190.000</td>
+              <td style="color:var(--muted);">$150.000</td>
+              <td><span class="pill pill-gold">+27%</span></td>
+              <td style="color:var(--green); font-weight:700;">$9.500</td>
+              <td style="color:var(--muted);">18:42</td>
+              <td><span class="pill pill-green">✓ Completada</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace; font-size:0.75rem;">#FAN-4480</td>
+              <td><span style="color:var(--red);">VIP ⚠️</span></td>
+              <td style="color:var(--muted2);">🥇 Lucas_G</td>
+              <td style="color:var(--red); font-weight:700;">$340.000</td>
+              <td style="color:var(--muted);">$220.000</td>
+              <td><span class="pill pill-red">+55%</span></td>
+              <td style="color:var(--green); font-weight:700;">$17.000</td>
+              <td style="color:var(--muted);">18:38</td>
+              <td><span class="pill pill-green">✓ Completada</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace; font-size:0.75rem;">#FAN-4479</td>
+              <td>Platea Baja</td>
+              <td style="color:var(--muted2);">🥉 CaroF</td>
+              <td style="color:var(--teal-light); font-weight:700;">$128.000</td>
+              <td style="color:var(--muted);">$110.000</td>
+              <td><span class="pill pill-teal">+16%</span></td>
+              <td style="color:var(--green); font-weight:700;">$6.400</td>
+              <td style="color:var(--muted);">18:35</td>
+              <td><span class="pill pill-green">✓ Completada</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace; font-size:0.75rem;">#FAN-4478</td>
+              <td>Platea Alta</td>
+              <td style="color:var(--muted2);">🔰 JuanP92</td>
+              <td style="color:var(--teal-light); font-weight:700;">$95.000</td>
+              <td style="color:var(--muted);">$80.000</td>
+              <td><span class="pill pill-teal">+19%</span></td>
+              <td style="color:var(--green); font-weight:700;">$4.750</td>
+              <td style="color:var(--muted);">18:31</td>
+              <td><span class="pill pill-teal">⏳ En escrow</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace; font-size:0.75rem;">#FAN-4477</td>
+              <td>Campo</td>
+              <td style="color:var(--muted2);">🥈 Nico_BA</td>
+              <td style="color:var(--gold); font-weight:700;">$180.000</td>
+              <td style="color:var(--muted);">$150.000</td>
+              <td><span class="pill pill-gold">+20%</span></td>
+              <td style="color:var(--green); font-weight:700;">$9.000</td>
+              <td style="color:var(--muted);">18:20</td>
+              <td><span class="pill pill-green">✓ Completada</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace; font-size:0.75rem;">#FAN-4476</td>
+              <td>Tribuna</td>
+              <td style="color:var(--muted2);">🔰 SofíaM</td>
+              <td style="color:var(--muted2); font-weight:700;">$53.000</td>
+              <td style="color:var(--muted);">$50.000</td>
+              <td><span style="font-size:0.68rem; color:var(--muted);">+6%</span></td>
+              <td style="color:var(--green); font-weight:700;">$2.650</td>
+              <td style="color:var(--muted);">18:14</td>
+              <td><span class="pill pill-green">✓ Completada</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="padding:12px 16px; font-size:0.75rem; color:var(--muted); border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+          <span id="txn-page-info">Mostrando 1–6 de 247 transacciones</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button class="action-btn" id="btn-prev-txn" onclick="changeTxnPage(-1)" style="opacity:.35; cursor:not-allowed;">← Anterior</button>
+            <span style="font-size:0.72rem; color:var(--muted2); padding:0 8px;" id="txn-page-num">Pág 1 / 42</span>
+            <button class="action-btn" id="btn-next-txn" onclick="changeTxnPage(1)">Siguiente →</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tab-transacciones -->
+
+
+    <!-- ══ TAB: MIS INGRESOS ══ -->
+    <div class="tab-pane" id="tab-ingresos">
+
+      <div>
+        <div class="section-label" style="margin-bottom:2px;">Mis ingresos</div>
+        <div style="font-size:0.8rem; color:var(--muted2);">Tu comisión del 5% sobre cada transacción de reventa del evento. Se acredita automáticamente al completarse.</div>
+      </div>
+
+      <!-- Resumen financiero -->
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
+        <div class="card" style="border-color:rgba(34,197,94,.25); background:rgba(34,197,94,.04); text-align:center;">
+          <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;">Total acumulado</div>
+          <div style="font-size:1.8rem; font-weight:800; color:var(--green);">$412.800</div>
+          <div style="font-size:0.72rem; color:var(--muted); margin-top:4px;">247 transacciones · 5% comisión</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;">Promedio por transacción</div>
+          <div style="font-size:1.8rem; font-weight:800; color:var(--teal-light);">$1.671</div>
+          <div style="font-size:0.72rem; color:var(--muted); margin-top:4px;">Sobre ticket promedio $114.980</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px;">Proyectado al evento</div>
+          <div style="font-size:1.8rem; font-weight:800; color:var(--gold);">$1.2M</div>
+          <div style="font-size:0.72rem; color:var(--muted); margin-top:4px;">Basado en tendencia actual</div>
+        </div>
+      </div>
+
+      <!-- Gráfico ingresos por sector -->
+      <div class="card">
+        <div class="section-label" style="margin-bottom:14px;">Ingresos por sector</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+              <span style="font-weight:600;">VIP</span>
+              <span style="color:var(--green); font-weight:700;">$142.500 <span style="font-size:0.7rem; color:var(--muted);">· 34.5%</span></span>
+            </div>
+            <div class="progress-bar" style="height:8px;"><div class="progress-fill" style="width:100%; background:var(--green);"></div></div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+              <span style="font-weight:600;">Campo</span>
+              <span style="color:var(--green); font-weight:700;">$106.400 <span style="font-size:0.7rem; color:var(--muted);">· 25.8%</span></span>
+            </div>
+            <div class="progress-bar" style="height:8px;"><div class="progress-fill" style="width:74%; background:var(--green);"></div></div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+              <span style="font-weight:600;">Platea Baja</span>
+              <span style="color:var(--green); font-weight:700;">$89.600 <span style="font-size:0.7rem; color:var(--muted);">· 21.7%</span></span>
+            </div>
+            <div class="progress-bar" style="height:8px;"><div class="progress-fill" style="width:63%; background:var(--teal);"></div></div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+              <span style="font-weight:600;">Platea Alta</span>
+              <span style="color:var(--green); font-weight:700;">$51.300 <span style="font-size:0.7rem; color:var(--muted);">· 12.4%</span></span>
+            </div>
+            <div class="progress-bar" style="height:8px;"><div class="progress-fill" style="width:36%; background:var(--teal);"></div></div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+              <span style="font-weight:600;">Tribuna</span>
+              <span style="color:var(--green); font-weight:700;">$23.000 <span style="font-size:0.7rem; color:var(--muted);">· 5.6%</span></span>
+            </div>
+            <div class="progress-bar" style="height:8px;"><div class="progress-fill" style="width:16%; background:var(--muted);"></div></div>
+          </div>
+        </div>
+        <div style="margin-top:14px; padding:10px 14px; background:var(--teal-glow); border-radius:6px; font-size:0.75rem; color:var(--muted2);">
+          💡 Los ingresos se transfieren automáticamente a tu cuenta bancaria registrada dentro de las 24hs de cada transacción completada.
+        </div>
+      </div>
+
+      <!-- Historial de acreditaciones -->
+      <div class="card">
+        <div class="section-label" style="margin-bottom:12px;">Últimas acreditaciones</div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Transacción</th><th>Sector</th><th>Monto reventa</th><th>Tu comisión (5%)</th><th>Estado</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace; font-size:0.75rem;">#FAN-4481</td>
+              <td>Campo</td>
+              <td style="color:var(--muted2);">$190.000</td>
+              <td style="color:var(--green); font-weight:700;">$9.500</td>
+              <td><span class="pill pill-green">Acreditado</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace; font-size:0.75rem;">#FAN-4480</td>
+              <td>VIP</td>
+              <td style="color:var(--muted2);">$340.000</td>
+              <td style="color:var(--green); font-weight:700;">$17.000</td>
+              <td><span class="pill pill-green">Acreditado</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace; font-size:0.75rem;">#FAN-4479</td>
+              <td>Platea Baja</td>
+              <td style="color:var(--muted2);">$128.000</td>
+              <td style="color:var(--green); font-weight:700;">$6.400</td>
+              <td><span class="pill pill-green">Acreditado</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--muted); font-family:monospace; font-size:0.75rem;">#FAN-4478</td>
+              <td>Platea Alta</td>
+              <td style="color:var(--muted2);">$95.000</td>
+              <td style="color:var(--gold); font-weight:700;">$4.750</td>
+              <td><span class="pill pill-gold">Pendiente escrow</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /tab-ingresos -->
+
+
+    <!-- ══ TAB: ALERTAS ══ -->
+    <div class="tab-pane" id="tab-alertas">
+
+      <div>
+        <div class="section-label" style="margin-bottom:2px;">Alertas activas</div>
+        <div style="font-size:0.8rem; color:var(--muted2);">El sistema te notifica cuando un sector supera los límites de precio configurados.</div>
+      </div>
+
+      <!-- Alertas activas -->
+      <div class="alert-item red">
+        <div style="font-size:1.4rem; flex-shrink:0;">🚨</div>
+        <div style="flex:1;">
+          <div style="font-size:0.88rem; font-weight:700; color:var(--red); margin-bottom:3px;">Sector VIP superó el límite de precio</div>
+          <div style="font-size:0.78rem; color:var(--muted2); line-height:1.6; margin-bottom:8px;">El precio promedio de reventa en VIP alcanzó <strong style="color:var(--red);">$320.000 (+45%)</strong> sobre el precio original de $220.000. Tu límite configurado es <strong style="color:var(--text);">+30%</strong>. Las nuevas transacciones en este rango requieren tu aprobación.</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-primary" style="padding:6px 14px; font-size:0.76rem;" onclick="showToast('Límite VIP ajustado a +50%', '✅')">Ajustar límite a +50%</button>
+            <button class="btn-outline" style="padding:6px 14px; font-size:0.76rem;" onclick="showToast('Pausando nuevas ventas en VIP...', '⏸')">Pausar ventas VIP</button>
+            <button class="action-btn" onclick="showTab('configuracion')">⚙️ Configurar</button>
+          </div>
+        </div>
+        <div style="font-size:0.7rem; color:var(--muted); flex-shrink:0;">Hace 12 min</div>
+      </div>
+
+      <div class="alert-item" style="border-left-color:var(--gold);">
+        <div style="font-size:1.4rem; flex-shrink:0;">⚠️</div>
+        <div style="flex:1;">
+          <div style="font-size:0.88rem; font-weight:700; color:var(--gold); margin-bottom:3px;">Campo: volumen inusualmente alto</div>
+          <div style="font-size:0.78rem; color:var(--muted2); line-height:1.6; margin-bottom:8px;">Se registraron <strong style="color:var(--text);">112 transacciones en Campo</strong> en las últimas 4 horas, un <strong style="color:var(--gold);">340% por encima del promedio histórico</strong> para este tipo de evento. El precio sigue dentro del límite configurado (+30%).</div>
+          <div style="display:flex; gap:8px;">
+            <button class="action-btn" onclick="showToast('Marcada como revisada', '✅')">Marcar como revisada</button>
+            <button class="action-btn" onclick="showTab('sectores')">🗺️ Ver en mapa</button>
+          </div>
+        </div>
+        <div style="font-size:0.7rem; color:var(--muted); flex-shrink:0;">Hace 38 min</div>
+      </div>
+
+      <!-- Alertas resueltas -->
+      <div style="font-size:0.75rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:4px;">Resueltas hoy</div>
+
+      <div class="alert-item green" style="opacity:.7;">
+        <div style="font-size:1.4rem; flex-shrink:0;">✅</div>
+        <div style="flex:1;">
+          <div style="font-size:0.85rem; font-weight:700; color:var(--green); margin-bottom:2px;">Platea Baja: precio normalizado</div>
+          <div style="font-size:0.75rem; color:var(--muted2);">El precio promedio bajó de +28% a +15% tras la reconfiguración del límite. Resuelta automáticamente.</div>
+        </div>
+        <div style="font-size:0.7rem; color:var(--muted); flex-shrink:0;">Hace 2hs</div>
+      </div>
+
+      <!-- Config alertas -->
+      <div class="card">
+        <div class="section-label" style="margin-bottom:12px;">Configuración de alertas</div>
+        <div style="display:flex; flex-direction:column; gap:0;">
+          <div class="config-row">
+            <div>
+              <div class="config-label">Alerta por precio sobre límite</div>
+              <div class="config-desc">Notificar cuando un sector supera el % máximo configurado</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="config-row">
+            <div>
+              <div class="config-label">Alerta por volumen inusual</div>
+              <div class="config-desc">Avisar si las transacciones superan 3x el promedio histórico</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="config-row">
+            <div>
+              <div class="config-label">Alerta por disputa de comprador</div>
+              <div class="config-desc">Notificar si un comprador abre una disputa en tu evento</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="config-row">
+            <div>
+              <div class="config-label">Resumen diario por email</div>
+              <div class="config-desc">Recibir reporte de métricas del día a las 23:00hs</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox"><span class="slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tab-alertas -->
+
+
+    <!-- ══ TAB: CONFIGURACIÓN ══ -->
+    <div class="tab-pane" id="tab-configuracion">
+
+      <div>
+        <div class="section-label" style="margin-bottom:2px;">Configuración del evento</div>
+        <div style="font-size:0.8rem; color:var(--muted2);">Definí las reglas de reventa para Coldplay · River. Los cambios aplican a nuevas transacciones dentro de los 5 minutos.</div>
+      </div>
+
+      <!-- Límites de precio por sector -->
+      <div class="card">
+        <div style="font-size:0.9rem; font-weight:700; margin-bottom:14px;">📊 Límites de precio por sector</div>
+        <div style="display:flex; flex-direction:column; gap:0;">
+
+          <div class="config-row">
+            <div>
+              <div class="config-label">Campo</div>
+              <div class="config-desc">Precio original: $150.000 · Actual: $185.000 (+23%)</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" min="0" max="100" value="30" oninput="updateLimit('campo', this.value)">
+              <span class="config-val" id="limit-campo">+30%</span>
+            </div>
+          </div>
+
+          <div class="config-row">
+            <div>
+              <div class="config-label" style="display:flex; align-items:center; gap:6px;">VIP <span class="pill pill-red" style="font-size:0.6rem;">⚠️ sobre límite</span></div>
+              <div class="config-desc">Precio original: $220.000 · Actual: $320.000 (+45%)</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" min="0" max="100" value="30" oninput="updateLimit('vip', this.value)">
+              <span class="config-val" id="limit-vip">+30%</span>
+            </div>
+          </div>
+
+          <div class="config-row">
+            <div>
+              <div class="config-label">Platea Baja</div>
+              <div class="config-desc">Precio original: $110.000 · Actual: $128.000 (+16%)</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" min="0" max="100" value="30" oninput="updateLimit('plbaja', this.value)">
+              <span class="config-val" id="limit-plbaja">+30%</span>
+            </div>
+          </div>
+
+          <div class="config-row">
+            <div>
+              <div class="config-label">Platea Alta</div>
+              <div class="config-desc">Precio original: $80.000 · Actual: $98.000 (+22%)</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" min="0" max="100" value="30" oninput="updateLimit('plalta', this.value)">
+              <span class="config-val" id="limit-plalta">+30%</span>
+            </div>
+          </div>
+
+          <div class="config-row">
+            <div>
+              <div class="config-label">Tribuna</div>
+              <div class="config-desc">Precio original: $50.000 · Actual: $53.000 (+6%)</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" min="0" max="100" value="30" oninput="updateLimit('tribuna', this.value)">
+              <span class="config-val" id="limit-tribuna">+30%</span>
+            </div>
+          </div>
+
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <button class="btn-primary" onclick="showToast('Límites guardados y aplicados', '✅')">Guardar límites</button>
+          <button class="btn-outline" onclick="showToast('Límites restablecidos a +30%', '↩️')">Restablecer</button>
+        </div>
+      </div>
+
+      <!-- Reglas generales -->
+      <div class="card">
+        <div style="font-size:0.9rem; font-weight:700; margin-bottom:14px;">⚙️ Reglas generales de reventa</div>
+        <div style="display:flex; flex-direction:column; gap:0;">
+          <div class="config-row">
+            <div>
+              <div class="config-label">Reventa habilitada</div>
+              <div class="config-desc">Permitir que compradores revendan sus entradas en FanChain</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="config-row">
+            <div>
+              <div class="config-label">Pujas habilitadas</div>
+              <div class="config-desc">Permitir sistema de ofertas entre compradores y vendedores</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="config-row">
+            <div>
+              <div class="config-label">Reventa mínima 24hs antes del evento</div>
+              <div class="config-desc">Cerrar el mercado secundario 24hs antes de que comience el show</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="config-row">
+            <div>
+              <div class="config-label">Requerir verificación RENAPER para VIP</div>
+              <div class="config-desc">Solo usuarios con identidad verificada pueden comprar/vender entradas VIP</div>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="slider"></span></label>
+          </div>
+          <div class="config-row">
+            <div>
+              <div class="config-label">Máximo de entradas por usuario</div>
+              <div class="config-desc">Limitar cuántas entradas puede vender un mismo usuario</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="range" min="1" max="10" value="4" oninput="document.getElementById('max-ent').textContent = this.value + ' entradas'">
+              <span class="config-val" id="max-ent">4 entradas</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <button class="btn-primary" onclick="showToast('Configuración guardada correctamente', '✅')">Guardar configuración</button>
+        </div>
+      </div>
+
+      <!-- Info FanChain -->
+      <div style="padding:14px 18px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; font-size:0.78rem; color:var(--muted2); line-height:1.7;">
+        <div style="font-weight:600; color:var(--text); margin-bottom:6px;">ℹ️ ¿Cómo funciona tu comisión?</div>
+        Tu comisión como organizador es del <strong style="color:var(--teal-light);">5% sobre cada transacción de reventa</strong> en tu evento. Se cobra automáticamente desde el escrow antes de liberar los fondos. FanChain retiene una comisión adicional de plataforma que no impacta en tu porcentaje.
+      </div>
+
+    </div><!-- /tab-configuracion -->
+
+  </main>
+</div>
+
+<!-- MODAL MAPA AMPLIADO -->
+<div id="map-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:400; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; width:100%; max-width:1040px; margin:16px auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div>
+        <div style="font-size:0.65rem; color:var(--teal-light); font-weight:700; text-transform:uppercase; letter-spacing:.8px; margin-bottom:2px;">Vista ampliada · Estadio Más Monumental</div>
+        <div style="font-weight:700; font-size:1rem;">Coldplay · 14 jun 2025 — Clickeá un sector para ver detalle</div>
+      </div>
+      <button onclick="closeMapModal()" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 16px; color:var(--muted2); cursor:pointer; font-size:0.82rem; flex-shrink:0;">✕ Cerrar</button>
+    </div>
+    <!-- Leyenda compacta -->
+    <div style="display:flex; gap:14px; margin-bottom:12px; flex-wrap:wrap;">
+      <span style="font-size:0.72rem; color:var(--muted2); display:flex; align-items:center; gap:5px;"><span style="width:11px;height:11px;border-radius:2px;background:#3b82f6;display:inline-block;"></span>Oficial disponible</span>
+      <span style="font-size:0.72rem; color:var(--muted2); display:flex; align-items:center; gap:5px;"><span style="width:11px;height:11px;border-radius:2px;background:rgba(34,197,94,0.6);display:inline-block;"></span>Vendidas oficial</span>
+      <span style="font-size:0.72rem; color:var(--muted2); display:flex; align-items:center; gap:5px;"><span style="width:11px;height:11px;border-radius:2px;background:#f97316;display:inline-block;"></span>En reventa</span>
+      <span style="font-size:0.72rem; color:var(--muted2); display:flex; align-items:center; gap:5px;"><span style="width:11px;height:11px;border-radius:2px;background:#ef4444;display:inline-block;"></span>Sobre límite ⚠️</span>
+    </div>
+    <!-- SVG duplicado a tamaño completo -->
+    <svg viewBox="0 0 680 490" style="width:100%; max-height:640px;" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="10" width="660" height="470" rx="50" fill="#0a1628" stroke="#1e3254" stroke-width="2"/>
+      <rect x="80" y="14" width="520" height="85" rx="12" fill="rgba(34,197,94,0.28)" stroke="rgba(34,197,94,0.5)" stroke-width="1.5" class="sector-block" onclick="selectSector('popular-norte');closeMapModal();showTab('sectores');" style="cursor:pointer;"/>
+      <rect x="80" y="14" width="150" height="85" rx="12" fill="rgba(249,115,22,0.45)" class="sector-block" onclick="selectSector('popular-norte');closeMapModal();showTab('sectores');" style="cursor:pointer;"/>
+      <text x="340" y="48" text-anchor="middle" fill="white" font-size="13" font-weight="800">POPULAR BELGRANO</text>
+      <text x="340" y="66" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">15.000 personas · 820 en reventa · 240 disp. oficial</text>
+      <rect x="80" y="391" width="520" height="85" rx="12" fill="rgba(59,130,246,0.55)" stroke="rgba(59,130,246,0.5)" stroke-width="1.5" class="sector-block" onclick="selectSector('popular-sur');closeMapModal();showTab('sectores');" style="cursor:pointer;"/>
+      <rect x="80" y="391" width="80" height="85" rx="12" fill="rgba(249,115,22,0.4)" class="sector-block" onclick="selectSector('popular-sur');closeMapModal();showTab('sectores');" style="cursor:pointer;"/>
+      <text x="340" y="427" text-anchor="middle" fill="white" font-size="13" font-weight="800">POPULAR SAN MARTÍN</text>
+      <text x="340" y="445" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">12.000 personas · 210 en reventa · 2.100 disp. oficial</text>
+      <rect x="14" y="135" width="95" height="220" rx="10" fill="rgba(245,158,11,0.5)" stroke="rgba(245,158,11,0.4)" stroke-width="1.5" class="sector-block" onclick="selectSector('platea-baja-oeste');closeMapModal();showTab('sectores');" style="cursor:pointer;"/>
+      <rect x="14" y="285" width="95" height="70" rx="10" fill="rgba(59,130,246,0.45)" class="sector-block" onclick="selectSector('platea-baja-oeste');closeMapModal();showTab('sectores');" style="cursor:pointer;"/>
+      <text x="61" y="248" text-anchor="middle" fill="white" font-size="10" font-weight="700" transform="rotate(-90,61,248)">PLATEA BAJA OESTE</text>
+      <rect x="571" y="103" width="95" height="110" rx="10" fill="rgba(239,68,68,0.75)" stroke="#ef4444" stroke-width="2" class="sector-block" onclick="selectSector('vip');closeMapModal();showTab('sectores');" style="cursor:pointer;"/>
+      <text x="618" y="150" text-anchor="middle" fill="white" font-size="12" font-weight="800">VIP</text>
+      <text x="618" y="166" text-anchor="middle" fill="#fca5a5" font-size="10">PALCOS ⚠️+45%</text>
+      <rect x="571" y="217" width="95" height="168" rx="10" fill="rgba(249,115,22,0.55)" stroke="rgba(249,115,22,0.4)" stroke-width="1.5" class="sector-block" onclick="selectSector('platea-baja-este');closeMapModal();showTab('sectores');" style="cursor:pointer;"/>
+      <rect x="571" y="325" width="95" height="60" rx="10" fill="rgba(59,130,246,0.4)" class="sector-block" onclick="selectSector('platea-baja-este');closeMapModal();showTab('sectores');" style="cursor:pointer;"/>
+      <text x="618" y="305" text-anchor="middle" fill="white" font-size="10" font-weight="700" transform="rotate(90,618,305)">PLATEA BAJA ESTE</text>
+      <rect x="120" y="105" width="440" height="280" rx="8" fill="rgba(249,115,22,0.35)" stroke="rgba(249,115,22,0.3)" stroke-width="1" class="sector-block" onclick="selectSector('campo');closeMapModal();showTab('sectores');" style="cursor:pointer;"/>
+      <text x="190" y="128" text-anchor="middle" fill="rgba(249,115,22,0.9)" font-size="10" font-weight="700">CAMPO</text>
+      <rect x="200" y="130" width="280" height="230" rx="6" fill="#14532d" stroke="#166534" stroke-width="2"/>
+      <line x1="200" y1="245" x2="480" y2="245" stroke="#166534" stroke-width="1.2"/>
+      <circle cx="340" cy="245" r="35" fill="none" stroke="#166534" stroke-width="1.2"/>
+      <circle cx="340" cy="245" r="3" fill="#166534"/>
+      <rect x="265" y="130" width="150" height="45" fill="none" stroke="#166534" stroke-width="1"/>
+      <rect x="298" y="130" width="84" height="25" fill="none" stroke="#166534" stroke-width="1"/>
+      <rect x="265" y="315" width="150" height="45" fill="none" stroke="#166534" stroke-width="1"/>
+      <rect x="298" y="335" width="84" height="25" fill="none" stroke="#166534" stroke-width="1"/>
+      <rect x="255" y="335" width="170" height="22" rx="4" fill="#0d9488" opacity=".85"/>
+      <text x="340" y="350" text-anchor="middle" fill="white" font-size="10" font-weight="700">ESCENARIO · COLDPLAY</text>
+      <!-- Etiquetas de referencia -->
+      <text x="340" y="485" text-anchor="middle" fill="#475569" font-size="9">🔍 Clickeá cualquier sector para ver sus métricas</text>
+    </svg>
+  </div>
+</div>
+
+<!-- MODAL MIS EVENTOS -->
+<div id="eventos-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.82); z-index:400; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; width:100%; max-width:840px; margin:16px auto; overflow:hidden;">
+
+    <!-- Header -->
+    <div style="padding:20px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface2);">
+      <div>
+        <div style="font-size:0.65rem; color:var(--teal-light); font-weight:700; text-transform:uppercase; letter-spacing:.8px; margin-bottom:3px;">DF Entertainment</div>
+        <div style="font-size:1.1rem; font-weight:800;">🎫 Mis Eventos</div>
+      </div>
+      <button onclick="closeEventsModal()" style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 16px; color:var(--muted2); cursor:pointer; font-size:0.82rem;">✕ Cerrar</button>
+    </div>
+
+    <!-- Filtros -->
+    <div style="padding:14px 24px; border-bottom:1px solid var(--border); display:flex; gap:8px; flex-wrap:wrap; align-items:center; background:var(--surface);">
+      <span style="font-size:0.72rem; color:var(--muted); margin-right:2px;">Filtrar:</span>
+      <button class="ev-filter active" id="evf-todos"  onclick="setEventFilter('todos',this)">📋 Todos (4)</button>
+      <button class="ev-filter"        id="evf-active" onclick="setEventFilter('active',this)">🟢 Actuales (1)</button>
+      <button class="ev-filter"        id="evf-future" onclick="setEventFilter('future',this)">⏳ Próximos (1)</button>
+      <button class="ev-filter"        id="evf-past"   onclick="setEventFilter('past',this)">✓ Pasados (2)</button>
+    </div>
+
+    <!-- Lista de eventos (se renderiza con JS) -->
+    <div id="eventos-list" style="padding:16px 24px; display:flex; flex-direction:column; gap:12px; max-height:62vh; overflow-y:auto;"></div>
+
+    <!-- Footer -->
+    <div style="padding:12px 20px; border-top:1px solid var(--border); background:var(--surface2); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <span style="font-size:0.72rem; color:var(--muted);">4 eventos registrados</span>
+      <button onclick="openNewEventModal()" style="background:var(--teal); border:none; border-radius:9px; padding:9px 20px; color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:7px; transition:background .15s;" onmouseover="this.style.background='var(--teal-dark)'" onmouseout="this.style.background='var(--teal)'">
+        ＋ Agregar nuevo evento
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ESTILOS NUEVO EVENTO ══ -->
+<style>
+/* FORM LABELS */
+.ne-label { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:#94a3b8; display:block; margin-bottom:6px; }
+.ne-input { width:100%; background:#1a2a45; border:1px solid #1e3254; border-radius:8px; padding:10px 13px; color:#e2e8f0; font-size:0.85rem; outline:none; transition:border-color .2s; }
+.ne-input:focus { border-color:#0d9488; }
+.ne-textarea { width:100%; background:#1a2a45; border:1px solid #1e3254; border-radius:8px; padding:10px 13px; color:#e2e8f0; font-size:0.82rem; outline:none; resize:vertical; min-height:72px; transition:border-color .2s; line-height:1.5; }
+.ne-textarea:focus { border-color:#0d9488; }
+.ne-select { width:100%; background:#1a2a45; border:1px solid #1e3254; border-radius:8px; padding:9px 12px; color:#e2e8f0; font-size:0.82rem; outline:none; }
+
+/* STEPS BAR */
+.ne-steps { display:flex; gap:0; margin-bottom:0; }
+.ne-step { flex:1; padding:10px 0; text-align:center; font-size:0.72rem; font-weight:700; color:#64748b; border-bottom:2px solid #1e3254; transition:all .2s; }
+.ne-step.active { color:#14b8a6; border-bottom-color:#0d9488; }
+.ne-step.done { color:#22c55e; border-bottom-color:#22c55e; }
+
+/* BANNER UPLOAD */
+.ne-banner-zone { border:2px dashed #1e3254; border-radius:12px; height:90px; display:flex; align-items:center; justify-content:center; cursor:pointer; overflow:hidden; transition:all .2s; position:relative; }
+.ne-banner-zone:hover { border-color:#0d9488; background:rgba(13,148,136,.04); }
+.ne-banner-preview { width:100%; height:100%; display:flex; align-items:center; gap:14px; padding:0 18px; }
+.ne-banner-img { width:56px; height:56px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:2rem; }
+.ne-banner-text { font-size:0.82rem; font-weight:700; }
+.ne-banner-sub  { font-size:0.7rem; color:#94a3b8; margin-top:2px; }
+
+/* VENUE AUTOCOMPLETE */
+.venue-wrap { position:relative; }
+.venue-dropdown { position:absolute; top:calc(100% + 4px); left:0; right:0; background:#131f35; border:1px solid #1e3254; border-radius:10px; z-index:900; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,.5); max-height:220px; overflow-y:auto; }
+.venue-option { display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; transition:background .12s; }
+.venue-option:hover { background:#1a2a45; }
+.venue-option-icon { font-size:1rem; flex-shrink:0; }
+.venue-option-name { font-size:0.82rem; font-weight:700; }
+.venue-option-detail { font-size:0.7rem; color:#94a3b8; margin-top:1px; }
+.venue-confirmed { background:rgba(13,148,136,.08); border:1px solid rgba(13,148,136,.2); border-radius:8px; padding:8px 12px; font-size:0.78rem; display:none; align-items:center; gap:8px; margin-top:6px; }
+.venue-confirmed-txt { flex:1; color:#e2e8f0; }
+.venue-change { background:none; border:none; color:#94a3b8; font-size:0.7rem; cursor:pointer; text-decoration:underline; }
+
+/* CALENDAR */
+.ne-date-wrap { position:relative; }
+.ne-date-input { background:#1a2a45; border:1px solid #1e3254; border-radius:8px; padding:9px 12px; color:#e2e8f0; font-size:0.82rem; outline:none; cursor:pointer; width:100%; transition:border-color .2s; }
+.ne-date-input:focus, .ne-date-input.open { border-color:#0d9488; }
+.cal-widget { position:fixed; background:#131f35; border:1px solid #1e3254; border-radius:12px; width:280px; z-index:9999; box-shadow:0 12px 40px rgba(0,0,0,.6); display:none; overflow:hidden; }
+.cal-head { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:#1a2a45; border-bottom:1px solid #1e3254; }
+.cal-head-label { font-size:0.88rem; font-weight:800; color:#e2e8f0; }
+.cal-nav { background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer; padding:2px 8px; border-radius:6px; transition:all .15s; }
+.cal-nav:hover { background:#1e3254; color:#14b8a6; }
+.cal-weekdays { display:grid; grid-template-columns:repeat(7,1fr); padding:8px 10px 4px; }
+.cal-weekdays span { text-align:center; font-size:0.62rem; font-weight:700; color:#64748b; text-transform:uppercase; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); padding:4px 10px 12px; gap:2px; }
+.cal-day { text-align:center; padding:6px 2px; font-size:0.78rem; border-radius:6px; cursor:pointer; color:#94a3b8; transition:all .12s; }
+.cal-day:hover:not(.empty):not(.past) { background:#1a2a45; color:#e2e8f0; }
+.cal-day.today { color:#14b8a6; font-weight:800; }
+.cal-day.selected { background:#0d9488; color:#fff; font-weight:700; }
+.cal-day.empty { cursor:default; }
+.cal-day.past { opacity:.3; cursor:not-allowed; }
+
+/* TIPO BUTTONS */
+.ne-tipo-btn { background:#1a2a45; border:1px solid #1e3254; border-radius:9px; padding:10px 6px; text-align:center; cursor:pointer; transition:all .15s; }
+.ne-tipo-btn:hover { border-color:#0d9488; }
+.ne-tipo-btn.sel { border-color:#14b8a6; background:rgba(13,148,136,.12); }
+
+/* SECTOR ROW */
+.ne-sector-row { display:flex; align-items:center; gap:10px; background:#1a2a45; border:1px solid #1e3254; border-radius:8px; padding:9px 12px; }
+.ne-sector-row input[type=checkbox] { accent-color:#0d9488; width:15px; height:15px; flex-shrink:0; }
+.ne-sector-row label { font-size:0.82rem; flex:1; cursor:pointer; }
+.ne-sector-price { width:130px; background:#131f35; border:1px solid #1e3254; border-radius:6px; padding:6px 10px; color:#e2e8f0; font-size:0.78rem; outline:none; text-align:right; }
+
+/* PREVIEW CARD */
+.ne-preview-card { background:#1a2a45; border:1px solid #1e3254; border-radius:12px; overflow:hidden; }
+.ne-preview-banner { height:80px; display:flex; align-items:center; padding:0 18px; gap:12px; }
+.ne-preview-body { padding:14px 18px; }
+.ne-preview-name { font-size:1rem; font-weight:800; margin-bottom:4px; }
+.ne-preview-venue { font-size:0.74rem; color:#94a3b8; margin-bottom:12px; }
+.ne-preview-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.ne-preview-stat { background:#131f35; border-radius:8px; padding:10px; text-align:center; }
+.ne-preview-stat-val { font-size:1rem; font-weight:800; }
+.ne-preview-stat-lbl { font-size:0.62rem; color:#64748b; margin-top:2px; }
+.ne-preview-dates { margin-top:12px; font-size:0.76rem; color:#94a3b8; display:flex; flex-wrap:wrap; gap:6px; }
+.ne-preview-date-pill { background:#131f35; border:1px solid #1e3254; border-radius:8px; padding:3px 10px; }
+.ne-config-row { display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(30,50,84,.6); font-size:0.78rem; }
+.ne-config-row:last-child { border-bottom:none; }
+.ne-config-key { color:#94a3b8; }
+.ne-config-val { color:#e2e8f0; font-weight:600; }
+</style>
+
+<!-- CALENDAR WIDGET (floating) -->
+<div class="cal-widget" id="ne-cal-widget">
+  <div class="cal-head">
+    <button class="cal-nav" onclick="calNav(-1)">‹</button>
+    <span class="cal-head-label" id="cal-head-label"></span>
+    <button class="cal-nav" onclick="calNav(1)">›</button>
+  </div>
+  <div class="cal-weekdays">
+    <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sa</span><span>Do</span>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+</div>
+
+<!-- MODAL NUEVO EVENTO -->
+<div id="new-event-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:700; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
+  <div style="background:#131f35; border:1px solid #1e3254; border-radius:16px; width:100%; max-width:580px; margin:20px auto; overflow:hidden;">
+
+    <!-- Header -->
+    <div style="padding:16px 22px 0; border-bottom:0; background:#1a2a45;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <div>
+          <div style="font-size:0.62rem; color:#14b8a6; font-weight:700; text-transform:uppercase; letter-spacing:.8px; margin-bottom:2px;">DF Entertainment</div>
+          <div style="font-size:1rem; font-weight:800; color:#e2e8f0;">➕ Nuevo evento</div>
+        </div>
+        <button onclick="closeNewEventModal()" style="background:#131f35; border:1px solid #1e3254; border-radius:8px; padding:7px 14px; color:#94a3b8; cursor:pointer; font-size:0.8rem;">✕</button>
+      </div>
+      <!-- Steps -->
+      <div class="ne-steps">
+        <div class="ne-step active" id="ne-step1-tab">① Información</div>
+        <div class="ne-step" id="ne-step2-tab">② Vista previa</div>
+      </div>
+    </div>
+
+    <!-- PANEL 1: FORMULARIO -->
+    <div id="ne-panel-form" style="padding:20px 22px; display:flex; flex-direction:column; gap:16px; max-height:68vh; overflow-y:auto;">
+
+      <!-- Banner -->
+      <div>
+        <label class="ne-label">Imagen / Banner del evento</label>
+        <div class="ne-banner-zone" id="ne-banner-zone" onclick="simulateBannerUpload()">
+          <div style="text-align:center; color:#64748b;">
+            <div style="font-size:1.6rem; margin-bottom:4px;">🖼</div>
+            <div style="font-size:0.78rem; font-weight:700;">Subir imagen de portada</div>
+            <div style="font-size:0.68rem; margin-top:2px;">JPG, PNG · Recomendado 1200×400px</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nombre -->
+      <div>
+        <label class="ne-label">Nombre del evento *</label>
+        <input id="ne-nombre" type="text" class="ne-input" placeholder="Ej: Taylor Swift — Eras Tour" oninput="neUpdatePreview()">
+      </div>
+
+      <!-- Tipo -->
+      <div>
+        <label class="ne-label">Tipo de evento *</label>
+        <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px;">
+          <div class="ne-tipo-btn sel" onclick="selectTipo(this,'🎸','musica')" id="ne-tipo-musica">
+            <div style="font-size:1.4rem;">🎸</div><div style="font-size:0.64rem;color:#94a3b8;margin-top:3px;">Música</div>
+          </div>
+          <div class="ne-tipo-btn" onclick="selectTipo(this,'⚽','deporte')" id="ne-tipo-deporte">
+            <div style="font-size:1.4rem;">⚽</div><div style="font-size:0.64rem;color:#94a3b8;margin-top:3px;">Deporte</div>
+          </div>
+          <div class="ne-tipo-btn" onclick="selectTipo(this,'🎭','teatro')" id="ne-tipo-teatro">
+            <div style="font-size:1.4rem;">🎭</div><div style="font-size:0.64rem;color:#94a3b8;margin-top:3px;">Teatro</div>
+          </div>
+          <div class="ne-tipo-btn" onclick="selectTipo(this,'🎤','show')" id="ne-tipo-show">
+            <div style="font-size:1.4rem;">🎤</div><div style="font-size:0.64rem;color:#94a3b8;margin-top:3px;">Show</div>
+          </div>
+          <div class="ne-tipo-btn" onclick="selectTipo(this,'🎪','otro')" id="ne-tipo-otro">
+            <div style="font-size:1.4rem;">🎪</div><div style="font-size:0.64rem;color:#94a3b8;margin-top:3px;">Otro</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Descripción -->
+      <div>
+        <label class="ne-label">Descripción del evento</label>
+        <textarea id="ne-desc" class="ne-textarea" placeholder="Artistas, aclaraciones, información importante para los compradores..."></textarea>
+      </div>
+
+      <!-- Venue con autocomplete -->
+      <div>
+        <label class="ne-label">Lugar / Venue *</label>
+        <div class="venue-wrap">
+          <input id="ne-venue" type="text" class="ne-input" placeholder="🔍  Buscá el venue..." oninput="onVenueInput(this.value);neUpdatePreview()" autocomplete="off">
+          <div class="venue-dropdown" id="venue-dropdown" style="display:none;"></div>
+        </div>
+        <div class="venue-confirmed" id="venue-confirmed">
+          <span style="font-size:1rem;">📍</span>
+          <span class="venue-confirmed-txt" id="venue-confirmed-text"></span>
+          <button class="venue-change" onclick="clearVenue()">Cambiar</button>
+        </div>
+      </div>
+
+      <!-- Fechas con calendario -->
+      <div>
+        <label class="ne-label">Fechas *</label>
+        <div id="ne-fechas-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+        <button onclick="addFechaRow()" style="margin-top:8px; background:none; border:1px dashed #1e3254; border-radius:8px; padding:8px 14px; color:#64748b; font-size:0.76rem; cursor:pointer; width:100%; transition:all .2s;" onmouseover="this.style.borderColor='#0d9488';this.style.color='#14b8a6'" onmouseout="this.style.borderColor='#1e3254';this.style.color='#64748b'">
+          ＋ Agregar otra fecha
+        </button>
+      </div>
+
+      <!-- Fecha límite de reventa -->
+      <div>
+        <label class="ne-label">Fecha límite de reventa</label>
+        <select id="ne-limite-reventa" class="ne-select">
+          <option value="2h">2 horas antes del evento</option>
+          <option value="4h">4 horas antes del evento</option>
+          <option value="24h" selected>24 horas antes del evento</option>
+          <option value="48h">48 horas antes del evento</option>
+          <option value="dia">El día anterior</option>
+          <option value="semana">Una semana antes</option>
+        </select>
+        <div style="font-size:0.7rem; color:#64748b; margin-top:5px;">Las entradas ya no se podrán publicar ni transferir después de este límite.</div>
+      </div>
+
+      <!-- Sectores -->
+      <div>
+        <label class="ne-label">Sectores y precios oficiales *</label>
+        <div style="display:flex; flex-direction:column; gap:6px;" id="ne-sectores"></div>
+      </div>
+
+      <!-- Límite precio reventa -->
+      <div>
+        <label class="ne-label">Precio máximo de reventa permitido</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <select id="ne-limite-tipo" class="ne-select">
+            <option value="pct">% sobre precio oficial</option>
+            <option value="fixed">Precio fijo máximo</option>
+            <option value="none">Sin límite</option>
+          </select>
+          <input id="ne-limite-val" type="text" class="ne-input" placeholder="Ej: 150%" value="150%">
+        </div>
+        <div style="font-size:0.7rem; color:#64748b; margin-top:5px;">Entradas por encima de este valor serán bloqueadas automáticamente.</div>
+      </div>
+
+      <!-- Alerta -->
+      <div style="background:#1a2a45; border:1px solid #1e3254; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="ne-alerta" style="accent-color:#0d9488; width:16px; height:16px; flex-shrink:0;" checked>
+        <label for="ne-alerta" style="font-size:0.78rem; color:#94a3b8; cursor:pointer; line-height:1.4;">Notificarme cuando el precio de reventa supere el <strong style="color:#e2e8f0;">30%</strong> del precio oficial</label>
+      </div>
+    </div>
+
+    <!-- PANEL 2: PREVIEW -->
+    <div id="ne-panel-preview" style="display:none; padding:20px 22px; max-height:68vh; overflow-y:auto;">
+      <div style="font-size:0.74rem; color:#94a3b8; margin-bottom:14px;">Así va a aparecer tu evento en el listado de Mis Eventos:</div>
+      <div class="ne-preview-card" id="ne-preview-card"></div>
+      <div style="margin-top:16px; background:#1a2a45; border:1px solid #1e3254; border-radius:10px; overflow:hidden;">
+        <div style="padding:10px 14px; border-bottom:1px solid #1e3254; font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px;">Configuración</div>
+        <div style="padding:10px 14px;" id="ne-preview-config"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:14px 22px; border-top:1px solid #1e3254; background:#1a2a45; display:flex; gap:10px; justify-content:space-between; align-items:center;">
+      <button onclick="closeNewEventModal()" style="background:#131f35; border:1px solid #1e3254; border-radius:9px; padding:9px 18px; color:#94a3b8; font-size:0.82rem; cursor:pointer;">Cancelar</button>
+      <div style="display:flex; gap:8px;">
+        <button id="ne-btn-back" onclick="neGoBack()" style="display:none; background:#131f35; border:1px solid #1e3254; border-radius:9px; padding:9px 18px; color:#94a3b8; font-size:0.82rem; cursor:pointer;">← Editar</button>
+        <button id="ne-btn-preview" onclick="neGoPreview()" style="background:#0d9488; border:none; border-radius:9px; padding:9px 22px; color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">Vista previa →</button>
+        <button id="ne-btn-save" onclick="saveNewEvent()" style="display:none; background:#22c55e; border:none; border-radius:9px; padding:9px 22px; color:#fff; font-size:0.82rem; font-weight:700; cursor:pointer;">✅ Crear evento</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL BUTACAS -->
+<div id="seat-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:500; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px; width:100%; max-width:740px; margin:30px auto;">
+
+    <!-- Header modal -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
+      <div>
+        <div style="font-size:0.65rem; color:var(--teal-light); font-weight:700; text-transform:uppercase; letter-spacing:.8px; margin-bottom:3px;">Vista por butaca · Estadio Más Monumental</div>
+        <div style="font-size:1rem; font-weight:800;" id="seat-modal-title">Platea Baja Oeste</div>
+        <div style="font-size:0.72rem; color:var(--muted); margin-top:2px;" id="seat-modal-sub">Fila A–T · Butacas numeradas</div>
+      </div>
+      <button onclick="closeSeatModal()" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 16px; color:var(--muted2); cursor:pointer; font-size:0.82rem; flex-shrink:0;">✕ Cerrar</button>
+    </div>
+
+    <!-- Leyenda -->
+    <div style="display:flex; gap:14px; margin-bottom:12px; flex-wrap:wrap;">
+      <div style="display:flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--muted2);">
+        <span style="display:inline-block; width:12px; height:12px; border-radius:2px; background:#15803d; border:1px solid rgba(255,255,255,.1);"></span> Disponible oficial
+      </div>
+      <div style="display:flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--muted2);">
+        <span style="display:inline-block; width:12px; height:12px; border-radius:2px; background:#f97316; border:1px solid rgba(255,255,255,.1);"></span> En reventa
+      </div>
+      <div style="display:flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--muted2);">
+        <span style="display:inline-block; width:12px; height:12px; border-radius:2px; background:#1e3254; border:1px solid rgba(255,255,255,.08);"></span> Vendida / Ocupada
+      </div>
+    </div>
+    <div style="font-size:0.7rem; color:var(--muted); margin-bottom:14px; padding:7px 12px; background:var(--surface2); border-radius:6px; line-height:1.6;">
+      💡 Clickeá una butaca para ver detalle. <span style="color:#22c55e;">🟢 Verde</span> = disponible · <span style="color:#f97316;">🟠 Naranja</span> = en reventa · <span style="color:#64748b;">⬛ Azul oscuro</span> = vendida/ocupada<br>
+      👤 Las butacas <strong style="color:var(--muted2);">vendidas</strong> muestran el comprador (solo visible para organizador y admin). Usá los filtros de abajo para ver cada grupo.
+    </div>
+
+    <!-- Grilla de butacas -->
+    <div id="seat-grid" style="overflow-x:auto; padding-bottom:10px;"></div>
+
+    <!-- Indicador escenario / cancha -->
+    <div style="text-align:center; margin-top:16px;">
+      <div style="display:inline-block; background:var(--teal-glow); border:1px solid var(--teal); border-radius:6px; padding:7px 50px; font-size:0.78rem; color:var(--teal-light); font-weight:700; letter-spacing:.5px;">▼ CANCHA / ESCENARIO</div>
+    </div>
+
+    <!-- Stats / filtros del sector -->
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px;" id="seat-stats"></div>
+    <div id="seat-filter-reset" style="text-align:center; margin-top:8px; display:none;">
+      <button onclick="filterSeats('all')" style="background:none; border:1px solid var(--border); color:var(--muted2); border-radius:6px; padding:5px 16px; font-size:0.72rem; cursor:pointer; transition:color .2s;" onmouseover="this.style.color='var(--teal-light)'" onmouseout="this.style.color='var(--muted2)'">↩ Mostrar todos</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-icon">✅</span>
+  <span id="toast-msg">Acción completada</span>
+</div>
+
+<script>
+// ── TAB NAVIGATION ─────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
+  const pane = document.getElementById('tab-' + name);
+  if (pane) pane.classList.add('active');
+  const btn = document.getElementById('sb-' + name);
+  if (btn) btn.classList.add('active');
+  if (name === 'overview') setTimeout(renderVolChart, 80);
+}
+
+// ── SECTOR DATA ─────────────────────────────────────────────────────────────
+const SECTOR_DATA = {
+  'campo': {
+    name: 'Campo', cap: 15000, seated: false,
+    disp: 0, sold: 14538, rev: 1240,
+    price: '$185.000', orig: '$150.000', delta: '+23%',
+    pctSold: 97, pctRev: 8.3
+  },
+  'vip': {
+    name: 'VIP / Palcos ⚠️', cap: 2000, seated: true,
+    disp: 0, sold: 1538, rev: 462,
+    price: '$320.000', orig: '$220.000', delta: '+45% ⚠️',
+    pctSold: 77, pctRev: 30, alert: true
+  },
+  'platea-baja-oeste': {
+    name: 'Platea Baja Oeste', cap: 8000, seated: true,
+    disp: 1200, sold: 6000, rev: 820,
+    price: '$128.000', orig: '$110.000', delta: '+16%',
+    pctSold: 90, pctRev: 13.7
+  },
+  'platea-baja-este': {
+    name: 'Platea Baja Este', cap: 6000, seated: true,
+    disp: 800, sold: 4700, rev: 500,
+    price: '$125.000', orig: '$110.000', delta: '+14%',
+    pctSold: 91, pctRev: 10.6
+  },
+  'popular-norte': {
+    name: 'Popular Belgrano Norte', cap: 15000, seated: false,
+    disp: 240, sold: 13940, rev: 820,
+    price: '$75.000', orig: '$65.000', delta: '+15%',
+    pctSold: 96, pctRev: 5.9
+  },
+  'popular-sur': {
+    name: 'Popular San Martín Sur', cap: 12000, seated: false,
+    disp: 2100, sold: 9690, rev: 210,
+    price: '$68.000', orig: '$65.000', delta: '+5%',
+    pctSold: 81, pctRev: 2.2
+  },
+};
+
+let currentMapMode = 'ambos';
+let currentSector  = 'campo';
+
+// ── SELECT SECTOR ──────────────────────────────────────────────────────────
+function selectSector(id) {
+  currentSector = id;
+  const sel = document.getElementById('sector-select');
+  if (sel && sel.value !== id) sel.value = id;
+  const d = SECTOR_DATA[id];
+  if (!d) return;
+  updateSectorPanel(d, currentMapMode);
+  const btnB = document.getElementById('btn-butacas');
+  if (btnB) {
+    btnB.style.display = 'block'; // siempre visible
+    if (d.seated) {
+      btnB.textContent  = '🪑 Ver butacas numeradas';
+      btnB.className    = 'btn-primary';
+      btnB.style.opacity = '1';
+      btnB.style.cursor  = 'pointer';
+    } else {
+      btnB.textContent  = '👥 Sector general — sin butacas asignadas';
+      btnB.className    = 'btn-outline';
+      btnB.style.opacity = '0.55';
+      btnB.style.cursor  = 'default';
+    }
+  }
+}
+
+function updateSectorPanel(d, mode) {
+  document.getElementById('sd-name').textContent = d.name;
+  document.getElementById('sd-cap').textContent  = 'Capacidad: ' + d.cap.toLocaleString('es-AR') + ' personas';
+
+  const dispEl    = document.getElementById('sd-disp');
+  const soldEl    = document.getElementById('sd-sold');
+  const revEl     = document.getElementById('sd-rev');
+  const priceEl   = document.getElementById('sd-price');
+  const deltaEl   = document.getElementById('sd-delta');
+  const barEl     = document.getElementById('sd-bar-sold');
+  const pctSoldEl = document.getElementById('sd-pct-sold');
+  const pctRevEl  = document.getElementById('sd-pct-rev');
+
+  if (mode === 'oficial') {
+    dispEl.textContent  = d.disp.toLocaleString('es-AR') + ' entradas';
+    soldEl.textContent  = d.sold.toLocaleString('es-AR') + ' entradas';
+    revEl.textContent   = '—';
+    priceEl.textContent = d.orig + ' (oficial)';
+    deltaEl.textContent = '—';
+    const ps = Math.round(d.sold / d.cap * 100);
+    barEl.style.width      = ps + '%';
+    barEl.style.background = 'var(--green)';
+    pctSoldEl.textContent  = ps + '%';
+    pctRevEl.textContent   = '—';
+  } else if (mode === 'reventa') {
+    dispEl.textContent  = '—';
+    soldEl.textContent  = '—';
+    revEl.textContent   = d.rev.toLocaleString('es-AR') + ' entradas';
+    priceEl.textContent = d.price;
+    deltaEl.textContent = d.delta;
+    barEl.style.width      = d.pctRev + '%';
+    barEl.style.background = 'var(--orange)';
+    pctSoldEl.textContent  = '—';
+    pctRevEl.textContent   = d.pctRev + '%';
+  } else { // ambos
+    dispEl.textContent  = d.disp.toLocaleString('es-AR') + ' entradas';
+    soldEl.textContent  = d.sold.toLocaleString('es-AR') + ' entradas';
+    revEl.textContent   = d.rev.toLocaleString('es-AR') + ' entradas';
+    priceEl.textContent = d.price;
+    deltaEl.textContent = d.delta;
+    barEl.style.width      = d.pctSold + '%';
+    barEl.style.background = 'var(--green)';
+    pctSoldEl.textContent  = d.pctSold + '%';
+    pctRevEl.textContent   = d.pctRev + '%';
+  }
+}
+
+// ── MAP MODE ────────────────────────────────────────────────────────────────
+function setMapMode(mode, btn) {
+  currentMapMode = mode;
+  document.querySelectorAll('#map-mode-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateTopMetrics(mode);
+  const d = SECTOR_DATA[currentSector];
+  if (d) updateSectorPanel(d, mode);
+}
+
+function updateTopMetrics(mode) {
+  const cfg = {
+    ambos:   { v2:'8.230',  l2:'Oficial disponible', s2:'9.8% del total',       v3:'71.540', l3:'Vendidas oficial', s3:'85.2% del total',       v4:'4.230', l4:'En reventa activa', s4:'5.0% del total' },
+    oficial: { v2:'8.230',  l2:'Oficial disponible', s2:'9.8% del total',       v3:'71.540', l3:'Vendidas oficial', s3:'85.2% del total',       v4:'—',     l4:'En reventa',        s4:'Vista desactivada' },
+    reventa: { v2:'—',      l2:'Oficial disponible', s2:'Vista desactivada',    v3:'—',       l3:'Vendidas oficial', s3:'Vista desactivada',    v4:'4.230', l4:'En reventa activa', s4:'5.0% del total' },
+  };
+  const s = cfg[mode] || cfg.ambos;
+  document.getElementById('metric-2-val').textContent = s.v2;
+  document.getElementById('metric-2-lbl').textContent = s.l2;
+  document.getElementById('metric-2-sub').textContent = s.s2;
+  document.getElementById('metric-3-val').textContent = s.v3;
+  document.getElementById('metric-3-lbl').textContent = s.l3;
+  document.getElementById('metric-3-sub').textContent = s.s3;
+  document.getElementById('metric-4-val').textContent = s.v4;
+  document.getElementById('metric-4-lbl').textContent = s.l4;
+  document.getElementById('metric-4-sub').textContent = s.s4;
+}
+
+// ── SEAT MAP MODAL ──────────────────────────────────────────────────────────
+const SEAT_ROWS     = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T'];
+const SEATS_PER_ROW = [14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14];
+const VIP_ROWS      = ['P1','P2','P3','P4','P5','P6','P7','P8'];
+const VIP_SEATS_PER = [8, 8, 10, 10, 12, 12, 10, 8];
+
+// Compradores ficticios para butacas vendidas (visible solo para org/admin)
+const BUYERS = [
+  '@marinaR92','@lucas_g','@caroF_ba','@juanP92','@nicoBA','@sofiaM',
+  '@roberto_a','@ana_LP','@marce_g','@tomasV','@pablo_rk','@lauraM',
+  '@diego_fc','@vale_bsas','@nico_rv','@claudiaP','@federicoT','@martina_g',
+  '@carlosH','@belenaS','@ramiro_q','@natalia_k','@julian_p','@ceci_rs',
+];
+
+let currentSeatFilter = 'all';
+
+function openSeatModal() {
+  const d = SECTOR_DATA[currentSector];
+  if (!d) return;
+  if (!d.seated) {
+    showToast('Sector de acceso general — sin butacas numeradas asignadas', 'ℹ️');
+    return;
+  }
+  currentSeatFilter = 'all';
+  document.getElementById('seat-filter-reset').style.display = 'none';
+  const isVip = currentSector === 'vip';
+  document.getElementById('seat-modal-title').textContent = d.name;
+  document.getElementById('seat-modal-sub').textContent   = isVip
+    ? 'Palcos P1–P8 · Butacas numeradas'
+    : 'Filas A–T · Butacas numeradas · Estadio Más Monumental';
+  renderSeatGrid(d, isVip);
+  renderSeatStats(d);
+  document.getElementById('seat-modal').style.display = 'flex';
+}
+
+function closeSeatModal() {
+  document.getElementById('seat-modal').style.display = 'none';
+}
+
+function renderSeatGrid(d, isVip) {
+  const rows     = isVip ? VIP_ROWS      : SEAT_ROWS;
+  const perRow   = isVip ? VIP_SEATS_PER : SEATS_PER_ROW;
+  const maxSeats = Math.max(...perRow);
+  const totalSeats = perRow.reduce((a,b)=>a+b,0);
+
+  // ── Distribuir colores PROPORCIONAL al tamaño de la grilla ──
+  // Así no importa que el sector tenga 6000 butacas reales y la grilla 490.
+  const pctDisp = d.disp / d.cap;
+  const pctRev  = d.rev  / d.cap;
+  // Resto = vendidas/ocupadas (sin estar en reventa)
+  const nDisp = Math.round(totalSeats * pctDisp);
+  const nRev  = Math.round(totalSeats * pctRev);
+  const nSold = totalSeats - nDisp - nRev;
+
+  // Orden de izquierda a derecha, fila por fila:
+  // [vendidas · · · ][reventa · ·][disponibles]
+  // (las disponibles al final = filas más alejadas del escenario, más raras)
+  let idx = 0;
+  let buyerIdx = 0;
+
+  const html = rows.map((row, ri) => {
+    const ns = perRow[ri];
+    const padCount = Math.floor((maxSeats - ns) / 2);
+    let rHtml = `<div style="display:flex;align-items:center;gap:2px;margin-bottom:2px;justify-content:center;">`;
+    rHtml += `<span style="color:var(--muted);font-size:8px;width:22px;text-align:right;margin-right:3px;font-weight:600;">${row}</span>`;
+    for (let p=0; p<padCount; p++) rHtml += `<div style="width:13px;"></div>`;
+
+    for (let s=1; s<=ns; s++) {
+      const i = idx++;
+      let bg, state, title, onclick;
+
+      if (i < nSold) {
+        // Butaca vendida/ocupada — muestra comprador al click
+        const buyer = BUYERS[buyerIdx++ % BUYERS.length];
+        bg = '#1e3254'; state = 'sold';
+        title = `Fila ${row} Asiento ${s} — Vendida · Comprador: ${buyer}`;
+        onclick = `showToast('Fila ${row}·${s} → Comprador: ${buyer}', '👤')`;
+      } else if (i < nSold + nRev) {
+        // Butaca en reventa
+        bg = '#f97316'; state = 'rev';
+        title = `Fila ${row} Asiento ${s} — En reventa · ${d.price}`;
+        onclick = `showToast('Fila ${row}·${s} en reventa: ${d.price} (${d.delta})', '🟠')`;
+      } else {
+        // Butaca disponible oficial
+        bg = '#15803d'; state = 'disp';
+        title = `Fila ${row} Asiento ${s} — Disponible · ${d.orig}`;
+        onclick = `showToast('Fila ${row}·${s} disponible oficial: ${d.orig}', '🟢')`;
+      }
+
+      rHtml += `<div data-state="${state}" title="${title}" onclick="${onclick}" style="width:13px;height:13px;background:${bg};border-radius:2px;cursor:pointer;border:1px solid rgba(255,255,255,.07);transition:opacity .12s;" onmouseover="this.style.opacity='.55'" onmouseout="this.style.opacity='1'"></div>`;
+    }
+
+    for (let p=0; p<padCount; p++) rHtml += `<div style="width:13px;"></div>`;
+    rHtml += `<span style="color:var(--muted);font-size:8px;width:22px;margin-left:3px;">${row}</span></div>`;
+    return rHtml;
+  }).join('');
+
+  document.getElementById('seat-grid').innerHTML = html;
+}
+
+function renderSeatStats(d) {
+  const nOcupadas = d.cap - d.disp - d.rev;
+  document.getElementById('seat-stats').innerHTML = `
+    <div id="stat-disp" onclick="filterSeats('disp')" style="text-align:center;background:rgba(21,128,61,.12);border:2px solid rgba(21,128,61,.35);border-radius:10px;padding:11px;cursor:pointer;transition:all .18s;" onmouseover="this.style.borderColor='#22c55e';this.style.transform='scale(1.03)'" onmouseout="this.style.borderColor='rgba(21,128,61,.35)';this.style.transform='scale(1)'">
+      <div style="font-size:1.05rem;font-weight:800;color:#22c55e;">${d.disp.toLocaleString('es-AR')}</div>
+      <div style="font-size:0.65rem;color:var(--muted);margin-top:2px;">🟢 Disponibles oficial</div>
+      <div style="font-size:0.6rem;color:rgba(34,197,94,.6);margin-top:1px;">Click para filtrar</div>
+    </div>
+    <div id="stat-rev" onclick="filterSeats('rev')" style="text-align:center;background:rgba(249,115,22,.1);border:2px solid rgba(249,115,22,.3);border-radius:10px;padding:11px;cursor:pointer;transition:all .18s;" onmouseover="this.style.borderColor='#f97316';this.style.transform='scale(1.03)'" onmouseout="this.style.borderColor='rgba(249,115,22,.3)';this.style.transform='scale(1)'">
+      <div style="font-size:1.05rem;font-weight:800;color:var(--orange);">${d.rev.toLocaleString('es-AR')}</div>
+      <div style="font-size:0.65rem;color:var(--muted);margin-top:2px;">🟠 En reventa · ${d.price}</div>
+      <div style="font-size:0.6rem;color:rgba(249,115,22,.6);margin-top:1px;">Click para filtrar</div>
+    </div>
+    <div id="stat-sold" onclick="filterSeats('sold')" style="text-align:center;background:rgba(30,50,84,.35);border:2px solid rgba(100,116,139,.2);border-radius:10px;padding:11px;cursor:pointer;transition:all .18s;" onmouseover="this.style.borderColor='#64748b';this.style.transform='scale(1.03)'" onmouseout="this.style.borderColor='rgba(100,116,139,.2)';this.style.transform='scale(1)'">
+      <div style="font-size:1.05rem;font-weight:800;color:var(--muted2);">${nOcupadas.toLocaleString('es-AR')}</div>
+      <div style="font-size:0.65rem;color:var(--muted);margin-top:2px;">⬛ Vendidas / Ocupadas</div>
+      <div style="font-size:0.6rem;color:rgba(100,116,139,.6);margin-top:1px;">Click → ver compradores</div>
+    </div>`;
+}
+
+// ── FILTRO DE BUTACAS ───────────────────────────────────────────────────────
+function filterSeats(type) {
+  currentSeatFilter = type;
+  const seats = document.querySelectorAll('#seat-grid [data-state]');
+  seats.forEach(seat => {
+    if (type === 'all' || seat.dataset.state === type) {
+      seat.style.opacity    = '1';
+      seat.style.pointerEvents = 'auto';
+    } else {
+      seat.style.opacity    = '0.07';
+      seat.style.pointerEvents = 'none';
+    }
+  });
+  // Resaltar card activa
+  ['disp','rev','sold'].forEach(t => {
+    const el = document.getElementById('stat-' + t);
+    if (!el) return;
+    if (type === t) {
+      el.style.outline = '2px solid var(--teal)';
+      el.style.outlineOffset = '2px';
+    } else {
+      el.style.outline = 'none';
+    }
+  });
+  // Mostrar/ocultar botón "Mostrar todos"
+  const resetBtn = document.getElementById('seat-filter-reset');
+  if (resetBtn) resetBtn.style.display = (type === 'all') ? 'none' : 'block';
+}
+
+// ── TRANSACTIONS PAGINATION ─────────────────────────────────────────────────
+const TXN_DATA = [
+  { id:'#FAN-4481', sector:'Campo',        vend:'🥈 MarinaR',  rev:'$190.000', orig:'$150.000', delta:'+27%', dlCls:'pill-gold', com:'$9.500',  hora:'18:42', est:'✓ Completada', estCls:'pill-green' },
+  { id:'#FAN-4480', sector:'VIP ⚠️',       vend:'🥇 Lucas_G',  rev:'$340.000', orig:'$220.000', delta:'+55%', dlCls:'pill-red',  com:'$17.000', hora:'18:38', est:'✓ Completada', estCls:'pill-green' },
+  { id:'#FAN-4479', sector:'Platea Baja',  vend:'🥉 CaroF',    rev:'$128.000', orig:'$110.000', delta:'+16%', dlCls:'pill-teal', com:'$6.400',  hora:'18:35', est:'✓ Completada', estCls:'pill-green' },
+  { id:'#FAN-4478', sector:'Platea Alta',  vend:'🔰 JuanP92',  rev:'$95.000',  orig:'$80.000',  delta:'+19%', dlCls:'pill-teal', com:'$4.750',  hora:'18:31', est:'⏳ En escrow',  estCls:'pill-teal'  },
+  { id:'#FAN-4477', sector:'Campo',        vend:'🥈 Nico_BA',  rev:'$180.000', orig:'$150.000', delta:'+20%', dlCls:'pill-gold', com:'$9.000',  hora:'18:20', est:'✓ Completada', estCls:'pill-green' },
+  { id:'#FAN-4476', sector:'Tribuna',      vend:'🔰 SofíaM',   rev:'$53.000',  orig:'$50.000',  delta:'+6%',  dlCls:'',          com:'$2.650',  hora:'18:14', est:'✓ Completada', estCls:'pill-green' },
+  { id:'#FAN-4475', sector:'VIP',          vend:'🥇 RobertoA', rev:'$315.000', orig:'$220.000', delta:'+43%', dlCls:'pill-red',  com:'$15.750', hora:'18:02', est:'✓ Completada', estCls:'pill-green' },
+  { id:'#FAN-4474', sector:'Campo',        vend:'🥈 Ana_LP',   rev:'$175.000', orig:'$150.000', delta:'+17%', dlCls:'pill-gold', com:'$8.750',  hora:'17:58', est:'✓ Completada', estCls:'pill-green' },
+  { id:'#FAN-4473', sector:'Platea Baja',  vend:'🔰 MarceG',   rev:'$120.000', orig:'$110.000', delta:'+9%',  dlCls:'pill-teal', com:'$6.000',  hora:'17:44', est:'✓ Completada', estCls:'pill-green' },
+  { id:'#FAN-4472', sector:'Platea Alta',  vend:'🥉 TomásV',   rev:'$92.000',  orig:'$80.000',  delta:'+15%', dlCls:'pill-teal', com:'$4.600',  hora:'17:31', est:'⏳ En escrow',  estCls:'pill-teal'  },
+  { id:'#FAN-4471', sector:'Campo',        vend:'🥈 PabloR',   rev:'$188.000', orig:'$150.000', delta:'+25%', dlCls:'pill-gold', com:'$9.400',  hora:'17:20', est:'✓ Completada', estCls:'pill-green' },
+  { id:'#FAN-4470', sector:'Tribuna',      vend:'🔰 LauraM',   rev:'$55.000',  orig:'$50.000',  delta:'+10%', dlCls:'pill-teal', com:'$2.750',  hora:'17:10', est:'✓ Completada', estCls:'pill-green' },
+];
+const PAGE_SIZE  = 6;
+const TOTAL_TXN  = 247;
+const TOTAL_PAGES = Math.ceil(TOTAL_TXN / PAGE_SIZE);
+let currentTxnPage = 1;
+
+function renderTxnPage(page) {
+  const start = (page - 1) * PAGE_SIZE;
+  const rows  = TXN_DATA.slice(start, start + PAGE_SIZE);
+  document.getElementById('txn-tbody').innerHTML = rows.map(r => `
+    <tr>
+      <td style="color:var(--muted);font-family:monospace;font-size:0.75rem;">${r.id}</td>
+      <td>${r.sector}</td>
+      <td style="color:var(--muted2);">${r.vend}</td>
+      <td style="color:var(--gold);font-weight:700;">${r.rev}</td>
+      <td style="color:var(--muted);">${r.orig}</td>
+      <td>${r.dlCls ? `<span class="pill ${r.dlCls}">${r.delta}</span>` : `<span style="font-size:0.68rem;color:var(--muted);">${r.delta}</span>`}</td>
+      <td style="color:var(--green);font-weight:700;">${r.com}</td>
+      <td style="color:var(--muted);">${r.hora}</td>
+      <td><span class="pill ${r.estCls}">${r.est}</span></td>
+    </tr>`).join('');
+
+  const from = start + 1;
+  const to   = Math.min(start + PAGE_SIZE, TOTAL_TXN);
+  document.getElementById('txn-page-info').textContent = `Mostrando ${from}–${to} de ${TOTAL_TXN} transacciones`;
+  document.getElementById('txn-page-num').textContent  = `Pág ${page} / ${TOTAL_PAGES}`;
+
+  const prevBtn = document.getElementById('btn-prev-txn');
+  const nextBtn = document.getElementById('btn-next-txn');
+  prevBtn.style.opacity = page === 1 ? '0.35' : '1';
+  prevBtn.style.cursor  = page === 1 ? 'not-allowed' : 'pointer';
+  nextBtn.style.opacity = page === TOTAL_PAGES ? '0.35' : '1';
+  nextBtn.style.cursor  = page === TOTAL_PAGES ? 'not-allowed' : 'pointer';
+}
+
+function changeTxnPage(dir) {
+  const np = currentTxnPage + dir;
+  if (np < 1 || np > TOTAL_PAGES) return;
+  currentTxnPage = np;
+  renderTxnPage(currentTxnPage);
+}
+
+// ── VOL TOGGLE ─────────────────────────────────────────────────────────────
+function setVolToggle(range, btn) {
+  document.querySelectorAll('#vol-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderVolChart(range);
+}
+
+// ── CANVAS CHART ───────────────────────────────────────────────────────────
+const VOL_DATA = {
+  '8h':  { labels:['11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00'], values:[12,18,22,31,28,45,58,33] },
+  '24h': { labels:['00h','03h','06h','09h','12h','15h','18h','21h'],                 values:[4,2,5,20,38,55,62,41] },
+  '7d':  { labels:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],                        values:[45,62,88,105,130,247,0] },
+};
+function renderVolChart(range = '8h') {
+  const canvas = document.getElementById('volChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const data = VOL_DATA[range] || VOL_DATA['8h'];
+  const W = canvas.offsetWidth; const H = 130;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0, 0, W, H);
+  const vals = data.values; const labels = data.labels;
+  const max = Math.max(...vals) || 1; const n = vals.length;
+  const padL=30, padR=10, padT=10, padB=28;
+  const bW = Math.floor((W - padL - padR) / n); const gap = 4;
+  vals.forEach((v, i) => {
+    const bH = Math.round(((H - padT - padB) * v) / max);
+    const x = padL + i * bW + gap / 2; const y = H - padB - bH;
+    const isLast = (i === n - 2 && range === '8h');
+    ctx.fillStyle = isLast ? '#14b8a6' : '#0d9488';
+    ctx.globalAlpha = v === 0 ? 0.2 : (isLast ? 1 : 0.75);
+    ctx.beginPath(); ctx.roundRect(x, y, bW-gap, bH, [3,3,0,0]); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#64748b'; ctx.font = '9px -apple-system,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(labels[i], x + (bW-gap)/2, H - 8);
+    if (v > 0) { ctx.fillStyle = isLast ? '#14b8a6' : '#94a3b8'; ctx.fillText(v, x + (bW-gap)/2, y - 4); }
+  });
+}
+
+// ── LIMITS SLIDERS ─────────────────────────────────────────────────────────
+function updateLimit(sector, val) {
+  const el = document.getElementById('limit-' + sector);
+  if (el) el.textContent = '+' + val + '%';
+}
+
+// ── TOAST ──────────────────────────────────────────────────────────────────
+function showToast(msg, icon = '✅') {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent  = msg;
+  document.getElementById('toast-icon').textContent = icon;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── MAP MODAL ───────────────────────────────────────────────────────────────
+function openMapModal()  { document.getElementById('map-modal').style.display = 'flex'; }
+function closeMapModal() { document.getElementById('map-modal').style.display = 'none'; }
+
+// ── EVENTOS MODAL ───────────────────────────────────────────────────────────
+const EVENTS_DATA = [
+  {
+    id: 'coldplay', name: 'Coldplay — Music Of The Spheres', venue: 'Estadio Más Monumental, Núñez', icon: '🎸', status: 'active',
+    dates: [
+      { label:'Fecha 1', date:'14 jun 2025', txns:247,  ingresos:'$412.800',   precio:'$185.000' },
+      { label:'Fecha 2', date:'15 jun 2025', txns:189,  ingresos:'$318.500',   precio:'$172.000' },
+      { label:'Fecha 3', date:'16 jun 2025', txns:312,  ingresos:'$524.100',   precio:'$198.000' },
+    ]
+  },
+  {
+    id: 'river-velez', name: 'River Plate vs. Vélez Sársfield', venue: 'Estadio Más Monumental, Núñez', icon: '⚽', status: 'future',
+    dates: [
+      { label:'Partido único', date:'22 jun 2025', txns:0, ingresos:'$0', precio:'—' },
+    ]
+  },
+  {
+    id: 'lali', name: 'Lali Espósito — Disciplina Tour', venue: 'Luna Park, CABA', icon: '🎤', status: 'past',
+    dates: [
+      { label:'Fecha 1', date:'10 may 2025', txns:542, ingresos:'$892.400',   precio:'$95.000'  },
+      { label:'Fecha 2', date:'11 may 2025', txns:621, ingresos:'$1.020.700', precio:'$102.000' },
+    ]
+  },
+  {
+    id: 'duki', name: 'Duki — Antes de que salga el sol', venue: 'Estadio Mario A. Kempes, Córdoba', icon: '🎵', status: 'past',
+    dates: [
+      { label:'Función única', date:'5 abr 2025', txns:389, ingresos:'$624.800', precio:'$78.000' },
+    ]
+  },
+];
+
+const selDates = { coldplay:0, 'river-velez':0, lali:0, duki:0 };
+let eventFilter = 'todos';
+
+function openEventsModal() {
+  renderEventsList();
+  document.getElementById('eventos-modal').style.display = 'flex';
+}
+function closeEventsModal() {
+  document.getElementById('eventos-modal').style.display = 'none';
+}
+
+function setEventFilter(type, btn) {
+  eventFilter = type;
+  document.querySelectorAll('.ev-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEventsList();
+}
+
+function selectEvDate(evId, idx) {
+  selDates[evId] = idx;
+  renderEventsList();
+}
+
+function renderEventsList() {
+  const statusCfg = {
+    active: { label:'🟢 ACTIVO',     cls:'pill-green'  },
+    future: { label:'⏳ PRÓXIMO',    cls:'pill-teal'   },
+    past:   { label:'✓ FINALIZADO',  cls:'pill-purple' },
+  };
+  let evs = EVENTS_DATA;
+  if (eventFilter !== 'todos') evs = evs.filter(e => e.status === eventFilter);
+
+  const container = document.getElementById('eventos-list');
+  if (!evs.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">No hay eventos en esta categoría.</div>';
+    return;
+  }
+
+  container.innerHTML = evs.map(ev => {
+    const cfg   = statusCfg[ev.status];
+    const si    = selDates[ev.id] || 0;
+    const d     = ev.dates[si];
+    const isMulti = ev.dates.length > 1;
+    const totalTxns = ev.dates.reduce((s,dt) => s + dt.txns, 0);
+
+    const datePills = ev.dates.map((dt, i) =>
+      `<button class="date-pill ${i===si?'sel':''}" onclick="selectEvDate('${ev.id}',${i})">${dt.label} · ${dt.date}</button>`
+    ).join('');
+
+    return `
+    <div class="ev-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+          <span style="font-size:1.8rem;flex-shrink:0;">${ev.icon}</span>
+          <div style="min-width:0;">
+            <div style="font-size:0.92rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ev.name}</div>
+            <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">📍 ${ev.venue}</div>
+          </div>
+        </div>
+        <span class="pill ${cfg.cls}" style="flex-shrink:0;font-size:0.68rem;">${cfg.label}</span>
+      </div>
+
+      ${isMulti ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">${datePills}</div>` : `<div style="font-size:0.78rem;color:var(--muted2);">📅 ${ev.dates[0].date}</div>`}
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+        <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:1rem;font-weight:800;color:var(--text);">${d.txns || '0'}</div>
+          <div style="font-size:0.63rem;color:var(--muted);margin-top:2px;">Transacciones</div>
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:1rem;font-weight:800;color:var(--green);">${d.ingresos}</div>
+          <div style="font-size:0.63rem;color:var(--muted);margin-top:2px;">Mi comisión</div>
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:1rem;font-weight:800;color:var(--gold);">${d.precio}</div>
+          <div style="font-size:0.63rem;color:var(--muted);margin-top:2px;">Precio prom.</div>
+        </div>
+      </div>
+
+      ${isMulti && ev.status !== 'future' ? `<div style="font-size:0.72rem;color:var(--muted);padding-top:8px;border-top:1px solid var(--border);">Total todas las fechas: <strong style="color:var(--text);">${totalTxns} txns</strong> · <a style="color:var(--green);text-decoration:none;">ver resumen global →</a></div>` : ''}
+
+      <div style="display:flex;justify-content:flex-end;">
+        <button class="btn-primary" style="font-size:0.78rem;padding:7px 16px;" onclick="loadEventMetrics('${ev.id}',${si})">
+          ${ev.status==='future' ? '⚙️ Configurar evento' : '📊 Ver métricas de esta fecha'}
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── NUEVO EVENTO MODAL ─────────────────────────────────────────────────────
+
+// Argentine venues list
+const VENUES = [
+  { name: 'Estadio Más Monumental',      city: 'Núñez, CABA',              cap: '84.000',  icon: '🏟' },
+  { name: 'Luna Park',                   city: 'Congreso, CABA',           cap: '7.500',   icon: '🎪' },
+  { name: 'Movistar Arena',              city: 'Villa Crespo, CABA',       cap: '15.000',  icon: '🎵' },
+  { name: 'Estadio Único de La Plata',   city: 'La Plata, Buenos Aires',   cap: '53.000',  icon: '🏟' },
+  { name: 'Estadio Mario A. Kempes',     city: 'Córdoba',                  cap: '57.000',  icon: '🏟' },
+  { name: 'Estadio Malvinas Argentinas', city: 'Mendoza',                  cap: '40.268',  icon: '🏟' },
+  { name: 'Estadio Padre Martearena',    city: 'Salta',                    cap: '22.000',  icon: '🏟' },
+  { name: 'Estadio Vélez Sársfield',     city: 'Liniers, CABA',            cap: '49.540',  icon: '🏟' },
+  { name: 'Estadio San Martín',          city: 'San Miguel de Tucumán',    cap: '34.000',  icon: '🏟' },
+  { name: 'Estadio Julio Grondona',      city: 'Sarandí, GBA Sur',         cap: '17.000',  icon: '🏟' },
+  { name: 'Teatro Colón',                city: 'San Nicolás, CABA',        cap: '2.500',   icon: '🎭' },
+  { name: 'Gran Rex',                    city: 'San Nicolás, CABA',        cap: '1.100',   icon: '🎭' },
+  { name: 'ND Ateneo',                   city: 'San Nicolás, CABA',        cap: '1.200',   icon: '🎵' },
+  { name: 'C Art Medios',                city: 'San Nicolás, CABA',        cap: '1.000',   icon: '🎵' },
+  { name: 'Centro Cultural Kirchner',    city: 'San Nicolás, CABA',        cap: '1.800',   icon: '🏛' },
+  { name: 'Microestadio Malvinas',       city: 'Palermo, CABA',            cap: '5.500',   icon: '🏛' },
+  { name: 'Parque Sarmiento',            city: 'Palermo, CABA',            cap: '60.000',  icon: '🌳' },
+  { name: 'Hipódromo de Palermo',        city: 'Palermo, CABA',            cap: '80.000',  icon: '🏇' },
+  { name: 'Tecnópolis',                  city: 'Villa Martelli, GBA Norte', cap: '100.000', icon: '🏭' },
+  { name: 'Espacio Quality',             city: 'Córdoba',                  cap: '3.000',   icon: '🎵' },
+  { name: 'Anfiteatro Parque Sarmiento', city: 'Córdoba',                  cap: '12.000',  icon: '🌳' },
+  { name: 'Velódromo Municipal',         city: 'Rosario, Santa Fe',        cap: '5.000',   icon: '🎵' },
+  { name: 'Complejo Cultural Mendoza',   city: 'Mendoza',                  cap: '4.000',   icon: '🎭' },
+  { name: 'Estadio Olímpico Córdoba',    city: 'Córdoba',                  cap: '15.000',  icon: '🏟' },
+  { name: 'Anfiteatro del Puerto',       city: 'Rosario, Santa Fe',        cap: '8.000',   icon: '🌳' },
+];
+
+const NE_SECTORES      = ['Campo', 'Platea Baja', 'Platea Alta', 'Populares', 'Visitante', 'Palco VIP', 'Platea Premium'];
+const NE_DEFAULT_PRICES = ['$185.000','$130.000','$95.000','$65.000','$75.000','$320.000','$150.000'];
+
+let neIcon = '🎸';
+let neType = 'musica';
+let neFechaCount = 1;
+
+const BANNER_GRADIENTS = {
+  musica:  'linear-gradient(135deg, #0d1a2e 0%, #0c4a3e 100%)',
+  deporte: 'linear-gradient(135deg, #0f1f10 0%, #1a4a20 100%)',
+  teatro:  'linear-gradient(135deg, #1a0a2e 0%, #4a1a6d 100%)',
+  show:    'linear-gradient(135deg, #1a0505 0%, #7c1a1a 100%)',
+  otro:    'linear-gradient(135deg, #0f1a2e 0%, #1a3060 100%)',
+};
+const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+// ── CALENDAR ──────────────────────────────────────────────────────────
+const CAL = { targetInput: null, year: 2026, month: 5 };
+
+function openCalendar(inputId, triggerEl) {
+  CAL.targetInput = inputId;
+  const today = new Date();
+  CAL.year = today.getFullYear(); CAL.month = today.getMonth();
+  const input = document.getElementById(inputId);
+  if (input && input.value) {
+    const p = input.value.split(' ');
+    if (p.length >= 3) {
+      const mi = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'].indexOf(p[1].toLowerCase());
+      if (mi >= 0) { CAL.month = mi; CAL.year = parseInt(p[2]) || CAL.year; }
+    }
+  }
+  renderCalendarGrid();
+  const widget = document.getElementById('ne-cal-widget');
+  widget.style.display = 'block';
+  const rect = triggerEl.getBoundingClientRect();
+  let top  = rect.bottom + window.scrollY + 4;
+  let left = rect.left   + window.scrollX;
+  if (left + 285 > window.innerWidth - 10) left = window.innerWidth - 295;
+  if (rect.bottom + 310 > window.innerHeight) top = rect.top + window.scrollY - 314;
+  widget.style.top  = top  + 'px';
+  widget.style.left = left + 'px';
+  if (input) input.classList.add('open');
+  setTimeout(() => document.addEventListener('click', calOutsideClick), 60);
+}
+
+function calOutsideClick(e) {
+  const widget = document.getElementById('ne-cal-widget');
+  if (widget && !widget.contains(e.target)) closeCalendar();
+}
+
+function closeCalendar() {
+  const widget = document.getElementById('ne-cal-widget');
+  if (widget) widget.style.display = 'none';
+  if (CAL.targetInput) { const inp = document.getElementById(CAL.targetInput); if (inp) inp.classList.remove('open'); }
+  document.removeEventListener('click', calOutsideClick);
+}
+
+function calNav(dir) {
+  CAL.month += dir;
+  if (CAL.month > 11) { CAL.month = 0; CAL.year++; }
+  if (CAL.month < 0)  { CAL.month = 11; CAL.year--; }
+  renderCalendarGrid();
+}
+
+function renderCalendarGrid() {
+  document.getElementById('cal-head-label').textContent = MONTHS_ES[CAL.month] + ' ' + CAL.year;
+  const today = new Date();
+  const ty = today.getFullYear(), tm = today.getMonth(), td = today.getDate();
+  const firstDay = new Date(CAL.year, CAL.month, 1).getDay();
+  const offset   = firstDay === 0 ? 6 : firstDay - 1;
+  const daysInMonth = new Date(CAL.year, CAL.month + 1, 0).getDate();
+  const shorts = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  let selDay = null;
+  if (CAL.targetInput) {
+    const inp = document.getElementById(CAL.targetInput);
+    if (inp && inp.value) {
+      const p = inp.value.split(' ');
+      if (p.length >= 3) { const mi = shorts.indexOf(p[1].toLowerCase()); if (mi === CAL.month && parseInt(p[2]) === CAL.year) selDay = parseInt(p[0]); }
+    }
+  }
+  let html = '';
+  for (let i = 0; i < offset; i++) html += '<div class="cal-day empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const isPast = CAL.year < ty || (CAL.year === ty && CAL.month < tm) || (CAL.year === ty && CAL.month === tm && d < td);
+    const isToday = d === td && CAL.month === tm && CAL.year === ty;
+    const isSel   = d === selDay;
+    let cls = 'cal-day' + (isPast ? ' past' : isSel ? ' selected' : isToday ? ' today' : '');
+    html += `<div class="${cls}" ${!isPast ? 'onclick="selectCalDay(' + d + ')"' : ''}>${d}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+function selectCalDay(day) {
+  const m = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][CAL.month];
+  const formatted = day + ' ' + m + ' ' + CAL.year;
+  if (CAL.targetInput) { const inp = document.getElementById(CAL.targetInput); if (inp) inp.value = formatted; }
+  closeCalendar();
+  neUpdatePreview();
+}
+
+// ── VENUE AUTOCOMPLETE ─────────────────────────────────────────────────
+let venueSelected = false;
+
+function onVenueInput(val) {
+  venueSelected = false;
+  document.getElementById('venue-confirmed').style.display = 'none';
+  const dropdown = document.getElementById('venue-dropdown');
+  if (val.length < 2) { dropdown.style.display = 'none'; return; }
+  const q = val.toLowerCase();
+  const results = VENUES.filter(v => v.name.toLowerCase().includes(q) || v.city.toLowerCase().includes(q)).slice(0, 6);
+  if (!results.length) { dropdown.style.display = 'none'; return; }
+  dropdown.innerHTML = results.map(v => `
+    <div class="venue-option" onclick="selectVenue(${JSON.stringify(v.name)}, ${JSON.stringify(v.city)}, '${v.cap}')">
+      <div class="venue-option-icon">${v.icon}</div>
+      <div>
+        <div class="venue-option-name">${v.name}</div>
+        <div class="venue-option-detail">${v.city} · Cap. ${v.cap}</div>
+      </div>
+    </div>`).join('');
+  dropdown.style.display = 'block';
+}
+
+function selectVenue(name, city, cap) {
+  venueSelected = true;
+  document.getElementById('ne-venue').value = name;
+  document.getElementById('venue-dropdown').style.display = 'none';
+  document.getElementById('venue-confirmed-text').textContent = name + ' · ' + city + ' · Cap. ' + cap;
+  document.getElementById('venue-confirmed').style.display = 'flex';
+  neUpdatePreview();
+}
+
+function clearVenue() {
+  venueSelected = false;
+  document.getElementById('ne-venue').value = '';
+  document.getElementById('venue-confirmed').style.display = 'none';
+  document.getElementById('ne-venue').focus();
+  neUpdatePreview();
+}
+
+// ── FORM MANAGEMENT ────────────────────────────────────────────────────
+function openNewEventModal() {
+  neIcon = '🎸'; neType = 'musica'; neFechaCount = 1;
+  document.getElementById('ne-nombre').value = '';
+  document.getElementById('ne-desc').value   = '';
+  document.getElementById('ne-venue').value  = '';
+  document.getElementById('ne-limite-val').value = '150%';
+  document.getElementById('venue-confirmed').style.display = 'none';
+  document.getElementById('venue-dropdown').style.display  = 'none';
+  venueSelected = false;
+  // Reset banner
+  const zone = document.getElementById('ne-banner-zone');
+  zone.style.background = ''; zone.style.border = '2px dashed #1e3254';
+  zone.innerHTML = '<div style="text-align:center; color:#64748b;"><div style="font-size:1.6rem; margin-bottom:4px;">🖼</div><div style="font-size:0.78rem; font-weight:700;">Subir imagen de portada</div><div style="font-size:0.68rem; margin-top:2px;">JPG, PNG · Recomendado 1200×400px</div></div>';
+  zone.onclick = simulateBannerUpload;
+  // Reset tipo
+  document.querySelectorAll('.ne-tipo-btn').forEach(b => b.classList.remove('sel'));
+  const first = document.getElementById('ne-tipo-musica'); if (first) first.classList.add('sel');
+  // Render fecha row
+  document.getElementById('ne-fechas-list').innerHTML = buildFechaRow(0);
+  // Render sectors
+  document.getElementById('ne-sectores').innerHTML = NE_SECTORES.map((s, i) => `
+    <div class="ne-sector-row">
+      <input type="checkbox" id="ne-s-${i}" ${i < 4 ? 'checked' : ''}>
+      <label for="ne-s-${i}">${s}</label>
+      <input type="text" class="ne-sector-price" id="ne-p-${i}" placeholder="Precio oficial" value="${NE_DEFAULT_PRICES[i] || ''}">
+    </div>`).join('');
+  // Reset to panel 1
+  document.getElementById('ne-panel-form').style.display    = 'flex';
+  document.getElementById('ne-panel-preview').style.display = 'none';
+  document.getElementById('ne-step1-tab').classList.add('active');
+  document.getElementById('ne-step1-tab').classList.remove('done');
+  document.getElementById('ne-step2-tab').classList.remove('active');
+  document.getElementById('ne-btn-preview').style.display = 'inline-flex';
+  document.getElementById('ne-btn-back').style.display    = 'none';
+  document.getElementById('ne-btn-save').style.display    = 'none';
+  document.getElementById('new-event-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeNewEventModal() {
+  document.getElementById('new-event-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  closeCalendar();
+}
+
+function buildFechaRow(idx) {
+  const removeBtn = idx > 0 ? '<button onclick="removeFecha(' + idx + ')" style="background:none;border:1px solid rgba(239,68,68,.3);border-radius:7px;width:30px;height:30px;color:#f87171;cursor:pointer;font-size:0.9rem;flex-shrink:0;">✕</button>' : '<div style="width:30px;"></div>';
+  return '<div style="display:flex; gap:8px; align-items:center;" id="ne-fecha-row-' + idx + '">'
+    + '<div class="ne-date-wrap" style="flex:1;"><input type="text" id="ne-fecha-' + idx + '" class="ne-date-input" placeholder="📅  Seleccioná una fecha..." readonly onclick="openCalendar(\'ne-fecha-' + idx + '\', this)"></div>'
+    + '<input type="text" id="ne-hora-' + idx + '" class="ne-input" placeholder="20:00hs" style="width:88px;">'
+    + removeBtn + '</div>';
+}
+
+function addFechaRow() {
+  const container = document.getElementById('ne-fechas-list');
+  const div = document.createElement('div');
+  div.innerHTML = buildFechaRow(neFechaCount);
+  container.appendChild(div.firstElementChild);
+  neFechaCount++;
+}
+
+function removeFecha(idx) {
+  const row = document.getElementById('ne-fecha-row-' + idx);
+  if (row) row.remove();
+}
+
+function selectTipo(el, icon, tipo) {
+  neIcon = icon; neType = tipo;
+  document.querySelectorAll('.ne-tipo-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// ── BANNER ──────────────────────────────────────────────────────────────
+function simulateBannerUpload() {
+  const zone = document.getElementById('ne-banner-zone');
+  zone.style.border = 'none';
+  zone.innerHTML = '<div style="text-align:center;color:#64748b;font-size:0.78rem;padding:20px;">⏳ Procesando imagen...</div>';
+  setTimeout(() => {
+    const nombre = document.getElementById('ne-nombre').value.trim() || 'Mi Evento';
+    const grad   = BANNER_GRADIENTS[neType] || BANNER_GRADIENTS.musica;
+    zone.style.background = grad; zone.style.border = 'none';
+    zone.innerHTML = '<div class="ne-banner-preview"><div class="ne-banner-img" style="background:rgba(255,255,255,.1);">' + neIcon + '</div><div><div class="ne-banner-text">' + nombre + '</div><div class="ne-banner-sub">Imagen de portada · ✅ Lista</div></div><button onclick="resetBanner(event)" style="margin-left:auto;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:4px 10px;color:#94a3b8;font-size:0.7rem;cursor:pointer;">✕</button></div>';
+    zone.onclick = null;
+  }, 900);
+}
+
+function resetBanner(e) {
+  e.stopPropagation();
+  const zone = document.getElementById('ne-banner-zone');
+  zone.style.background = ''; zone.style.border = '2px dashed #1e3254';
+  zone.innerHTML = '<div style="text-align:center; color:#64748b;"><div style="font-size:1.6rem; margin-bottom:4px;">🖼</div><div style="font-size:0.78rem; font-weight:700;">Subir imagen de portada</div><div style="font-size:0.68rem; margin-top:2px;">JPG, PNG · Recomendado 1200×400px</div></div>';
+  zone.onclick = simulateBannerUpload;
+}
+
+function neUpdatePreview() {
+  const nameEl = document.querySelector('#ne-banner-zone .ne-banner-text');
+  if (nameEl) nameEl.textContent = document.getElementById('ne-nombre').value.trim() || 'Mi Evento';
+}
+
+// ── TWO-STEP NAVIGATION ────────────────────────────────────────────────
+function neGoPreview() {
+  const nombre = document.getElementById('ne-nombre').value.trim();
+  if (!nombre) { showToast('Ingresá el nombre del evento', '⚠️'); return; }
+  const venue  = document.getElementById('ne-venue').value.trim();
+  if (!venue)  { showToast('Seleccioná el lugar del evento', '⚠️'); return; }
+  let hasFecha = false;
+  for (let i = 0; i < neFechaCount; i++) { const f = document.getElementById('ne-fecha-' + i); if (f && f.value.trim()) { hasFecha = true; break; } }
+  if (!hasFecha) { showToast('Agregá al menos una fecha', '⚠️'); return; }
+  renderPreviewCard();
+  document.getElementById('ne-panel-form').style.display    = 'none';
+  document.getElementById('ne-panel-preview').style.display = 'block';
+  document.getElementById('ne-step1-tab').classList.remove('active');
+  document.getElementById('ne-step1-tab').classList.add('done');
+  document.getElementById('ne-step2-tab').classList.add('active');
+  document.getElementById('ne-btn-preview').style.display = 'none';
+  document.getElementById('ne-btn-back').style.display    = 'inline-flex';
+  document.getElementById('ne-btn-save').style.display    = 'inline-flex';
+  document.getElementById('ne-panel-preview').scrollTop   = 0;
+}
+
+function neGoBack() {
+  document.getElementById('ne-panel-form').style.display    = 'flex';
+  document.getElementById('ne-panel-preview').style.display = 'none';
+  document.getElementById('ne-step1-tab').classList.add('active');
+  document.getElementById('ne-step1-tab').classList.remove('done');
+  document.getElementById('ne-step2-tab').classList.remove('active');
+  document.getElementById('ne-btn-preview').style.display = 'inline-flex';
+  document.getElementById('ne-btn-back').style.display    = 'none';
+  document.getElementById('ne-btn-save').style.display    = 'none';
+}
+
+// ── PREVIEW RENDER ─────────────────────────────────────────────────────
+function renderPreviewCard() {
+  const nombre = document.getElementById('ne-nombre').value.trim() || 'Sin nombre';
+  const venue  = document.getElementById('ne-venue').value.trim()  || 'Sin venue';
+  const desc   = document.getElementById('ne-desc').value.trim();
+  const limEl  = document.getElementById('ne-limite-reventa');
+  const ltEl   = document.getElementById('ne-limite-tipo');
+  const limVal = document.getElementById('ne-limite-val').value.trim();
+  const alerta = document.getElementById('ne-alerta').checked;
+  const dates = [];
+  for (let i = 0; i < neFechaCount; i++) {
+    const f = document.getElementById('ne-fecha-' + i);
+    const h = document.getElementById('ne-hora-' + i);
+    if (f && f.value.trim()) dates.push(f.value.trim() + (h && h.value.trim() ? ' · ' + h.value.trim() : ''));
+  }
+  const sectors = [];
+  NE_SECTORES.forEach((s, i) => {
+    const cb = document.getElementById('ne-s-' + i);
+    const pr = document.getElementById('ne-p-' + i);
+    if (cb && cb.checked) sectors.push({ name: s, price: pr ? pr.value : '' });
+  });
+  const grad = BANNER_GRADIENTS[neType] || BANNER_GRADIENTS.musica;
+  const limReventaTxt = limEl ? limEl.options[limEl.selectedIndex].text : '24 horas antes';
+  const limPrecioTxt  = ltEl && ltEl.value === 'none' ? 'Sin límite' : (limVal + ' — ' + (ltEl ? ltEl.options[ltEl.selectedIndex].text : ''));
+  const tipoLabel = neType ? neType.charAt(0).toUpperCase() + neType.slice(1) : 'Música';
+  document.getElementById('ne-preview-card').innerHTML = '<div class="ne-preview-banner" style="background:' + grad + ';"><div style="font-size:2rem;">' + neIcon + '</div><div><div class="ne-preview-name">' + nombre + '</div><div class="ne-preview-venue">📍 ' + venue + '</div></div></div>'
+    + '<div class="ne-preview-body">'
+    + (desc ? '<div style="font-size:0.76rem;color:#94a3b8;margin-bottom:12px;line-height:1.5;">' + desc + '</div>' : '')
+    + '<div class="ne-preview-stats"><div class="ne-preview-stat"><div class="ne-preview-stat-val" style="color:#14b8a6;">' + dates.length + '</div><div class="ne-preview-stat-lbl">Fecha' + (dates.length !== 1 ? 's' : '') + '</div></div>'
+    + '<div class="ne-preview-stat"><div class="ne-preview-stat-val" style="color:#22c55e;">' + sectors.length + '</div><div class="ne-preview-stat-lbl">Sector' + (sectors.length !== 1 ? 'es' : '') + '</div></div>'
+    + '<div class="ne-preview-stat"><div class="ne-preview-stat-val" style="color:#f59e0b;">⏳</div><div class="ne-preview-stat-lbl">Próximo</div></div></div>'
+    + '<div class="ne-preview-dates">' + dates.map(d => '<span class="ne-preview-date-pill">' + d + '</span>').join('') + '</div></div>';
+  document.getElementById('ne-preview-config').innerHTML =
+    '<div class="ne-config-row"><span class="ne-config-key">Tipo de evento</span><span class="ne-config-val">' + neIcon + ' ' + tipoLabel + '</span></div>'
+    + '<div class="ne-config-row"><span class="ne-config-key">Sectores activos</span><span class="ne-config-val">' + (sectors.map(s => s.name).join(', ') || 'Ninguno') + '</span></div>'
+    + '<div class="ne-config-row"><span class="ne-config-key">Cierre de reventa</span><span class="ne-config-val">' + limReventaTxt + '</span></div>'
+    + '<div class="ne-config-row"><span class="ne-config-key">Límite de precio</span><span class="ne-config-val">' + limPrecioTxt + '</span></div>'
+    + '<div class="ne-config-row"><span class="ne-config-key">Alerta de precios</span><span class="ne-config-val">' + (alerta ? '🔔 Activada (+30%)' : '🔕 Desactivada') + '</span></div>';
+}
+
+// ── SAVE ────────────────────────────────────────────────────────────────
+function saveNewEvent() {
+  const nombre = document.getElementById('ne-nombre').value.trim();
+  const venue  = document.getElementById('ne-venue').value.trim();
+  const dates  = [];
+  for (let i = 0; i < neFechaCount; i++) {
+    const f = document.getElementById('ne-fecha-' + i);
+    if (f && f.value.trim()) {
+      const h = document.getElementById('ne-hora-' + i);
+      dates.push({ label: 'Fecha ' + (dates.length + 1), date: f.value.trim() + (h && h.value.trim() ? ' · ' + h.value.trim() : ''), txns:0, ingresos:'$0', precio:'—' });
+    }
+  }
+  const newEv = { id: 'ev-' + Date.now(), name: nombre, venue, icon: neIcon, status: 'future', dates };
+  EVENTS_DATA.unshift(newEv);
+  selDates[newEv.id] = 0;
+  closeNewEventModal();
+  renderEventsList();
+  showToast('Evento "' + nombre + '" creado', '🎉');
+}
+
+function loadEventMetrics(evId, dateIdx) {
+  const ev = EVENTS_DATA.find(e => e.id === evId);
+  if (!ev) return;
+  const d = ev.dates[dateIdx];
+  closeEventsModal();
+  showTab('overview');
+  // Update event header in dashboard
+  const hdrEvent = document.getElementById('hdr-event-name');
+  if (hdrEvent) hdrEvent.textContent = ev.name + ' — ' + d.date;
+  showToast(ev.icon + ' Métricas: ' + ev.name + ' · ' + d.label, '📊');
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+setTimeout(() => {
+  renderVolChart();
+  selectSector('platea-baja-oeste'); // platea como default → botón activo visible
+  renderTxnPage(1);
+}, 80);
+window.addEventListener('resize', () => renderVolChart());
+</script>
+</body>
+</html>
