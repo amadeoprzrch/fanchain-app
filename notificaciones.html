@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FanChain — Notificaciones</title>
+<style>
+  :root {
+    --bg: #0b1120;
+    --surface: #131f35;
+    --surface2: #1a2a45;
+    --border: #1e3254;
+    --teal: #0d9488;
+    --teal2: #0f766e;
+    --teal-light: #14b8a6;
+    --teal-glow: rgba(13,148,136,0.15);
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --muted: #64748b;
+    --gold: #f59e0b;
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #7c3aed;
+    --orange: #f97316;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; }
+
+  /* NAV */
+  .nav { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; height:56px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .nav-left { display:flex; align-items:center; gap:16px; }
+  .nav-back { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:6px 12px; font-size:0.78rem; color:var(--text-dim); cursor:pointer; text-decoration:none; transition:border-color .2s; }
+  .nav-back:hover { border-color:var(--teal); color:var(--teal-light); }
+  .nav-logo { font-size:1rem; font-weight:900; color:var(--teal-light); }
+  .nav-logo span { color:var(--text); }
+  .nav-right { display:flex; align-items:center; gap:10px; }
+  .nav-mark-all { font-size:0.74rem; color:var(--teal-light); cursor:pointer; background:none; border:none; padding:4px 8px; border-radius:6px; transition:background .15s; }
+  .nav-mark-all:hover { background:var(--teal-glow); }
+  .unread-badge { background:var(--red); color:#fff; font-size:0.62rem; font-weight:800; padding:2px 7px; border-radius:10px; }
+
+  /* LAYOUT */
+  .layout { max-width:960px; margin:0 auto; padding:24px 20px; display:grid; grid-template-columns:1fr 320px; gap:20px; }
+  @media(max-width:780px) { .layout { grid-template-columns:1fr; } .alerts-col { order:-1; } }
+
+  /* TABS */
+  .tabs { display:flex; gap:4px; margin-bottom:16px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:4px; }
+  .tab-btn { flex:1; padding:7px 10px; border:none; border-radius:7px; background:none; color:var(--text-dim); font-size:0.76rem; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; display:flex; align-items:center; justify-content:center; gap:5px; }
+  .tab-btn.active { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+  .tab-btn:hover:not(.active) { color:var(--text); }
+  .tab-count { font-size:0.6rem; background:var(--red); color:#fff; border-radius:8px; padding:1px 5px; font-weight:800; }
+  .tab-count.zero { background:var(--surface2); color:var(--muted); }
+
+  /* NOTIF LIST */
+  .notif-list { display:flex; flex-direction:column; gap:6px; }
+  .notif-item { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; display:flex; gap:12px; align-items:flex-start; cursor:pointer; transition:border-color .15s, background .15s; position:relative; overflow:hidden; }
+  .notif-item:hover { border-color:var(--teal); background:rgba(13,148,136,.03); }
+  .notif-item.unread { border-left:3px solid var(--teal); }
+  .notif-item.unread-offer { border-left:3px solid var(--gold); }
+  .notif-item.unread-alert { border-left:3px solid var(--purple); }
+  .notif-item.unread-escrow { border-left:3px solid var(--blue); }
+  .notif-item.unread-qr { border-left:3px solid var(--green); }
+  .notif-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+  .dot-offer  { background:var(--gold); }
+  .dot-alert  { background:var(--purple); }
+  .dot-escrow { background:var(--blue); }
+  .dot-qr     { background:var(--green); }
+  .dot-read   { background:transparent; border:1px solid var(--border); }
+  .notif-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+  .ni-offer  { background:rgba(245,158,11,.12); }
+  .ni-alert  { background:rgba(124,58,237,.12); }
+  .ni-escrow { background:rgba(59,130,246,.1); }
+  .ni-qr     { background:rgba(34,197,94,.1); }
+  .ni-demand { background:rgba(249,115,22,.1); }
+  .ni-pay    { background:rgba(13,148,136,.12); }
+  .ni-info   { background:var(--surface2); }
+  .notif-content { flex:1; min-width:0; }
+  .notif-title { font-size:0.84rem; font-weight:700; margin-bottom:3px; line-height:1.3; }
+  .notif-body { font-size:0.76rem; color:var(--text-dim); line-height:1.5; margin-bottom:6px; }
+  .notif-body strong { color:var(--text); }
+  .notif-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .notif-time { font-size:0.68rem; color:var(--muted); }
+  .notif-tag { font-size:0.62rem; font-weight:700; padding:2px 7px; border-radius:8px; }
+  .tag-offer  { background:rgba(245,158,11,.1); color:var(--gold); }
+  .tag-alert  { background:rgba(124,58,237,.1); color:#a78bfa; }
+  .tag-escrow { background:rgba(59,130,246,.1); color:#93c5fd; }
+  .tag-qr     { background:rgba(34,197,94,.1); color:var(--green); }
+  .tag-demand { background:rgba(249,115,22,.1); color:var(--orange); }
+  .tag-pay    { background:var(--teal-glow); color:var(--teal-light); }
+  .notif-action { font-size:0.72rem; color:var(--teal-light); font-weight:700; background:var(--teal-glow); border:none; border-radius:6px; padding:4px 10px; cursor:pointer; text-decoration:none; white-space:nowrap; transition:background .15s; }
+  .notif-action:hover { background:rgba(13,148,136,.25); }
+
+  /* EMPTY STATE */
+  .empty-state { text-align:center; padding:40px 20px; color:var(--muted); }
+  .empty-icon { font-size:2.5rem; margin-bottom:10px; opacity:.4; }
+  .empty-text { font-size:0.82rem; }
+
+  /* DATE SEPARATOR */
+  .date-sep { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); padding:6px 0 8px; }
+
+  /* ====== RIGHT COLUMN — ALERTAS ====== */
+  .alerts-col { display:flex; flex-direction:column; gap:16px; }
+
+  .alerts-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .alerts-head { padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .alerts-head-title { font-size:0.82rem; font-weight:800; display:flex; align-items:center; gap:7px; }
+  .alerts-head-sub { font-size:0.68rem; color:var(--text-dim); margin-top:2px; }
+  .alerts-add { background:var(--teal); color:#fff; border:none; border-radius:7px; padding:5px 11px; font-size:0.72rem; font-weight:700; cursor:pointer; transition:background .15s; }
+  .alerts-add:hover { background:var(--teal2); }
+
+  /* ACTIVE ALERTS */
+  .alert-item { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .alert-item:last-child { border-bottom:none; }
+  .alert-event-icon { font-size:1.3rem; flex-shrink:0; }
+  .alert-info { flex:1; min-width:0; }
+  .alert-event { font-size:0.8rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .alert-detail { font-size:0.68rem; color:var(--text-dim); margin-top:1px; }
+  .alert-toggle { position:relative; width:34px; height:19px; flex-shrink:0; }
+  .alert-toggle input { opacity:0; width:0; height:0; }
+  .alert-slider { position:absolute; inset:0; background:var(--border); border-radius:10px; cursor:pointer; transition:background .2s; }
+  .alert-slider:before { content:''; position:absolute; height:13px; width:13px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform .2s; }
+  .alert-toggle input:checked + .alert-slider { background:var(--teal); }
+  .alert-toggle input:checked + .alert-slider:before { transform:translateX(15px); }
+  .alert-matches { font-size:0.62rem; font-weight:700; padding:2px 7px; border-radius:8px; background:rgba(124,58,237,.12); color:#a78bfa; white-space:nowrap; }
+
+  /* DEMAND INSIGHT */
+  .demand-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .demand-head { padding:14px 16px; border-bottom:1px solid var(--border); }
+  .demand-head-title { font-size:0.82rem; font-weight:800; display:flex; align-items:center; gap:7px; }
+  .demand-head-sub { font-size:0.68rem; color:var(--text-dim); margin-top:2px; }
+  .demand-row { padding:11px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .demand-row:last-child { border-bottom:none; }
+  .demand-event { flex:1; }
+  .demand-event-name { font-size:0.78rem; font-weight:700; }
+  .demand-event-sector { font-size:0.66rem; color:var(--text-dim); margin-top:1px; }
+  .demand-count { font-size:0.72rem; font-weight:800; color:var(--orange); }
+  .demand-bar-wrap { width:60px; height:5px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .demand-bar { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--orange),var(--gold)); }
+  .demand-cta { font-size:0.68rem; color:var(--teal-light); font-weight:700; cursor:pointer; background:none; border:none; text-decoration:underline; }
+
+  /* NEW ALERT MODAL */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; pointer-events:none; transition:opacity .2s; }
+  .modal-overlay.open { opacity:1; pointer-events:all; }
+  .modal-box { background:var(--surface); border:1px solid var(--border); border-radius:14px; width:100%; max-width:440px; }
+  .modal-head { padding:18px 20px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .modal-title { font-size:0.95rem; font-weight:800; }
+  .modal-close { background:var(--surface2); border:1px solid var(--border); border-radius:7px; width:26px; height:26px; cursor:pointer; color:var(--text-dim); font-size:.9rem; }
+  .modal-body { padding:20px; }
+  .form-group { margin-bottom:14px; }
+  .form-label { font-size:0.72rem; font-weight:700; color:var(--text-dim); margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:.5px; }
+  .form-select, .form-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:9px 12px; color:var(--text); font-size:0.82rem; outline:none; transition:border-color .2s; }
+  .form-select:focus, .form-input:focus { border-color:var(--teal); }
+  .form-select option { background:var(--surface2); }
+  .price-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .modal-foot { padding:14px 20px; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:flex-end; }
+  .btn-cancel { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 16px; color:var(--text-dim); font-size:0.8rem; cursor:pointer; }
+  .btn-save { background:var(--teal); border:none; border-radius:8px; padding:8px 18px; color:#fff; font-size:0.8rem; font-weight:700; cursor:pointer; transition:background .15s; }
+  .btn-save:hover { background:var(--teal2); }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--surface2); border:1px solid var(--teal); border-radius:12px; padding:10px 20px; font-size:0.82rem; font-weight:600; color:var(--teal-light); transition:transform .3s; z-index:999; white-space:nowrap; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-left">
+    <a href="index.html" class="nav-back">← Hub</a>
+    <div class="nav-logo">Fan<span>Chain</span></div>
+  </div>
+  <div class="nav-right">
+    <span class="unread-badge" id="globalBadge">5 nuevas</span>
+    <button class="nav-mark-all" onclick="markAllRead()">Marcar todo leído</button>
+  </div>
+</nav>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT: NOTIFICACIONES -->
+  <div>
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('todas')" id="tab-todas">
+        Todas <span class="tab-count" id="cnt-todas">5</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('alertas')" id="tab-alertas">
+        🔔 Alertas <span class="tab-count" id="cnt-alertas">2</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('ofertas')" id="tab-ofertas">
+        💬 Ofertas <span class="tab-count" id="cnt-ofertas">2</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('escrow')" id="tab-escrow">
+        🔐 Escrow <span class="tab-count" id="cnt-escrow">1</span>
+      </button>
+    </div>
+
+    <!-- NOTIF LIST -->
+    <div class="notif-list" id="notifList"></div>
+  </div>
+
+  <!-- RIGHT: ALERTAS -->
+  <div class="alerts-col">
+
+    <!-- MIS ALERTAS ACTIVAS -->
+    <div class="alerts-card">
+      <div class="alerts-head">
+        <div>
+          <div class="alerts-head-title">🔔 Mis alertas activas</div>
+          <div class="alerts-head-sub">Te avisamos cuando aparezca lo que buscás</div>
+        </div>
+        <button class="alerts-add" onclick="openNewAlert()">+ Nueva</button>
+      </div>
+
+      <div class="alert-item">
+        <div class="alert-event-icon">🎸</div>
+        <div class="alert-info">
+          <div class="alert-event">Coldplay · 15 Nov</div>
+          <div class="alert-detail">Platea Baja · hasta $95.000</div>
+        </div>
+        <span class="alert-matches">3 coincidencias</span>
+        <label class="alert-toggle"><input type="checkbox" checked><span class="alert-slider"></span></label>
+      </div>
+
+      <div class="alert-item">
+        <div class="alert-event-icon">⚽</div>
+        <div class="alert-info">
+          <div class="alert-event">River vs Boca · 22 Nov</div>
+          <div class="alert-detail">Tribuna Norte · hasta $45.000</div>
+        </div>
+        <span class="alert-matches">1 coincidencia</span>
+        <label class="alert-toggle"><input type="checkbox" checked><span class="alert-slider"></span></label>
+      </div>
+
+      <div class="alert-item">
+        <div class="alert-event-icon">🎵</div>
+        <div class="alert-info">
+          <div class="alert-event">Lollapalooza · Mar 2027</div>
+          <div class="alert-detail">Campo · cualquier precio</div>
+        </div>
+        <span class="alert-matches" style="background:rgba(34,197,94,.1);color:var(--green);">0 aún</span>
+        <label class="alert-toggle"><input type="checkbox" checked><span class="alert-slider"></span></label>
+      </div>
+
+      <div class="alert-item">
+        <div class="alert-event-icon">🎤</div>
+        <div class="alert-info">
+          <div class="alert-event">Taylor Swift · Ene 2027</div>
+          <div class="alert-detail">Cualquier sector · hasta $200.000</div>
+        </div>
+        <span class="alert-matches" style="background:rgba(34,197,94,.1);color:var(--green);">0 aún</span>
+        <label class="alert-toggle"><input type="checkbox"><span class="alert-slider"></span></label>
+      </div>
+    </div>
+
+    <!-- DEMANDA ACTIVA (para vendedores) -->
+    <div class="demand-card">
+      <div class="demand-head">
+        <div class="demand-head-title">🔥 Demanda activa ahora</div>
+        <div class="demand-head-sub">Personas buscando entradas — publicá la tuya</div>
+      </div>
+
+      <div class="demand-row">
+        <div class="demand-event">
+          <div class="demand-event-name">🎸 Coldplay · 15 Nov</div>
+          <div class="demand-event-sector">Platea Baja</div>
+        </div>
+        <div>
+          <div class="demand-count">47 buscando</div>
+          <div class="demand-bar-wrap"><div class="demand-bar" style="width:94%"></div></div>
+        </div>
+        <button class="demand-cta" onclick="goPublish()">Publicar</button>
+      </div>
+
+      <div class="demand-row">
+        <div class="demand-event">
+          <div class="demand-event-name">🎸 Coldplay · 15 Nov</div>
+          <div class="demand-event-sector">Campo</div>
+        </div>
+        <div>
+          <div class="demand-count">31 buscando</div>
+          <div class="demand-bar-wrap"><div class="demand-bar" style="width:62%"></div></div>
+        </div>
+        <button class="demand-cta" onclick="goPublish()">Publicar</button>
+      </div>
+
+      <div class="demand-row">
+        <div class="demand-event">
+          <div class="demand-event-name">⚽ River vs Boca · 22 Nov</div>
+          <div class="demand-event-sector">Tribuna Norte</div>
+        </div>
+        <div>
+          <div class="demand-count">28 buscando</div>
+          <div class="demand-bar-wrap"><div class="demand-bar" style="width:56%"></div></div>
+        </div>
+        <button class="demand-cta" onclick="goPublish()">Publicar</button>
+      </div>
+
+      <div class="demand-row">
+        <div class="demand-event">
+          <div class="demand-event-name">🎵 Lollapalooza · Mar 2027</div>
+          <div class="demand-event-sector">Campo</div>
+        </div>
+        <div>
+          <div class="demand-count">19 buscando</div>
+          <div class="demand-bar-wrap"><div class="demand-bar" style="width:38%"></div></div>
+        </div>
+        <button class="demand-cta" onclick="goPublish()">Publicar</button>
+      </div>
+
+      <div class="demand-row">
+        <div class="demand-event">
+          <div class="demand-event-name">🎤 Taylor Swift · Ene 2027</div>
+          <div class="demand-event-sector">Platea Baja</div>
+        </div>
+        <div>
+          <div class="demand-count">86 buscando</div>
+          <div class="demand-bar-wrap"><div class="demand-bar" style="width:100%"></div></div>
+        </div>
+        <button class="demand-cta" onclick="goPublish()">Publicar</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- NEW ALERT MODAL -->
+<div class="modal-overlay" id="newAlertOverlay" onclick="handleModalClick(event)">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title">🔔 Nueva alerta de disponibilidad</div>
+      <button class="modal-close" onclick="closeNewAlert()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Evento</label>
+        <select class="form-select" id="alertEvent">
+          <option>Coldplay — 15 Nov 2026</option>
+          <option>River vs Boca — 22 Nov 2026</option>
+          <option>Lollapalooza — Mar 2027</option>
+          <option>Taylor Swift — Ene 2027</option>
+          <option>Metallica — Feb 2027</option>
+          <option>Arsenal vs Chelsea — Mar 2027</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sector</label>
+        <select class="form-select" id="alertSector">
+          <option>Cualquier sector</option>
+          <option>Platea Baja</option>
+          <option>Platea Alta</option>
+          <option>Tribuna Norte</option>
+          <option>Tribuna Sur</option>
+          <option>Campo</option>
+          <option>Palco VIP</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rango de precio máximo</label>
+        <div class="price-row">
+          <input class="form-input" type="number" placeholder="Mín (opcional)" id="alertMin">
+          <input class="form-input" type="number" placeholder="Máx $" id="alertMax">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cantidad de entradas</label>
+        <select class="form-select" id="alertQty">
+          <option>1 entrada</option>
+          <option>2 entradas</option>
+          <option>3 entradas</option>
+          <option>4 o más</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notificarme por</label>
+        <select class="form-select">
+          <option>Push + email</option>
+          <option>Solo push</option>
+          <option>Solo email</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeNewAlert()">Cancelar</button>
+      <button class="btn-save" onclick="saveAlert()">Activar alerta</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+const NOTIFS = [
+  {
+    id: 1, type: 'alert', unread: true,
+    icon: '🎟', iconClass: 'ni-alert',
+    title: '¡Apareció una entrada que buscabas!',
+    body: '<strong>Platea Baja — Coldplay 15 Nov</strong> · Un vendedor publicó una entrada a <strong>$87.000</strong>. Hay 3 personas más mirando esta oferta.',
+    time: 'Hace 4 min',
+    tag: 'Alerta activa', tagClass: 'tag-alert',
+    action: 'Ver entrada', href: 'flujo-comprador.html',
+    accentClass: 'unread-alert'
+  },
+  {
+    id: 2, type: 'offer', unread: true,
+    icon: '💬', iconClass: 'ni-offer',
+    title: 'Nueva oferta recibida',
+    body: '<strong>Martín G.</strong> ofreció <strong>$72.000</strong> por tu entrada de Platea Baja · Coldplay. Tu precio pedido: $85.000.',
+    time: 'Hace 18 min',
+    tag: 'Oferta', tagClass: 'tag-offer',
+    action: 'Responder', href: 'flujo-vendedor.html',
+    accentClass: 'unread-offer'
+  },
+  {
+    id: 3, type: 'alert', unread: true,
+    icon: '👥', iconClass: 'ni-demand',
+    title: '47 personas buscan Coldplay Platea Baja',
+    body: 'La demanda está en su <strong>pico histórico</strong>. Si tenés una entrada disponible, este es el momento ideal para publicarla. Precio promedio actual: <strong>$84.200</strong>.',
+    time: 'Hace 32 min',
+    tag: 'Demanda activa', tagClass: 'tag-demand',
+    action: 'Publicar entrada', href: 'flujo-vendedor.html',
+    accentClass: 'unread-alert'
+  },
+  {
+    id: 4, type: 'offer', unread: true,
+    icon: '✅', iconClass: 'ni-offer',
+    title: 'Tu contraoferta fue aceptada',
+    body: '<strong>Lucía P.</strong> aceptó tu contraoferta de <strong>$78.500</strong> por la entrada de River vs Boca · Tribuna Norte. El escrow se activó automáticamente.',
+    time: 'Hace 1 hora',
+    tag: 'Oferta aceptada', tagClass: 'tag-offer',
+    action: 'Ver escrow', href: 'escrow-visual.html',
+    accentClass: 'unread-offer'
+  },
+  {
+    id: 5, type: 'escrow', unread: true,
+    icon: '🔐', iconClass: 'ni-escrow',
+    title: 'Fondos bloqueados en escrow',
+    body: '<strong>$78.500</strong> bloqueados por FanChain para la venta de River vs Boca. Tu entrada (QR) está en la bóveda digital. Los fondos se liberan cuando el comprador confirme recepción.',
+    time: 'Hace 1 hora',
+    tag: 'Escrow activo', tagClass: 'tag-escrow',
+    action: 'Ver bóveda', href: 'escrow-visual.html',
+    accentClass: 'unread-escrow'
+  },
+  {
+    id: 6, type: 'escrow', unread: false,
+    icon: '✅', iconClass: 'ni-qr',
+    title: 'QR transferido al comprador',
+    body: 'Tu entrada de <strong>Coldplay · Campo</strong> fue entregada exitosamente. <strong>$61.200</strong> en camino a tu CBU. Acreditación estimada: 24–48 hs hábiles.',
+    time: 'Ayer 20:14',
+    tag: 'QR entregado', tagClass: 'tag-qr',
+    action: 'Ver detalle', href: 'escrow-visual.html',
+    accentClass: ''
+  },
+  {
+    id: 7, type: 'escrow', unread: false,
+    icon: '💸', iconClass: 'ni-pay',
+    title: 'Pago acreditado en tu CBU',
+    body: 'Recibiste <strong>$61.200</strong> por la venta de Coldplay · Campo. CBU terminado en 4821.',
+    time: 'Ayer 09:30',
+    tag: 'Pago', tagClass: 'tag-pay',
+    action: 'Ver dashboard', href: 'dashboard-usuario.html',
+    accentClass: ''
+  },
+  {
+    id: 8, type: 'offer', unread: false,
+    icon: '❌', iconClass: 'ni-info',
+    title: 'Oferta rechazada',
+    body: 'El vendedor rechazó tu oferta de <strong>$65.000</strong> por Lollapalooza · Campo. Podés hacer una nueva oferta o buscar otras entradas.',
+    time: 'Hace 2 días',
+    tag: 'Oferta', tagClass: 'tag-offer',
+    action: 'Buscar más', href: 'flujo-comprador.html',
+    accentClass: ''
+  },
+  {
+    id: 9, type: 'alert', unread: false,
+    icon: '⚠️', iconClass: 'ni-info',
+    title: 'Alerta de precio — River vs Boca',
+    body: 'Las entradas de <strong>Tribuna Norte</strong> subieron un <strong>23%</strong> en las últimas 6 horas. Precio actual: $52.000. Tu alerta estaba configurada para $45.000.',
+    time: 'Hace 3 días',
+    tag: 'Alerta precio', tagClass: 'tag-alert',
+    action: 'Ver gráfico', href: 'grafico-velas.html',
+    accentClass: ''
+  },
+];
+
+// ─── STATE ──────────────────────────────────────────────
+let currentTab = 'todas';
+let notifs = NOTIFS.map(n => ({...n}));
+
+// ─── RENDER ─────────────────────────────────────────────
+function getFiltered(tab) {
+  if (tab === 'todas')   return notifs;
+  if (tab === 'alertas') return notifs.filter(n => n.type === 'alert');
+  if (tab === 'ofertas') return notifs.filter(n => n.type === 'offer');
+  if (tab === 'escrow')  return notifs.filter(n => n.type === 'escrow');
+  return notifs;
+}
+
+function renderNotifs() {
+  const list = document.getElementById('notifList');
+  const filtered = getFiltered(currentTab);
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🔔</div><div class="empty-text">No hay notificaciones en esta categoría</div></div>`;
+    return;
+  }
+
+  let html = '';
+  let lastDate = null;
+  const todayItems = filtered.filter(n => n.time.includes('min') || n.time.includes('hora'));
+  const yesterdayItems = filtered.filter(n => n.time.includes('Ayer'));
+  const olderItems = filtered.filter(n => n.time.includes('días'));
+
+  const groups = [
+    { label: 'Hoy', items: todayItems },
+    { label: 'Ayer', items: yesterdayItems },
+    { label: 'Anteriores', items: olderItems },
+  ];
+
+  groups.forEach(g => {
+    if (!g.items.length) return;
+    html += `<div class="date-sep">${g.label}</div>`;
+    g.items.forEach(n => {
+      html += `
+        <div class="notif-item ${n.unread ? n.accentClass : ''}" onclick="markRead(${n.id})">
+          <div class="notif-dot ${n.unread ? 'dot-' + n.type : 'dot-read'}"></div>
+          <div class="notif-icon ${n.iconClass}">${n.icon}</div>
+          <div class="notif-content">
+            <div class="notif-title" style="${n.unread ? '' : 'color:var(--text-dim);font-weight:600;'}">${n.title}</div>
+            <div class="notif-body">${n.body}</div>
+            <div class="notif-meta">
+              <span class="notif-time">${n.time}</span>
+              <span class="notif-tag ${n.tagClass}">${n.tag}</span>
+              <a href="${n.href}" class="notif-action" onclick="event.stopPropagation()">${n.action} →</a>
+            </div>
+          </div>
+        </div>`;
+    });
+  });
+
+  list.innerHTML = html;
+}
+
+function updateCounts() {
+  const unreadAll    = notifs.filter(n => n.unread).length;
+  const unreadAlerts = notifs.filter(n => n.unread && n.type === 'alert').length;
+  const unreadOffers = notifs.filter(n => n.unread && n.type === 'offer').length;
+  const unreadEscrow = notifs.filter(n => n.unread && n.type === 'escrow').length;
+
+  const setCnt = (id, val) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = val;
+    el.className = 'tab-count' + (val === 0 ? ' zero' : '');
+  };
+  setCnt('cnt-todas', unreadAll);
+  setCnt('cnt-alertas', unreadAlerts);
+  setCnt('cnt-ofertas', unreadOffers);
+  setCnt('cnt-escrow', unreadEscrow);
+
+  const badge = document.getElementById('globalBadge');
+  if (unreadAll > 0) {
+    badge.textContent = unreadAll + ' nueva' + (unreadAll > 1 ? 's' : '');
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  renderNotifs();
+}
+
+function markRead(id) {
+  const n = notifs.find(x => x.id === id);
+  if (n) n.unread = false;
+  renderNotifs();
+  updateCounts();
+}
+
+function markAllRead() {
+  notifs.forEach(n => n.unread = false);
+  renderNotifs();
+  updateCounts();
+  showToast('✅ Todas las notificaciones marcadas como leídas');
+}
+
+// ─── NEW ALERT MODAL ────────────────────────────────────
+function openNewAlert() {
+  document.getElementById('newAlertOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeNewAlert() {
+  document.getElementById('newAlertOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function handleModalClick(e) {
+  if (e.target === document.getElementById('newAlertOverlay')) closeNewAlert();
+}
+function saveAlert() {
+  const event = document.getElementById('alertEvent').value;
+  const sector = document.getElementById('alertSector').value;
+  closeNewAlert();
+  showToast('🔔 Alerta activada: ' + event.split('—')[0].trim());
+}
+
+// ─── DEMAND CTA ─────────────────────────────────────────
+function goPublish() {
+  window.location.href = 'flujo-vendedor.html';
+}
+
+// ─── TOAST ──────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── KEYBOARD ───────────────────────────────────────────
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNewAlert(); });
+
+// ─── INIT ────────────────────────────────────────────────
+renderNotifs();
+updateCounts();
+</script>
+</body>
+</html>
