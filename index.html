@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FanChain — Demo Navigator</title>
+<title>FanChain — Marketplace de Entradas</title>
 <style>
   :root {
     --bg: #0b1120;
@@ -15,876 +15,256 @@
     --teal-light: #14b8a6;
     --teal-glow: rgba(13,148,136,0.15);
     --text: #e2e8f0;
-    --text-dim: #94a3b8;
     --muted: #64748b;
+    --muted2: #94a3b8;
     --gold: #f59e0b;
     --green: #22c55e;
-    --red: #ef4444;
-    --blue: #3b82f6;
     --purple: #7c3aed;
+    --orange: #f97316;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; }
-
-  /* HERO */
-  .hero { text-align:center; padding:52px 24px 36px; }
-  .hero-logo { font-size:2.6rem; font-weight:900; color:var(--teal-light); letter-spacing:-1px; margin-bottom:6px; }
-  .hero-logo span { color:var(--text); }
-  .hero-sub { font-size:1rem; color:var(--text-dim); margin-bottom:18px; }
-  .hero-pills { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
-  .hero-pill { font-size:0.72rem; font-weight:700; padding:4px 12px; border-radius:20px; }
-  .hp-teal   { background:var(--teal-glow); color:var(--teal-light); border:1px solid rgba(13,148,136,.3); }
-  .hp-gold   { background:rgba(245,158,11,.1); color:var(--gold); border:1px solid rgba(245,158,11,.3); }
-  .hp-purple { background:rgba(124,58,237,.12); color:#a78bfa; border:1px solid rgba(124,58,237,.25); }
-
-  /* FLOWS */
-  .section { max-width:1200px; margin:0 auto; padding:0 24px 48px; }
-  .section-title { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--teal-light); margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
-
-  /* FLOW ROW */
-  .flow-row { display:flex; align-items:stretch; gap:0; margin-bottom:28px; overflow-x:auto; padding-bottom:4px; }
-  .flow-row::-webkit-scrollbar { height:4px; }
-  .flow-row::-webkit-scrollbar-track { background:var(--surface2); }
-  .flow-row::-webkit-scrollbar-thumb { background:var(--teal); border-radius:2px; }
-  .flow-arrow { display:flex; align-items:center; color:var(--teal); font-size:1.2rem; padding:0 4px; opacity:.5; flex-shrink:0; margin-top:-16px; }
-
-  /* SCREEN CARD */
-  .screen-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; min-width:180px; max-width:200px; flex-shrink:0; cursor:pointer; text-decoration:none; color:var(--text); transition:border-color .2s, transform .15s, box-shadow .2s; display:flex; flex-direction:column; gap:6px; position:relative; }
-  .screen-card:hover { border-color:var(--teal); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.4); }
-  .screen-card.highlight { border-color:rgba(13,148,136,.5); background:rgba(13,148,136,.05); }
-  .sc-icon { font-size:1.6rem; margin-bottom:2px; }
-  .sc-role { font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px; padding:2px 7px; border-radius:10px; width:fit-content; }
-  .sc-title { font-size:0.88rem; font-weight:800; line-height:1.2; }
-  .sc-desc { font-size:0.72rem; color:var(--text-dim); line-height:1.4; }
-  .sc-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
-  .sc-tag { font-size:0.6rem; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:2px 6px; color:var(--muted); }
-  .sc-badge { position:absolute; top:-8px; right:10px; font-size:0.62rem; font-weight:800; padding:2px 8px; border-radius:10px; }
-
-  /* STANDALONE GRID */
-  .standalone-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
-
-  /* JOURNEY LABEL */
-  .journey-label { font-size:0.75rem; font-weight:700; color:var(--text-dim); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
-  .journey-label::before { content:''; width:12px; height:2px; background:var(--teal); border-radius:1px; }
-
-  /* DIVIDER */
-  hr { border:none; border-top:1px solid var(--border); margin:32px 0; }
-
-  /* ESCROW BRIDGE */
-  .escrow-bridge { background:rgba(13,148,136,.06); border:1px solid rgba(13,148,136,.2); border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:12px; margin-bottom:28px; font-size:0.8rem; }
-  .eb-icon { font-size:1.4rem; flex-shrink:0; }
-  .eb-text { flex:1; color:var(--text-dim); line-height:1.5; }
-  .eb-text strong { color:var(--teal-light); }
-  .eb-btn { background:var(--teal); color:#fff; border:none; border-radius:8px; padding:8px 16px; font-size:0.8rem; font-weight:700; cursor:pointer; text-decoration:none; white-space:nowrap; }
-  .eb-btn:hover { background:var(--teal2); }
-
-  /* FOOTER */
-  .footer { text-align:center; padding:28px 24px; border-top:1px solid var(--border); font-size:0.76rem; color:var(--muted); }
-
-  @media(max-width:700px) {
-    .hero-logo { font-size:2rem; }
-    .flow-row { gap:0; }
-    .standalone-grid { grid-template-columns:repeat(2,1fr); }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* PILL CLICKABLE */
-  .hero-pill { cursor:pointer; transition:opacity .15s, transform .1s; user-select:none; }
-  .hero-pill:hover { opacity:.85; transform:scale(1.04); }
-  .hero-pill:active { transform:scale(.97); }
+  /* ── HEADER ── */
+  header {
+    padding: 28px 40px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo { font-size: 1.5rem; font-weight: 800; color: var(--teal-light); letter-spacing: -0.5px; }
+  .logo span { color: var(--text); }
+  .logo-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; font-weight: 400; letter-spacing: .3px; }
+  .live-badge {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 6px 14px; font-size: 0.75rem; color: var(--muted2);
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-  /* INFO MODAL */
-  .imodal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; pointer-events:none; transition:opacity .2s; }
-  .imodal-overlay.open { opacity:1; pointer-events:all; }
-  .imodal { background:var(--surface); border:1px solid var(--border); border-radius:16px; width:100%; max-width:600px; max-height:88vh; overflow-y:auto; position:relative; transform:translateY(12px); transition:transform .2s; }
-  .imodal-overlay.open .imodal { transform:translateY(0); }
-  .imodal::-webkit-scrollbar { width:4px; }
-  .imodal::-webkit-scrollbar-track { background:var(--surface2); }
-  .imodal::-webkit-scrollbar-thumb { background:var(--teal); border-radius:2px; }
-  .imodal-head { padding:20px 22px 16px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; gap:12px; position:sticky; top:0; background:var(--surface); z-index:2; }
-  .imodal-icon { font-size:1.8rem; flex-shrink:0; margin-top:2px; }
-  .imodal-titles { flex:1; }
-  .imodal-title { font-size:1.05rem; font-weight:800; margin-bottom:2px; }
-  .imodal-sub { font-size:0.76rem; color:var(--text-dim); }
-  .imodal-close { background:var(--surface2); border:1px solid var(--border); border-radius:8px; width:28px; height:28px; cursor:pointer; color:var(--text-dim); font-size:1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .imodal-close:hover { color:var(--text); border-color:var(--teal); }
-  .imodal-body { padding:20px 22px; }
+  /* ── HERO ── */
+  .hero { text-align: center; padding: 52px 24px 36px; }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--teal-glow); border: 1px solid rgba(20,184,166,.25);
+    border-radius: 20px; padding: 5px 14px; font-size: 0.72rem;
+    color: var(--teal-light); font-weight: 700; letter-spacing: .4px;
+    margin-bottom: 20px; text-transform: uppercase;
+  }
+  .hero h1 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800;
+    line-height: 1.15; color: var(--text); margin-bottom: 14px; letter-spacing: -1px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(90deg, var(--teal-light), #34d399);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p { font-size: 1rem; color: var(--muted2); max-width: 480px; margin: 0 auto; line-height: 1.6; }
 
-  /* Modal internals */
-  .im-section { margin-bottom:22px; }
-  .im-section:last-child { margin-bottom:0; }
-  .im-section-title { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--teal-light); margin-bottom:10px; }
-  .im-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
-  .im-chip { font-size:0.72rem; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:4px 10px; color:var(--text-dim); }
-  .im-chip strong { color:var(--text); }
-  .im-p { font-size:0.82rem; color:var(--text-dim); line-height:1.6; margin-bottom:8px; }
-  .im-p strong { color:var(--text); }
+  /* ── ROLE GRID ── */
+  .roles-label {
+    text-align: center; font-size: 0.68rem; color: var(--muted);
+    font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;
+  }
+  .roles-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 16px; max-width: 740px; margin: 0 auto; padding: 0 24px 48px;
+  }
+  .role-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px 24px; cursor: pointer;
+    text-decoration: none; color: var(--text);
+    display: flex; flex-direction: column; gap: 12px;
+    transition: all .22s; position: relative; overflow: hidden;
+  }
+  .role-card::before {
+    content: ''; position: absolute; inset: 0; opacity: 0;
+    transition: opacity .22s; border-radius: 16px;
+  }
+  .role-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,.4); }
+  .role-card:hover::before { opacity: 1; }
 
-  /* Level table */
-  .level-table { width:100%; border-collapse:collapse; font-size:0.76rem; }
-  .level-table th { text-align:left; padding:7px 10px; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); border-bottom:1px solid var(--border); }
-  .level-table td { padding:9px 10px; border-bottom:1px solid rgba(30,50,84,.5); vertical-align:middle; }
-  .level-table tr:last-child td { border-bottom:none; }
-  .level-name { font-weight:700; display:flex; align-items:center; gap:6px; }
-  .level-badge { font-size:0.62rem; font-weight:700; padding:2px 8px; border-radius:10px; white-space:nowrap; }
-  .lb-rookie  { background:rgba(100,116,139,.15); color:#94a3b8; border:1px solid rgba(100,116,139,.3); }
-  .lb-fan     { background:rgba(13,148,136,.12); color:var(--teal-light); border:1px solid rgba(13,148,136,.3); }
-  .lb-fanplus { background:rgba(245,158,11,.1); color:var(--gold); border:1px solid rgba(245,158,11,.3); }
-  .lb-fanpro  { background:rgba(124,58,237,.12); color:#a78bfa; border:1px solid rgba(124,58,237,.3); }
-  .lb-fanelite{ background:linear-gradient(90deg,rgba(245,158,11,.2),rgba(124,58,237,.2)); color:#f9d77e; border:1px solid rgba(245,158,11,.4); }
-  .comm-val { font-weight:800; color:var(--green); }
-  .comm-val.high { color:#f87171; }
+  .role-comprador { border-color: rgba(20,184,166,.3); }
+  .role-comprador::before { background: linear-gradient(135deg, rgba(13,148,136,.08), transparent); }
+  .role-comprador:hover { border-color: var(--teal); }
 
-  /* Commission breakdown */
-  .comm-box { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px; }
-  .comm-box-title { font-size:0.72rem; font-weight:700; margin-bottom:8px; color:var(--text-dim); }
-  .comm-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:6px; font-size:0.74rem; }
-  .comm-bar-label { width:100px; color:var(--text-dim); flex-shrink:0; }
-  .comm-bar-track { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
-  .comm-bar-fill { height:100%; border-radius:3px; }
-  .comm-bar-pct { width:36px; text-align:right; font-weight:700; color:var(--text); flex-shrink:0; }
+  .role-vendedor { border-color: rgba(245,158,11,.25); }
+  .role-vendedor::before { background: linear-gradient(135deg, rgba(245,158,11,.07), transparent); }
+  .role-vendedor:hover { border-color: var(--gold); box-shadow: 0 12px 40px rgba(245,158,11,.1); }
 
-  /* Step flow */
-  .step-flow { display:flex; flex-direction:column; gap:6px; }
-  .step-item { display:flex; align-items:flex-start; gap:10px; font-size:0.8rem; }
-  .step-num { width:22px; height:22px; border-radius:50%; background:var(--teal); color:#fff; font-size:0.62rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
-  .step-text { color:var(--text-dim); line-height:1.5; }
-  .step-text strong { color:var(--text); }
+  .role-organizador { border-color: rgba(124,58,237,.25); }
+  .role-organizador::before { background: linear-gradient(135deg, rgba(124,58,237,.08), transparent); }
+  .role-organizador:hover { border-color: #7c3aed; box-shadow: 0 12px 40px rgba(124,58,237,.12); }
 
-  /* Two-col grid */
-  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .info-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
-  .info-card-icon { font-size:1.3rem; margin-bottom:6px; }
-  .info-card-title { font-size:0.76rem; font-weight:700; margin-bottom:4px; }
-  .info-card-desc { font-size:0.7rem; color:var(--text-dim); line-height:1.5; }
-  @media(max-width:480px) { .two-col { grid-template-columns:1fr; } .imodal { border-radius:12px 12px 0 0; align-self:flex-end; max-height:92vh; } }
+  .role-admin { border-color: rgba(249,115,22,.25); }
+  .role-admin::before { background: linear-gradient(135deg, rgba(249,115,22,.07), transparent); }
+  .role-admin:hover { border-color: var(--orange); box-shadow: 0 12px 40px rgba(249,115,22,.1); }
+
+  .role-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; flex-shrink: 0;
+  }
+  .role-comprador .role-icon   { background: rgba(13,148,136,.15); }
+  .role-vendedor .role-icon    { background: rgba(245,158,11,.12); }
+  .role-organizador .role-icon { background: rgba(124,58,237,.12); }
+  .role-admin .role-icon       { background: rgba(249,115,22,.12); }
+
+  .role-name { font-size: 1.05rem; font-weight: 800; margin-bottom: 3px; }
+  .role-comprador .role-name   { color: var(--teal-light); }
+  .role-vendedor .role-name    { color: var(--gold); }
+  .role-organizador .role-name { color: #a78bfa; }
+  .role-admin .role-name       { color: var(--orange); }
+
+  .role-desc { font-size: 0.8rem; color: var(--muted2); line-height: 1.5; }
+  .role-features { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .role-feat {
+    font-size: 0.65rem; padding: 3px 8px; border-radius: 10px; font-weight: 600;
+    background: var(--surface2); color: var(--muted2); border: 1px solid var(--border);
+  }
+  .role-arrow {
+    position: absolute; right: 20px; bottom: 24px;
+    font-size: 1rem; color: var(--muted); transition: all .2s;
+  }
+  .role-card:hover .role-arrow { color: var(--text); transform: translateX(4px); }
+
+  /* ── FOOTER ── */
+  footer {
+    margin-top: auto; padding: 20px 40px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px;
+  }
+  .footer-stats { display: flex; gap: 20px; flex-wrap: wrap; }
+  .footer-stat { font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+  .footer-stat strong { color: var(--muted2); }
+  .footer-note { font-size: 0.68rem; color: var(--muted); }
+
+  .demo-banner {
+    background: linear-gradient(90deg, rgba(13,148,136,.08), rgba(124,58,237,.06));
+    border: 1px solid rgba(20,184,166,.15); border-radius: 10px;
+    font-size: 0.76rem; color: var(--muted2); text-align: center;
+    max-width: 740px; margin: 0 auto 28px; padding: 10px 24px; line-height: 1.5;
+  }
+  .demo-banner strong { color: var(--teal-light); }
+
+  @media (max-width: 520px) {
+    .roles-grid { grid-template-columns: 1fr; }
+    .hero { padding: 36px 20px 28px; }
+    header { padding: 20px 20px 0; }
+    footer { padding: 16px 20px; }
+  }
 </style>
 </head>
 <body>
 
-<!-- HERO -->
+<header>
+  <div>
+    <div class="logo">Fan<span>Chain</span></div>
+    <div class="logo-sub">Marketplace de reventa de entradas</div>
+  </div>
+  <div class="live-badge">
+    <div class="live-dot"></div>
+    Prototipo funcional
+  </div>
+</header>
+
 <div class="hero">
-  <div class="hero-logo">Fan<span>Chain</span></div>
-  <div class="hero-sub">Prototipo interactivo · Junio 2026 · Todas las pantallas conectadas</div>
-  <div style="margin-bottom:14px;">
-    <a href="notificaciones.html" style="display:inline-flex;align-items:center;gap:7px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.25);border-radius:20px;padding:5px 14px;font-size:0.74rem;font-weight:700;color:#a78bfa;text-decoration:none;transition:all .15s;" onmouseover="this.style.background='rgba(124,58,237,.18)'" onmouseout="this.style.background='rgba(124,58,237,.1)'">
-      🔔 <span>Centro de notificaciones</span> <span style="background:var(--red);color:#fff;font-size:0.58rem;font-weight:800;padding:1px 5px;border-radius:8px;">5</span>
-    </a>
-  </div>
-  <div class="hero-pills">
-    <span class="hero-pill hp-teal" onclick="openInfo('marketplace')">🎟 Marketplace de reventa</span>
-    <span class="hero-pill hp-teal" onclick="openInfo('escrow')">🔐 Escrow + blockchain</span>
-    <span class="hero-pill hp-gold" onclick="openInfo('velas')">📈 Gráfico de velas</span>
-    <span class="hero-pill hp-teal" onclick="openInfo('renaper')">✅ Verificación RENAPER</span>
-    <span class="hero-pill hp-purple" onclick="openInfo('niveles')">⭐ Fan Pro / Elite</span>
-    <span class="hero-pill hp-gold" onclick="openInfo('organizador')">🏟 Panel organizador</span>
-    <span class="hero-pill hp-teal" onclick="openInfo('admin')">🛡️ Panel admin</span>
+  <div class="hero-tag">✦ Demo interactivo</div>
+  <h1>Comprá y vendé entradas<br>de forma <em>segura y transparente</em></h1>
+  <p>Escrow automático, verificación de identidad, sistema de pujas en tiempo real y blockchain visual.</p>
+</div>
+
+<div style="padding:0 24px;">
+  <div class="demo-banner">
+    <strong>¿Cómo querés ingresar?</strong> Seleccioná tu rol para explorar la experiencia completa.
   </div>
 </div>
 
-<div class="section">
+<div class="roles-label">Seleccioná tu rol</div>
+<div class="roles-grid">
 
-  <!-- ══════════════════════════════════
-       FLUJO COMPRADOR
-  ══════════════════════════════════ -->
-  <div class="section-title">👤 Flujo del comprador — journey completo</div>
-  <div class="journey-label">Desde el registro hasta la entrada en mano</div>
-
-  <div class="flow-row">
-
-    <a href="registro-login.html" class="screen-card">
-      <div class="sc-icon">🔐</div>
-      <span class="sc-role" style="background:rgba(59,130,246,.1);color:#93c5fd;">Onboarding</span>
-      <div class="sc-title">Registro & Verificación</div>
-      <div class="sc-desc">RENAPER, 2FA, tarjeta de crédito, CBU/CVU para cobros.</div>
-      <div class="sc-tags"><span class="sc-tag">RENAPER</span><span class="sc-tag">2FA</span><span class="sc-tag">CBU</span></div>
-    </a>
-
-    <div class="flow-arrow">→</div>
-
-    <a href="flujo-comprador.html" class="screen-card highlight">
-      <div class="sc-badge" style="background:var(--teal);color:#fff;">⭐ Core</div>
-      <div class="sc-icon">🎟</div>
-      <span class="sc-role" style="background:rgba(13,148,136,.12);color:var(--teal-light);">Comprador</span>
-      <div class="sc-title">Comprar entrada</div>
-      <div class="sc-desc">Selección de sector, gráfico de velas, pujas, negociación, pago.</div>
-      <div class="sc-tags"><span class="sc-tag">Pujas</span><span class="sc-tag">Velas</span><span class="sc-tag">Vista butaca</span></div>
-    </a>
-
-    <div class="flow-arrow">→</div>
-
-    <a href="escrow-visual.html" class="screen-card highlight">
-      <div class="sc-badge" style="background:var(--gold);color:#0b1120;">Nuevo</div>
-      <div class="sc-icon">🔐</div>
-      <span class="sc-role" style="background:rgba(245,158,11,.1);color:var(--gold);">Escrow</span>
-      <div class="sc-title">Escrow Visual</div>
-      <div class="sc-desc">Vista paralela comprador/vendedor. Blockchain visual bloque a bloque.</div>
-      <div class="sc-tags"><span class="sc-tag">Blockchain</span><span class="sc-tag">Hash</span><span class="sc-tag">Disputa</span></div>
-    </a>
-
-    <div class="flow-arrow">→</div>
-
-    <a href="dashboard-usuario.html" class="screen-card">
-      <div class="sc-icon">📊</div>
-      <span class="sc-role" style="background:rgba(124,58,237,.12);color:#a78bfa;">Dashboard</span>
-      <div class="sc-title">Mi Dashboard</div>
-      <div class="sc-desc">Entradas activas, historial con blockchain, nivel y puntos.</div>
-      <div class="sc-tags"><span class="sc-tag">Puntos</span><span class="sc-tag">Niveles</span><span class="sc-tag">QR</span></div>
-    </a>
-
-  </div>
-
-  <!-- ══════════════════════════════════
-       FLUJO VENDEDOR
-  ══════════════════════════════════ -->
-  <div class="section-title">💸 Flujo del vendedor</div>
-  <div class="journey-label">Publicar una entrada y cobrar</div>
-
-  <div class="flow-row">
-
-    <a href="registro-login.html" class="screen-card">
-      <div class="sc-icon">🔐</div>
-      <span class="sc-role" style="background:rgba(59,130,246,.1);color:#93c5fd;">Onboarding</span>
-      <div class="sc-title">Registro & Verificación</div>
-      <div class="sc-desc">Verificación RENAPER + CBU/CVU para recibir pagos como vendedor.</div>
-      <div class="sc-tags"><span class="sc-tag">RENAPER</span><span class="sc-tag">CBU</span></div>
-    </a>
-
-    <div class="flow-arrow">→</div>
-
-    <a href="flujo-vendedor.html" class="screen-card highlight">
-      <div class="sc-badge" style="background:var(--green);color:#fff;">Core</div>
-      <div class="sc-icon">💸</div>
-      <span class="sc-role" style="background:rgba(34,197,94,.08);color:var(--green);">Vendedor</span>
-      <div class="sc-title">Publicar & Vender</div>
-      <div class="sc-desc">Publicar entrada, gestionar ofertas, contraofertas y disputas.</div>
-      <div class="sc-tags"><span class="sc-tag">Ofertas</span><span class="sc-tag">Disputas</span><span class="sc-tag">Cobros</span></div>
-    </a>
-
-    <div class="flow-arrow">→</div>
-
-    <a href="escrow-visual.html" class="screen-card highlight">
-      <div class="sc-icon">🔐</div>
-      <span class="sc-role" style="background:rgba(245,158,11,.1);color:var(--gold);">Escrow</span>
-      <div class="sc-title">Escrow Visual</div>
-      <div class="sc-desc">El vendedor ve el estado del dinero bloqueado y cuándo se libera.</div>
-      <div class="sc-tags"><span class="sc-tag">Blockchain</span><span class="sc-tag">CBU</span></div>
-    </a>
-
-    <div class="flow-arrow">→</div>
-
-    <a href="dashboard-usuario.html" class="screen-card">
-      <div class="sc-icon">📊</div>
-      <span class="sc-role" style="background:rgba(124,58,237,.12);color:#a78bfa;">Dashboard</span>
-      <div class="sc-title">Mi Dashboard</div>
-      <div class="sc-desc">Historial de cobros, reputación y progreso de nivel.</div>
-      <div class="sc-tags"><span class="sc-tag">Cobros</span><span class="sc-tag">Reputación</span></div>
-    </a>
-
-  </div>
-
-  <!-- ESCROW BRIDGE -->
-  <div class="escrow-bridge">
-    <div class="eb-icon">⛓</div>
-    <div class="eb-text">
-      <strong>El escrow conecta comprador y vendedor.</strong> Cada acción genera un bloque inmutable en la cadena. El dinero solo se libera cuando ambas partes confirman — o el admin interviene en caso de disputa.
+  <a class="role-card role-comprador" href="flujo-comprador.html">
+    <div class="role-icon">🛒</div>
+    <div>
+      <div class="role-name">Comprador</div>
+      <div class="role-desc">Buscá entradas, participá en subastas y comprá con escrow automático.</div>
     </div>
-    <a href="escrow-visual.html" class="eb-btn">Ver escrow visual →</a>
-  </div>
-
-  <hr>
-
-  <!-- ══════════════════════════════════
-       PANELES DE GESTIÓN
-  ══════════════════════════════════ -->
-  <div class="section-title">🔔 Notificaciones & Alertas</div>
-
-  <div class="standalone-grid" style="margin-bottom:28px;">
-    <a href="notificaciones.html" class="screen-card highlight" style="max-width:100%;">
-      <div class="sc-badge" style="background:var(--red);color:#fff;">5 nuevas</div>
-      <div class="sc-icon">🔔</div>
-      <span class="sc-role" style="background:rgba(124,58,237,.12);color:#a78bfa;">Notificaciones</span>
-      <div class="sc-title">Centro de Notificaciones</div>
-      <div class="sc-desc">Alertas de disponibilidad, demanda activa, ofertas recibidas, estado del escrow y transferencia del QR.</div>
-      <div class="sc-tags"><span class="sc-tag">Alertas</span><span class="sc-tag">Demanda</span><span class="sc-tag">Ofertas</span><span class="sc-tag">QR</span></div>
-    </a>
-  </div>
-
-  <div class="section-title">🏟 Paneles de gestión</div>
-
-  <div class="standalone-grid">
-
-    <a href="panel-organizador.html" class="screen-card" style="max-width:100%;">
-      <div class="sc-icon">🏟</div>
-      <span class="sc-role" style="background:rgba(245,158,11,.1);color:var(--gold);">Organizador</span>
-      <div class="sc-title">Panel del Organizador</div>
-      <div class="sc-desc">Mapa de sectores con butacas en tiempo real, filtro oficial/reventa, alertas de precio, transacciones y mis eventos.</div>
-      <div class="sc-tags"><span class="sc-tag">Heatmap</span><span class="sc-tag">Butacas</span><span class="sc-tag">Alertas</span><span class="sc-tag">Reventa</span></div>
-    </a>
-
-    <a href="panel-admin.html" class="screen-card" style="max-width:100%;">
-      <div class="sc-icon">🛡️</div>
-      <span class="sc-role" style="background:rgba(239,68,68,.1);color:#f87171;">Super Admin</span>
-      <div class="sc-title">Panel Admin FanChain</div>
-      <div class="sc-desc">Monitor global con drill-down KPI a KPI, usuarios, sanciones, disputas, escrow, analytics y audit log completo.</div>
-      <div class="sc-tags"><span class="sc-tag">Drill-down</span><span class="sc-tag">Sanciones</span><span class="sc-tag">Analytics</span><span class="sc-tag">Audit</span></div>
-    </a>
-
-    <a href="grafico-velas.html" class="screen-card" style="max-width:100%;">
-      <div class="sc-icon">📈</div>
-      <span class="sc-role" style="background:rgba(59,130,246,.1);color:#93c5fd;">Mercado</span>
-      <div class="sc-title">Gráfico de Velas</div>
-      <div class="sc-desc">Evolución de precios por sector en tiempo real. Vista standalone del mercado de entradas.</div>
-      <div class="sc-tags"><span class="sc-tag">Velas</span><span class="sc-tag">Sectores</span><span class="sc-tag">Volumen</span></div>
-    </a>
-
-  </div>
-
-  <hr>
-
-  <!-- ══════════════════════════════════
-       PRESENTACIONES
-  ══════════════════════════════════ -->
-  <div class="section-title">📋 Presentaciones</div>
-
-  <div class="standalone-grid">
-
-    <a href="presentacion.html" class="screen-card" style="max-width:100%;">
-      <div class="sc-icon">🚀</div>
-      <span class="sc-role" style="background:rgba(13,148,136,.12);color:var(--teal-light);">Pitch</span>
-      <div class="sc-title">Presentación Inversores</div>
-      <div class="sc-desc">Problema, solución, producto, modelo de negocio, competencia, tracción y equipo.</div>
-      <div class="sc-tags"><span class="sc-tag">Inversores</span><span class="sc-tag">Pitch deck</span></div>
-    </a>
-
-    <a href="presentacion-socio.html" class="screen-card" style="max-width:100%;">
-      <div class="sc-icon">🤝</div>
-      <span class="sc-role" style="background:rgba(124,58,237,.12);color:#a78bfa;">Socio</span>
-      <div class="sc-title">Presentación Socio</div>
-      <div class="sc-desc">Versión más técnica orientada a un co-founder o socio técnico estratégico.</div>
-      <div class="sc-tags"><span class="sc-tag">Técnico</span><span class="sc-tag">Co-founder</span></div>
-    </a>
-
-  </div>
-
-  <hr>
-
-  <!-- ══════════════════════════════════
-       MAPA DE RELACIONES
-  ══════════════════════════════════ -->
-  <div class="section-title">🗺 Cómo se relacionan las pantallas</div>
-
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;font-size:0.8rem;line-height:2;">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-      <div>
-        <div style="font-weight:700;color:var(--teal-light);margin-bottom:10px;">Flujo del comprador</div>
-        <div style="color:var(--text-dim);">
-          <span style="color:var(--text);">registro-login</span> → <span style="color:var(--text);">flujo-comprador</span><br>
-          &nbsp;&nbsp;↳ Selección sector + gráfico velas<br>
-          &nbsp;&nbsp;↳ Alerta de disponibilidad si sector agotado → <span style="color:#a78bfa;">notificaciones</span><br>
-          &nbsp;&nbsp;↳ Lista de entradas + pujas + negociación<br>
-          &nbsp;&nbsp;↳ <span style="color:var(--teal-light);">escrow-visual</span> (bóveda QR + blockchain)<br>
-          &nbsp;&nbsp;↳ dashboard-usuario (entrada activa)
-        </div>
-      </div>
-      <div>
-        <div style="font-weight:700;color:var(--green);margin-bottom:10px;">Flujo del vendedor</div>
-        <div style="color:var(--text-dim);">
-          <span style="color:var(--text);">registro-login</span> → <span style="color:var(--text);">flujo-vendedor</span><br>
-          &nbsp;&nbsp;↳ Publicar + subir QR a bóveda digital<br>
-          &nbsp;&nbsp;↳ Ve demanda activa del sector elegido<br>
-          &nbsp;&nbsp;↳ Gestionar ofertas / contraofertas<br>
-          &nbsp;&nbsp;↳ <span style="color:var(--teal-light);">escrow-visual</span> → QR se transfiere automático<br>
-          &nbsp;&nbsp;↳ dashboard-usuario (cobro pendiente)
-        </div>
-      </div>
-      <div>
-        <div style="font-weight:700;color:var(--gold);margin-bottom:10px;">Panel del organizador</div>
-        <div style="color:var(--text-dim);">
-          <span style="color:var(--text);">panel-organizador</span><br>
-          &nbsp;&nbsp;↳ Dashboard → mini-mapa clickeable<br>
-          &nbsp;&nbsp;↳ Mapa de sectores → butacas en tiempo real<br>
-          &nbsp;&nbsp;↳ Alertas de precio de reventa<br>
-          &nbsp;&nbsp;↳ Mis eventos → agregar nuevo evento
-        </div>
-      </div>
-      <div>
-        <div style="font-weight:700;color:#a78bfa;margin-bottom:10px;">Notificaciones</div>
-        <div style="color:var(--text-dim);">
-          <span style="color:var(--text);">notificaciones</span><br>
-          &nbsp;&nbsp;↳ Alertas de disponibilidad (comprador)<br>
-          &nbsp;&nbsp;↳ Demanda activa por evento/sector (vendedor)<br>
-          &nbsp;&nbsp;↳ Ofertas recibidas / aceptadas / rechazadas<br>
-          &nbsp;&nbsp;↳ Estados de escrow y transferencia de QR
-        </div>
-      </div>
-      <div>
-        <div style="font-weight:700;color:#f87171;margin-bottom:10px;">Panel admin</div>
-        <div style="color:var(--text-dim);">
-          <span style="color:var(--text);">panel-admin</span><br>
-          &nbsp;&nbsp;↳ Monitor → drill-down por KPI<br>
-          &nbsp;&nbsp;↳ Disputas → detalle → <span style="color:var(--teal-light);">escrow-visual</span><br>
-          &nbsp;&nbsp;↳ Escrow → tabla → <span style="color:var(--teal-light);">escrow-visual</span><br>
-          &nbsp;&nbsp;↳ Usuarios, sanciones, audit log
-        </div>
-      </div>
+    <div class="role-features">
+      <span class="role-feat">Pujas en vivo</span>
+      <span class="role-feat">Escrow</span>
+      <span class="role-feat">QR digital</span>
+      <span class="role-feat">Verificación</span>
     </div>
-  </div>
+    <span class="role-arrow">→</span>
+  </a>
 
-</div>
-
-<!-- INFO MODAL -->
-<div class="imodal-overlay" id="infoOverlay" onclick="handleOverlayClick(event)">
-  <div class="imodal" id="infoModal">
-    <div class="imodal-head">
-      <div class="imodal-icon" id="iModalIcon"></div>
-      <div class="imodal-titles">
-        <div class="imodal-title" id="iModalTitle"></div>
-        <div class="imodal-sub" id="iModalSub"></div>
-      </div>
-      <button class="imodal-close" onclick="closeInfo()">✕</button>
+  <a class="role-card role-vendedor" href="flujo-vendedor.html">
+    <div class="role-icon">💰</div>
+    <div>
+      <div class="role-name">Vendedor</div>
+      <div class="role-desc">Publicá tu entrada, fijá el precio y recibí el pago automáticamente al confirmarse.</div>
     </div>
-    <div class="imodal-body" id="iModalBody"></div>
+    <div class="role-features">
+      <span class="role-feat">Publicar entrada</span>
+      <span class="role-feat">Custodia QR</span>
+      <span class="role-feat">Cobro seguro</span>
+    </div>
+    <span class="role-arrow">→</span>
+  </a>
+
+  <a class="role-card role-organizador" href="panel-organizador.html">
+    <div class="role-icon">🎪</div>
+    <div>
+      <div class="role-name">Organizador</div>
+      <div class="role-desc">Gestioná tus eventos, controlá precios de reventa y monitoreá transacciones en tiempo real.</div>
+    </div>
+    <div class="role-features">
+      <span class="role-feat">Dashboard</span>
+      <span class="role-feat">Mapa de sectores</span>
+      <span class="role-feat">Límites de precio</span>
+    </div>
+    <span class="role-arrow">→</span>
+  </a>
+
+  <a class="role-card role-admin" href="panel-admin.html">
+    <div class="role-icon">⚙️</div>
+    <div>
+      <div class="role-name">Administrador</div>
+      <div class="role-desc">Panel de control completo: usuarios, disputas, comisiones y configuración global.</div>
+    </div>
+    <div class="role-features">
+      <span class="role-feat">Gestión usuarios</span>
+      <span class="role-feat">Disputas</span>
+      <span class="role-feat">Comisiones</span>
+    </div>
+    <span class="role-arrow">→</span>
+  </a>
+
+</div>
+
+<footer>
+  <div class="footer-stats">
+    <div class="footer-stat">🎫 <strong>9 pantallas</strong> completadas</div>
+    <div class="footer-stat">🔒 <strong>Escrow</strong> automático</div>
+    <div class="footer-stat">🇦🇷 <strong>RENAPER</strong> verificación</div>
+    <div class="footer-stat">⛓ <strong>Blockchain</strong> visual</div>
   </div>
-</div>
-
-<script>
-const INFO_DATA = {
-
-  marketplace: {
-    icon: '🎟',
-    title: 'Marketplace de reventa',
-    sub: 'Cómo funciona la compra y venta de entradas en FanChain',
-    body: `
-      <div class="im-section">
-        <div class="im-section-title">¿Qué es FanChain?</div>
-        <p class="im-p">FanChain es un <strong>marketplace P2P de reventa de entradas</strong> con sistema de pujas en tiempo real, precios de mercado transparentes y un escrow que protege a compradores y vendedores.</p>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Flujo de compra</div>
-        <div class="step-flow">
-          <div class="step-item"><div class="step-num">1</div><div class="step-text"><strong>Explorás el evento</strong> — elegís sector, ves disponibilidad y el precio promedio del mercado.</div></div>
-          <div class="step-item"><div class="step-num">2</div><div class="step-text"><strong>Chequeás el precio</strong> — el gráfico de velas te muestra la evolución histórica para que no te cobremos de más.</div></div>
-          <div class="step-item"><div class="step-num">3</div><div class="step-text"><strong>Comprás o pujás</strong> — podés comprar al precio pedido o hacer una oferta al vendedor y negociar.</div></div>
-          <div class="step-item"><div class="step-num">4</div><div class="step-text"><strong>El dinero va a escrow</strong> — no le llega al vendedor hasta que vos confirmás recibir la entrada.</div></div>
-          <div class="step-item"><div class="step-num">5</div><div class="step-text"><strong>Recibís tu entrada</strong> — QR verificado y registro inmutable en la blockchain.</div></div>
-        </div>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Flujo de venta</div>
-        <div class="step-flow">
-          <div class="step-item"><div class="step-num">1</div><div class="step-text"><strong>Publicás tu entrada</strong> — subís el QR, elegís precio (el sistema te sugiere uno justo basado en mercado).</div></div>
-          <div class="step-item"><div class="step-num">2</div><div class="step-text"><strong>Recibís ofertas</strong> — aceptás, rechazás o contraofertás en tiempo real.</div></div>
-          <div class="step-item"><div class="step-num">3</div><div class="step-text"><strong>Se activa el escrow</strong> — el comprador paga y el dinero queda retenido de forma segura.</div></div>
-          <div class="step-item"><div class="step-num">4</div><div class="step-text"><strong>Cobrás</strong> — cuando el comprador confirma, el dinero se libera a tu CBU/CVU.</div></div>
-        </div>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Protecciones clave</div>
-        <div class="im-row">
-          <span class="im-chip">✅ Identidad verificada (RENAPER)</span>
-          <span class="im-chip">🔐 Escrow automático</span>
-          <span class="im-chip">📈 Precio de mercado visible</span>
-          <span class="im-chip">⛓ Registro en blockchain</span>
-          <span class="im-chip">🛡 Resolución de disputas</span>
-        </div>
-      </div>
-    `
-  },
-
-  escrow: {
-    icon: '🔐',
-    title: 'Escrow + Blockchain',
-    sub: 'Cómo se protege el dinero y se registra cada acción',
-    body: `
-      <div class="im-section">
-        <div class="im-section-title">¿Qué es el escrow?</div>
-        <p class="im-p">El escrow es un <strong>sistema de depósito en garantía</strong>. Cuando el comprador paga, el dinero queda retenido en FanChain — no va al vendedor hasta que la entrada fue entregada y confirmada. Si hay un problema, un admin puede intervenir.</p>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Estados del escrow</div>
-        <div class="step-flow">
-          <div class="step-item"><div class="step-num">1</div><div class="step-text"><strong>Iniciado</strong> — se genera el contrato de escrow al cerrar el trato.</div></div>
-          <div class="step-item"><div class="step-num">2</div><div class="step-text"><strong>Fondos bloqueados</strong> — el comprador paga y el dinero queda en custodia de FanChain.</div></div>
-          <div class="step-item"><div class="step-num">3</div><div class="step-text"><strong>Entrada entregada</strong> — el vendedor marca que transfirió el QR al comprador.</div></div>
-          <div class="step-item"><div class="step-num">4</div><div class="step-text"><strong>Comprador confirma</strong> — el comprador confirma recepción y el dinero se libera.</div></div>
-          <div class="step-item"><div class="step-num">5</div><div class="step-text"><strong>Liquidado</strong> — el vendedor recibe el pago en su CBU/CVU.</div></div>
-        </div>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">La blockchain</div>
-        <p class="im-p">Cada acción dentro del escrow genera un <strong>bloque inmutable</strong> con hash único, hash del bloque anterior (encadenado), actor, monto y timestamp. Esto hace que cualquier alteración sea detectable.</p>
-        <div class="im-row">
-          <span class="im-chip">🟢 Bloque génesis — creación del escrow</span>
-          <span class="im-chip">🔵 Pago del comprador</span>
-          <span class="im-chip">🟡 Entrega del vendedor</span>
-          <span class="im-chip">✅ Confirmación recepción</span>
-          <span class="im-chip">💸 Fondos liberados</span>
-        </div>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Disputas</div>
-        <p class="im-p">Si comprador o vendedor no confirman dentro de las <strong>48 horas</strong>, cualquiera puede abrir una disputa. El equipo de FanChain revisa la evidencia y resuelve. El dinero permanece congelado hasta la resolución.</p>
-      </div>
-    `
-  },
-
-  velas: {
-    icon: '📈',
-    title: 'Gráfico de velas',
-    sub: 'Transparencia de precios en el mercado de entradas',
-    body: `
-      <div class="im-section">
-        <div class="im-section-title">¿Para qué sirve?</div>
-        <p class="im-p">El gráfico de velas muestra la <strong>evolución histórica de los precios de reventa</strong> por sector. Permite al comprador saber si el precio actual es justo, está inflado o es una oportunidad.</p>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Cómo leer una vela</div>
-        <div class="two-col">
-          <div class="info-card">
-            <div class="info-card-icon">🟢</div>
-            <div class="info-card-title">Vela verde</div>
-            <div class="info-card-desc">El precio cerró más alto que abrió. La demanda subió en ese período.</div>
-          </div>
-          <div class="info-card">
-            <div class="info-card-icon">🔴</div>
-            <div class="info-card-title">Vela roja</div>
-            <div class="info-card-desc">El precio cerró más bajo que abrió. La oferta superó a la demanda.</div>
-          </div>
-          <div class="info-card">
-            <div class="info-card-icon">📏</div>
-            <div class="info-card-title">Cuerpo</div>
-            <div class="info-card-desc">Rango entre precio de apertura y cierre del período.</div>
-          </div>
-          <div class="info-card">
-            <div class="info-card-icon">〰</div>
-            <div class="info-card-title">Mecha</div>
-            <div class="info-card-desc">Máximo y mínimo alcanzado dentro del período, incluyendo ofertas rechazadas.</div>
-          </div>
-        </div>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Sectores disponibles</div>
-        <div class="im-row">
-          <span class="im-chip">🏟 Platea Baja</span>
-          <span class="im-chip">🏟 Platea Alta</span>
-          <span class="im-chip">🏟 Tribuna Norte</span>
-          <span class="im-chip">🏟 Tribuna Sur</span>
-          <span class="im-chip">🏟 Palco VIP</span>
-          <span class="im-chip">🏟 Campo</span>
-        </div>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Funciones del gráfico</div>
-        <div class="im-row">
-          <span class="im-chip">🔍 Zoom por período (1H / 4H / 1D / 1S)</span>
-          <span class="im-chip">💡 Tooltip con detalle al hacer hover</span>
-          <span class="im-chip">📊 Barras de volumen abajo</span>
-          <span class="im-chip">🔄 Actualización en tiempo real</span>
-        </div>
-      </div>
-    `
-  },
-
-  renaper: {
-    icon: '✅',
-    title: 'Verificación RENAPER',
-    sub: 'Por qué verificamos identidad y cómo funciona',
-    body: `
-      <div class="im-section">
-        <div class="im-section-title">¿Por qué verificamos?</div>
-        <p class="im-p">FanChain requiere <strong>identidad verificada</strong> para garantizar que compradores y vendedores son personas reales. Esto elimina scalpers automatizados y fraudes.</p>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Proceso de verificación</div>
-        <div class="step-flow">
-          <div class="step-item"><div class="step-num">1</div><div class="step-text"><strong>DNI frente y dorso</strong> — subís foto de tu documento nacional de identidad.</div></div>
-          <div class="step-item"><div class="step-num">2</div><div class="step-text"><strong>Selfie en vivo</strong> — tomás una selfie siguiendo instrucciones para prueba de vida.</div></div>
-          <div class="step-item"><div class="step-num">3</div><div class="step-text"><strong>Validación RENAPER</strong> — comparamos tu foto con la base de datos oficial del Registro Nacional.</div></div>
-          <div class="step-item"><div class="step-num">4</div><div class="step-text"><strong>Resultado en minutos</strong> — aprobado o rechazado. En caso de error, podés reintentar.</div></div>
-        </div>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">¿Qué se verifica?</div>
-        <div class="im-row">
-          <span class="im-chip">🪪 Validez del DNI</span>
-          <span class="im-chip">👤 Match biométrico foto/selfie</span>
-          <span class="im-chip">🎂 Mayoría de edad (+18)</span>
-          <span class="im-chip">🚫 No estar sancionado en FanChain</span>
-        </div>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Privacidad</div>
-        <p class="im-p">Los datos biométricos <strong>no se almacenan</strong> en FanChain. Solo se guarda el resultado del check (verificado/rechazado) y el hash del documento. La verificación la procesa RENAPER directamente.</p>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">¿Qué pasa si no verifico?</div>
-        <p class="im-p">Podés ver el marketplace pero <strong>no podés comprar ni vender</strong> hasta completar la verificación. Tampoco podés subir de nivel más allá de Rookie.</p>
-      </div>
-    `
-  },
-
-  niveles: {
-    icon: '⭐',
-    title: 'Niveles de usuario & Comisiones',
-    sub: 'Rookie · Fan · Fan Plus · Fan Pro · Fan Elite',
-    body: `
-      <div class="im-section">
-        <div class="im-section-title">Sistema de niveles</div>
-        <p class="im-p">FanChain tiene <strong>5 niveles de usuario</strong>. Los primeros 3 se obtienen por puntos (gratis). Fan Pro y Fan Elite son <strong>suscripciones pagas</strong> con beneficios profesionales.</p>
-      </div>
-
-      <div class="im-section">
-        <div class="im-section-title">Tabla completa de niveles</div>
-        <div style="overflow-x:auto;">
-        <table class="level-table">
-          <thead>
-            <tr>
-              <th>Nivel</th>
-              <th>Cómo se obtiene</th>
-              <th>Límite venta</th>
-              <th>FanChain</th>
-              <th>Organizador</th>
-              <th>Total</th>
-              <th>Beneficios clave</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><div class="level-name"><span class="level-badge lb-rookie">🥉 Rookie</span></div></td>
-              <td style="color:var(--text-dim)">Registro + RENAPER</td>
-              <td style="color:var(--text-dim)">2 entradas/mes</td>
-              <td><span class="comm-val high">7%</span></td>
-              <td><span style="color:var(--gold);font-weight:700;">3%</span></td>
-              <td><span style="color:#f87171;font-weight:800;">10%</span></td>
-              <td style="color:var(--text-dim);font-size:0.72rem">Acceso básico, soporte estándar</td>
-            </tr>
-            <tr>
-              <td><div class="level-name"><span class="level-badge lb-fan">⭐ Fan</span></div></td>
-              <td style="color:var(--text-dim)">500 puntos</td>
-              <td style="color:var(--text-dim)">5 entradas/mes</td>
-              <td><span class="comm-val high">5.5%</span></td>
-              <td><span style="color:var(--gold);font-weight:700;">3%</span></td>
-              <td><span style="color:#fb923c;font-weight:800;">8.5%</span></td>
-              <td style="color:var(--text-dim);font-size:0.72rem">Acceso anticipado a eventos populares</td>
-            </tr>
-            <tr>
-              <td><div class="level-name"><span class="level-badge lb-fanplus">⭐⭐ Fan Plus</span></div></td>
-              <td style="color:var(--text-dim)">2.000 puntos</td>
-              <td style="color:var(--text-dim)">10 entradas/mes</td>
-              <td><span class="comm-val">4%</span></td>
-              <td><span style="color:var(--gold);font-weight:700;">3%</span></td>
-              <td><span style="color:#facc15;font-weight:800;">7%</span></td>
-              <td style="color:var(--text-dim);font-size:0.72rem">Badge verificado, soporte prioritario</td>
-            </tr>
-            <tr>
-              <td><div class="level-name"><span class="level-badge lb-fanpro">💜 Fan Pro</span></div></td>
-              <td style="color:var(--text-dim)">Suscripción $4.990/mes</td>
-              <td style="color:var(--text-dim)">Sin límite</td>
-              <td><span class="comm-val">2.5%</span></td>
-              <td><span style="color:var(--gold);font-weight:700;">3%</span></td>
-              <td><span style="color:var(--green);font-weight:800;">5.5%</span></td>
-              <td style="color:var(--text-dim);font-size:0.72rem">Alertas de precio, análisis avanzado, publicación masiva</td>
-            </tr>
-            <tr>
-              <td><div class="level-name"><span class="level-badge lb-fanelite">👑 Fan Elite</span></div></td>
-              <td style="color:var(--text-dim)">Suscripción $9.990/mes</td>
-              <td style="color:var(--text-dim)">Sin límite</td>
-              <td><span class="comm-val">1.5%</span></td>
-              <td><span style="color:var(--gold);font-weight:700;">3%</span></td>
-              <td><span style="color:var(--green);font-weight:800;">4.5%</span></td>
-              <td style="color:var(--text-dim);font-size:0.72rem">API de integración, cuenta manager, white-label</td>
-            </tr>
-          </tbody>
-        </table>
-        </div>
-      </div>
-
-      <div class="im-section">
-        <div class="im-section-title">¿Cómo se ganan puntos?</div>
-        <div class="two-col">
-          <div class="info-card">
-            <div class="info-card-icon">✅</div>
-            <div class="info-card-title">Registro completo</div>
-            <div class="info-card-desc">+200 pts al completar perfil + RENAPER</div>
-          </div>
-          <div class="info-card">
-            <div class="info-card-icon">💳</div>
-            <div class="info-card-title">Agregar método de pago</div>
-            <div class="info-card-desc">+100 pts al guardar tarjeta o CBU</div>
-          </div>
-          <div class="info-card">
-            <div class="info-card-icon">🎟</div>
-            <div class="info-card-title">Comprar entrada</div>
-            <div class="info-card-desc">+50 pts por compra completada</div>
-          </div>
-          <div class="info-card">
-            <div class="info-card-icon">⭐</div>
-            <div class="info-card-title">Vender sin disputas</div>
-            <div class="info-card-desc">+80 pts por venta exitosa</div>
-          </div>
-          <div class="info-card">
-            <div class="info-card-icon">🏆</div>
-            <div class="info-card-title">Racha de 5 ventas</div>
-            <div class="info-card-desc">+150 pts bonus por racha sin problemas</div>
-          </div>
-          <div class="info-card">
-            <div class="info-card-icon">👥</div>
-            <div class="info-card-title">Referido activo</div>
-            <div class="info-card-desc">+200 pts cuando tu referido hace su primera transacción</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="im-section">
-        <div class="im-section-title">Desglose de comisiones — ¿a dónde va cada peso?</div>
-        <div class="comm-box">
-          <div class="comm-box-title">Ejemplo: venta de $50.000 — nivel Rookie (7% total)</div>
-          <div class="comm-bar-row">
-            <div class="comm-bar-label">FanChain plat.</div>
-            <div class="comm-bar-track"><div class="comm-bar-fill" style="width:57%;background:var(--teal)"></div></div>
-            <div class="comm-bar-pct">4%</div>
-          </div>
-          <div class="comm-bar-row">
-            <div class="comm-bar-label">Organizador</div>
-            <div class="comm-bar-track"><div class="comm-bar-fill" style="width:43%;background:var(--gold)"></div></div>
-            <div class="comm-bar-pct">3%</div>
-          </div>
-          <div style="font-size:0.7rem;color:var(--muted);margin-top:6px;">Comisión total: <strong style="color:#f87171;">10%</strong> (7% FanChain + 3% organizador). El vendedor recibe <strong style="color:var(--text);">$45.000</strong>.</div>
-        </div>
-        <div class="comm-box">
-          <div class="comm-box-title">Mismo ejemplo — nivel Fan Elite (1.5% total FanChain)</div>
-          <div class="comm-bar-row">
-            <div class="comm-bar-label">FanChain plat.</div>
-            <div class="comm-bar-track"><div class="comm-bar-fill" style="width:33%;background:var(--teal)"></div></div>
-            <div class="comm-bar-pct">1.5%</div>
-          </div>
-          <div class="comm-bar-row">
-            <div class="comm-bar-label">Organizador</div>
-            <div class="comm-bar-track"><div class="comm-bar-fill" style="width:43%;background:var(--gold)"></div></div>
-            <div class="comm-bar-pct">3%</div>
-          </div>
-          <div style="font-size:0.7rem;color:var(--muted);margin-top:6px;">Comisión total: <strong style="color:var(--green);">4.5%</strong> (1.5% FanChain + 3% organizador). El vendedor recibe <strong style="color:var(--text);">$47.750</strong> — <strong style="color:var(--green);">$2.750 más que un Rookie</strong>. En volúmenes altos la diferencia es enorme.</div>
-        </div>
-      </div>
-
-      <div class="im-section">
-        <div class="im-section-title">Fan Pro vs Fan Elite — diferencias</div>
-        <div class="two-col">
-          <div class="info-card" style="border-color:rgba(124,58,237,.3)">
-            <div class="info-card-icon">💜</div>
-            <div class="info-card-title" style="color:#a78bfa;">Fan Pro — $4.990/mes</div>
-            <div class="info-card-desc">Comisión 2.5% · Sin límite de ventas · Alertas de precio en tiempo real · Publicación masiva de entradas · Dashboard de analytics · Soporte prioritario 24h</div>
-          </div>
-          <div class="info-card" style="border-color:rgba(245,158,11,.4);background:linear-gradient(135deg,rgba(245,158,11,.05),rgba(124,58,237,.05))">
-            <div class="info-card-icon">👑</div>
-            <div class="info-card-title" style="color:#f9d77e;">Fan Elite — $9.990/mes</div>
-            <div class="info-card-desc">Comisión 1.5% · Todo lo de Fan Pro + API de integración · Cuenta manager asignada · White-label para revendedores · Reportes custom · SLA garantizado</div>
-          </div>
-        </div>
-      </div>
-    `
-  },
-
-  organizador: {
-    icon: '🏟',
-    title: 'Panel del Organizador',
-    sub: 'Herramientas para productoras y organizadores de eventos',
-    body: `
-      <div class="im-section">
-        <div class="im-section-title">¿Quién lo usa?</div>
-        <p class="im-p">El panel está diseñado para <strong>productoras, promotoras y organizadores</strong> de eventos que quieren monitorear el mercado de reventa de sus entradas sin perder visibilidad ni control.</p>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Funciones principales</div>
-        <div class="two-col">
-          <div class="info-card">
-            <div class="info-card-icon">🗺</div>
-            <div class="info-card-title">Mapa de sectores</div>
-            <div class="info-card-desc">Heatmap en tiempo real por sector. Click en un sector → detalle de butacas con estado oficial vs reventa.</div>
-          </div>
-          <div class="info-card">
-            <div class="info-card-icon">📈</div>
-            <div class="info-card-title">Monitoreo de precios</div>
-            <div class="info-card-desc">Ve cuánto se están cobrando tus entradas en reventa y recibí alertas si el precio supera el umbral configurado.</div>
-          </div>
-          <div class="info-card">
-            <div class="info-card-icon">🎟</div>
-            <div class="info-card-title">Toggle Oficial / Reventa</div>
-            <div class="info-card-desc">Filtrá la vista entre entradas oficiales y de reventa para entender la distribución real del mercado.</div>
-          </div>
-          <div class="info-card">
-            <div class="info-card-icon">💰</div>
-            <div class="info-card-title">Comisión garantizada</div>
-            <div class="info-card-desc">El organizador cobra su 3% en cada transacción de reventa — automático, sin gestión manual.</div>
-          </div>
-        </div>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Mis eventos</div>
-        <p class="im-p">Dashboard con todos los eventos activos: Coldplay, River Plate, Lollapalooza, etc. Cada evento tiene su propio heatmap, métricas de reventa y alertas independientes.</p>
-      </div>
-    `
-  },
-
-  admin: {
-    icon: '🛡️',
-    title: 'Panel Super Admin',
-    sub: 'Control total de la plataforma — solo equipo FanChain',
-    body: `
-      <div class="im-section">
-        <div class="im-section-title">¿Quién lo usa?</div>
-        <p class="im-p">El panel admin es exclusivo del <strong>equipo interno de FanChain</strong>. Tiene visibilidad y control total sobre todas las operaciones de la plataforma.</p>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Módulos disponibles</div>
-        <div class="step-flow">
-          <div class="step-item"><div class="step-num">📊</div><div class="step-text"><strong>Monitor global</strong> — KPIs en tiempo real: transacciones, volumen, usuarios activos, escrows abiertos, comisiones, disputas. Cada card es clickeable con drill-down detallado.</div></div>
-          <div class="step-item"><div class="step-num">👥</div><div class="step-text"><strong>Usuarios</strong> — lista completa con nivel, verificación, estado. Búsqueda, filtrado y acciones directas sobre cualquier cuenta.</div></div>
-          <div class="step-item"><div class="step-num">⚠️</div><div class="step-text"><strong>Sanciones</strong> — gestión de usuarios suspendidos, sancionados o baneados. Historial de sanciones anteriores.</div></div>
-          <div class="step-item"><div class="step-num">⚖️</div><div class="step-text"><strong>Disputas</strong> — lista de disputas abiertas con chat entre partes. El admin puede intervenir, resolver a favor del comprador o vendedor.</div></div>
-          <div class="step-item"><div class="step-num">🔐</div><div class="step-text"><strong>Escrow</strong> — tabla de escrows activos, congelados y en disputa. Link directo a la vista visual de cada operación.</div></div>
-          <div class="step-item"><div class="step-num">💜</div><div class="step-text"><strong>Suscripciones</strong> — gestión de Fan Pro y Fan Elite: altas, bajas, renovaciones, revenue mensual.</div></div>
-          <div class="step-item"><div class="step-num">📈</div><div class="step-text"><strong>Analytics</strong> — volumen por evento, conversión, ticket promedio, retención y proyecciones.</div></div>
-          <div class="step-item"><div class="step-num">📋</div><div class="step-text"><strong>Audit log</strong> — registro inmutable de todas las acciones del sistema con actor, timestamp y descripción.</div></div>
-        </div>
-      </div>
-      <div class="im-section">
-        <div class="im-section-title">Drill-down de KPIs</div>
-        <p class="im-p">Cada stat card del monitor global se puede clickear para ver <strong>el desglose exacto</strong>: transacciones una por una, usuarios nuevos con su info, escrows con estado detallado. Diseñado para auditoría y soporte.</p>
-      </div>
-    `
-  }
-
-};
-
-function openInfo(key) {
-  const d = INFO_DATA[key];
-  if (!d) return;
-  document.getElementById('iModalIcon').textContent = d.icon;
-  document.getElementById('iModalTitle').textContent = d.title;
-  document.getElementById('iModalSub').textContent = d.sub;
-  document.getElementById('iModalBody').innerHTML = d.body;
-  document.getElementById('infoOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeInfo() {
-  document.getElementById('infoOverlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('infoOverlay')) closeInfo();
-}
-
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeInfo(); });
-</script>
-
-<!-- FOOTER -->
-<div class="footer">
-  FanChain · Prototipo HTML/CSS/JS · Sin backend · Junio 2026<br>
-  <span style="color:var(--teal-light);font-weight:700;">9 pantallas · 100% interactivas · Todas conectadas</span>
-</div>
+  <div class="footer-note">FanChain © 2026 · Prototipo v0.1</div>
+</footer>
 
 </body>
 </html>
