@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FanChain — Vendedor</title>
+<style>
+  :root {
+    --bg: #0b1120;
+    --surface: #131f35;
+    --surface2: #1a2a45;
+    --surface3: #1e3254;
+    --border: #1e3254;
+    --teal: #0d9488;
+    --teal2: #0f766e;
+    --teal-light: #14b8a6;
+    --teal-glow: rgba(13,148,136,0.15);
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+    --gold: #f59e0b;
+    --green: #22c55e;
+    --red: #ef4444;
+    --purple: #7c3aed;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; }
+
+  /* ── NAV ── */
+  .topnav { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; height:58px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .logo { font-size:1.2rem; font-weight:700; color:var(--teal-light); }
+  .logo span { color:var(--text); }
+  .nav-right { display:flex; align-items:center; gap:10px; }
+  .avatar-mini { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--teal),var(--teal2)); display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; color:#fff; border:2px solid var(--teal); cursor:pointer; }
+
+  /* ── PAGES ── */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* ── LAYOUT DASHBOARD ── */
+  .layout { max-width:1100px; margin:0 auto; padding:24px 20px; display:flex; gap:24px; }
+  .sidebar { width:210px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; }
+  .sb-btn { display:flex; align-items:center; gap:10px; padding:9px 14px; border-radius:var(--radius-sm); border:none; background:none; color:var(--muted2); font-size:0.86rem; cursor:pointer; transition:all .2s; width:100%; text-align:left; }
+  .sb-btn:hover { color:var(--text); background:var(--surface2); }
+  .sb-btn.active { color:var(--teal-light); background:var(--teal-glow); font-weight:600; }
+  .sb-icon { width:20px; text-align:center; font-size:1rem; }
+  .sb-badge { margin-left:auto; background:var(--red); color:#fff; font-size:0.62rem; padding:2px 6px; border-radius:10px; font-weight:700; }
+  .sb-divider { height:1px; background:var(--border); margin:4px 0; }
+  .main { flex:1; min-width:0; display:flex; flex-direction:column; gap:18px; }
+
+  /* ── STATS ROW ── */
+  .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .stats-row-2 { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:12px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; text-align:center; transition:border-color .2s, background .2s; }
+  .stat-card.clickable { cursor:pointer; }
+  .stat-card.clickable:hover { border-color:var(--teal); background:var(--surface2); }
+  .stat-icon { font-size:1.2rem; margin-bottom:5px; }
+  .stat-val { font-size:1.35rem; font-weight:700; }
+  .stat-lbl { font-size:0.7rem; color:var(--muted); margin-top:2px; }
+
+  /* ── TABS ── */
+  .tab-pane { display:none; flex-direction:column; gap:14px; }
+  .tab-pane.active { display:flex; }
+
+  /* ── CARDS ── */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:18px 20px; }
+  .section-label { font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.7px; color:var(--muted); margin-bottom:12px; }
+
+  /* ── LISTING CARD ── */
+  .listing-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px 18px; display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:16px; transition:border-color .2s; }
+  .listing-card:hover { border-color:var(--teal); }
+  .listing-ev { font-size:0.9rem; font-weight:700; }
+  .listing-meta { font-size:0.73rem; color:var(--muted); margin-top:2px; }
+  .listing-price { text-align:right; }
+  .listing-price .val { font-size:1rem; font-weight:700; }
+  .listing-price .sub { font-size:0.68rem; color:var(--muted); }
+  .listing-icon { width:42px; height:42px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; }
+
+  /* ── STATUS PILLS ── */
+  .pill { font-size:0.68rem; padding:3px 10px; border-radius:20px; font-weight:600; white-space:nowrap; display:inline-block; }
+  .pill-active { background:rgba(34,197,94,.12); color:#4ade80; border:1px solid rgba(34,197,94,.25); }
+  .pill-offer { background:rgba(245,158,11,.12); color:#fbbf24; border:1px solid rgba(245,158,11,.25); }
+  .pill-escrow { background:rgba(124,58,237,.12); color:#a78bfa; border:1px solid rgba(124,58,237,.25); }
+  .pill-sold { background:rgba(100,116,139,.12); color:#94a3b8; border:1px solid rgba(100,116,139,.25); }
+
+  /* ── ACTION BTN ── */
+  .action-btn { background:none; border:1px solid var(--border); color:var(--muted2); border-radius:6px; padding:5px 10px; font-size:0.73rem; cursor:pointer; transition:all .2s; }
+  .action-btn:hover { border-color:var(--teal); color:var(--teal-light); }
+
+  /* ── OFFER CARD ── */
+  .offer-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px 18px; transition:border-color .2s; }
+  .offer-card.urgent { border-color:rgba(245,158,11,.4); }
+  .offer-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .buyer-avatar { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:700; color:#fff; flex-shrink:0; }
+  .offer-info { flex:1; }
+  .offer-buyer-name { font-size:0.88rem; font-weight:700; }
+  .offer-buyer-meta { font-size:0.72rem; color:var(--muted); margin-top:2px; }
+  .offer-event { font-size:0.78rem; color:var(--muted2); margin-bottom:10px; padding:8px 12px; background:var(--surface2); border-radius:6px; }
+  .offer-amounts { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
+  .amount-block { text-align:center; }
+  .amount-label { font-size:0.68rem; color:var(--muted); }
+  .amount-val { font-size:1.1rem; font-weight:700; }
+  .amount-arrow { color:var(--muted); font-size:1rem; }
+  .offer-timer { font-size:0.72rem; display:flex; align-items:center; gap:5px; margin-bottom:12px; }
+  .timer-dot { width:6px; height:6px; border-radius:50%; animation:blink 1.2s infinite; }
+  .urgent .timer-dot { background:var(--gold); }
+  .normal .timer-dot { background:var(--teal-light); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .offer-actions { display:flex; gap:8px; }
+  .btn-accept { background:linear-gradient(135deg,#16a34a,#15803d); color:#fff; border:none; border-radius:6px; padding:8px 16px; font-size:0.8rem; font-weight:600; cursor:pointer; transition:opacity .2s; flex:1; }
+  .btn-accept:hover { opacity:.88; }
+  .btn-reject { background:none; border:1px solid rgba(239,68,68,.4); color:#f87171; border-radius:6px; padding:8px 16px; font-size:0.8rem; cursor:pointer; transition:all .2s; }
+  .btn-reject:hover { background:rgba(239,68,68,.08); }
+  .btn-counter { background:none; border:1px solid var(--teal); color:var(--teal-light); border-radius:6px; padding:8px 16px; font-size:0.8rem; cursor:pointer; transition:all .2s; flex:1; }
+  .btn-counter:hover { background:var(--teal-glow); }
+
+  /* ── COUNTER FORM ── */
+  .counter-form { background:var(--surface2); border-radius:6px; padding:12px 14px; margin-top:10px; display:none; flex-direction:column; gap:10px; }
+  .counter-form.open { display:flex; }
+  .counter-form label { font-size:0.75rem; color:var(--muted2); }
+  .counter-form input { background:var(--surface3); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:8px 12px; font-size:0.88rem; width:100%; }
+  .counter-form input:focus { outline:none; border-color:var(--teal); }
+  .counter-send { background:linear-gradient(135deg,var(--teal),var(--teal2)); color:#fff; border:none; border-radius:6px; padding:8px 16px; font-size:0.8rem; font-weight:600; cursor:pointer; }
+  .counter-cancel { background:none; border:1px solid var(--border); color:var(--muted2); border-radius:6px; padding:8px 14px; font-size:0.8rem; cursor:pointer; }
+
+  /* ── HISTORIAL ── */
+  .hist-table { width:100%; border-collapse:collapse; }
+  .hist-table th { font-size:0.68rem; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); font-weight:600; }
+  .hist-table td { padding:11px 12px; font-size:0.82rem; color:var(--text); border-bottom:1px solid rgba(30,50,84,.6); vertical-align:middle; }
+  .hist-table tr:last-child td { border-bottom:none; }
+  .hist-table tr:hover td { background:rgba(13,148,136,.04); }
+  .amount-in { color:var(--green); font-weight:700; }
+  .chain-hash { font-size:0.68rem; font-family:monospace; color:var(--muted); }
+  .chain-dot { color:var(--teal-light); }
+
+  /* ── PUBLISH FLOW ── */
+  .pub-wrap { max-width:760px; margin:0 auto; padding:28px 20px; }
+  .pub-header { display:flex; align-items:center; gap:14px; margin-bottom:28px; }
+  .back-btn { background:none; border:1px solid var(--border); color:var(--muted2); border-radius:8px; padding:7px 14px; font-size:0.82rem; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all .2s; }
+  .back-btn:hover { border-color:var(--teal); color:var(--teal-light); }
+  .pub-title { font-size:1.2rem; font-weight:700; }
+  .pub-sub { font-size:0.82rem; color:var(--muted); margin-top:2px; }
+
+  /* step bar */
+  .step-bar { display:flex; align-items:center; gap:0; margin-bottom:28px; }
+  .step-item { display:flex; align-items:center; flex:1; }
+  .step-circle { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:700; flex-shrink:0; transition:all .3s; }
+  .step-circle.done { background:var(--teal); color:#fff; }
+  .step-circle.current { background:var(--teal-glow); border:2px solid var(--teal-light); color:var(--teal-light); }
+  .step-circle.pending { background:var(--surface2); border:2px solid var(--border); color:var(--muted); }
+  .step-label { font-size:0.72rem; color:var(--muted2); margin-left:8px; white-space:nowrap; }
+  .step-label.current { color:var(--teal-light); font-weight:600; }
+  .step-connector { flex:1; height:2px; background:var(--border); margin:0 8px; }
+  .step-connector.done { background:var(--teal); }
+
+  /* step panes */
+  .step-pane { display:none; }
+  .step-pane.active { display:flex; flex-direction:column; gap:16px; }
+
+  /* form elements */
+  .form-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:20px; }
+  .form-row { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+  .form-row:last-child { margin-bottom:0; }
+  .form-label { font-size:0.78rem; font-weight:600; color:var(--muted2); }
+  .form-input { background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:10px 14px; font-size:0.88rem; width:100%; transition:border-color .2s; }
+  .form-input:focus { outline:none; border-color:var(--teal); }
+  .form-input::placeholder { color:var(--muted); }
+  .form-select { background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:10px 14px; font-size:0.88rem; width:100%; cursor:pointer; }
+  .form-select option { background:var(--surface2); }
+  .form-hint { font-size:0.72rem; color:var(--muted); }
+  .form-two { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .form-three { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+
+  /* event search */
+  .event-search { position:relative; }
+  .event-results { position:absolute; top:100%; left:0; right:0; background:var(--surface2); border:1px solid var(--teal); border-radius:0 0 8px 8px; z-index:10; display:none; }
+  .event-results.open { display:block; }
+  .event-option { padding:10px 14px; font-size:0.84rem; cursor:pointer; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); transition:background .15s; }
+  .event-option:last-child { border-bottom:none; }
+  .event-option:hover { background:var(--teal-glow); }
+  .event-option-icon { font-size:1.1rem; }
+  .event-option-name { font-weight:600; }
+  .event-option-meta { font-size:0.7rem; color:var(--muted); }
+
+  /* sector chips */
+  .sector-chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .sector-chip { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:8px 14px; font-size:0.82rem; cursor:pointer; transition:all .2s; }
+  .sector-chip:hover { border-color:var(--teal); }
+  .sector-chip.selected { border-color:var(--teal-light); background:var(--teal-glow); color:var(--teal-light); font-weight:600; }
+
+  /* price slider + commission */
+  .price-display { display:flex; align-items:baseline; gap:6px; }
+  .price-big { font-size:1.6rem; font-weight:800; color:var(--text); }
+  .price-currency { font-size:0.9rem; color:var(--muted); }
+  .commission-box { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; margin-top:10px; }
+  .comm-row { display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; padding:4px 0; }
+  .comm-row:not(:last-child) { border-bottom:1px solid rgba(30,50,84,.5); }
+  .comm-label { color:var(--muted2); }
+  .comm-val { font-weight:600; }
+  .comm-final { color:var(--green); }
+  .comm-neg { color:var(--red); }
+
+  /* sale type toggle */
+  .type-toggle { display:flex; gap:10px; }
+  .type-btn { flex:1; padding:12px; border-radius:8px; border:1px solid var(--border); background:none; color:var(--muted2); cursor:pointer; font-size:0.82rem; transition:all .2s; text-align:center; }
+  .type-btn .type-icon { font-size:1.3rem; display:block; margin-bottom:4px; }
+  .type-btn .type-name { font-weight:700; display:block; margin-bottom:2px; }
+  .type-btn .type-desc { font-size:0.68rem; color:var(--muted); display:block; }
+  .type-btn.selected { border-color:var(--teal); background:var(--teal-glow); color:var(--text); }
+  .type-btn.selected .type-desc { color:var(--teal-light); }
+
+  /* photo upload */
+  .photo-drop { border:2px dashed var(--border); border-radius:8px; padding:28px; text-align:center; cursor:pointer; transition:all .2s; }
+  .photo-drop:hover { border-color:var(--teal); background:var(--teal-glow); }
+  .photo-drop-icon { font-size:2rem; margin-bottom:8px; }
+  .photo-drop p { font-size:0.8rem; color:var(--muted); }
+  .photo-drop small { font-size:0.7rem; color:var(--muted); }
+  .photo-added { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .photo-thumb { width:72px; height:72px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; position:relative; cursor:pointer; }
+  .photo-thumb .remove { position:absolute; top:-5px; right:-5px; background:var(--red); color:#fff; border-radius:50%; width:16px; height:16px; display:flex; align-items:center; justify-content:center; font-size:0.55rem; }
+
+  /* step nav buttons */
+  .step-nav { display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
+  .btn-primary { background:linear-gradient(135deg,var(--teal),var(--teal2)); color:#fff; border:none; border-radius:8px; padding:10px 24px; font-size:0.88rem; font-weight:700; cursor:pointer; transition:opacity .2s; }
+  .btn-primary:hover { opacity:.88; }
+  .btn-secondary { background:none; border:1px solid var(--border); color:var(--muted2); border-radius:8px; padding:10px 20px; font-size:0.85rem; cursor:pointer; transition:all .2s; }
+  .btn-secondary:hover { border-color:var(--teal); color:var(--teal-light); }
+
+  /* review summary */
+  .review-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(30,50,84,.5); font-size:0.84rem; }
+  .review-row:last-child { border-bottom:none; }
+  .review-key { color:var(--muted2); }
+  .review-val { font-weight:600; }
+
+  /* success overlay */
+  .success-overlay { position:fixed; inset:0; background:rgba(11,17,32,.9); display:flex; align-items:center; justify-content:center; z-index:200; opacity:0; pointer-events:none; transition:opacity .4s; }
+  .success-overlay.show { opacity:1; pointer-events:all; }
+  .success-box { background:var(--surface); border:1px solid var(--teal); border-radius:var(--radius); padding:40px; max-width:440px; text-align:center; }
+  .success-icon { font-size:3rem; margin-bottom:14px; }
+  .success-title { font-size:1.3rem; font-weight:800; margin-bottom:8px; }
+  .success-sub { font-size:0.84rem; color:var(--muted2); line-height:1.6; margin-bottom:20px; }
+  .success-hash { font-size:0.72rem; font-family:monospace; background:var(--surface2); border-radius:6px; padding:8px 14px; color:var(--teal-light); margin-bottom:20px; }
+
+  /* toast */
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--surface2); border:1px solid var(--teal); border-radius:10px; padding:12px 20px; font-size:0.82rem; color:var(--text); display:flex; align-items:center; gap:10px; transform:translateY(80px); opacity:0; transition:all .35s cubic-bezier(.4,0,.2,1); z-index:300; max-width:320px; }
+  .toast.show { transform:translateY(0); opacity:1; }
+
+  /* empty */
+  .empty { background:var(--surface); border:1px dashed var(--border); border-radius:var(--radius-sm); padding:36px; text-align:center; color:var(--muted); }
+  .empty .big { font-size:2.2rem; margin-bottom:8px; }
+  .empty p { font-size:0.83rem; }
+
+  /* min price label */
+  .min-label { font-size:0.68rem; color:var(--muted); margin-left:8px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="topnav">
+  <div class="logo">Fan<span>Chain</span></div>
+  <div class="nav-right">
+    <button class="btn-primary" style="padding:7px 16px; font-size:0.8rem;" onclick="showPage('pagePublicar')">+ Publicar entrada</button>
+    <div class="avatar-mini" onclick="window.location.href='dashboard-usuario.html'" title="Mi cuenta">MC</div>
+  </div>
+</nav>
+
+
+<!-- ══════════════════════════════
+     PAGE: DASHBOARD VENDEDOR
+══════════════════════════════ -->
+<div class="page active" id="pageDashboard">
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <button class="sb-btn active" onclick="showTab('publicaciones')" id="sb-publicaciones">
+        <span class="sb-icon">🎟</span> Mis publicaciones
+      </button>
+      <button class="sb-btn" onclick="showTab('ofertas')" id="sb-ofertas">
+        <span class="sb-icon">📩</span> Ofertas recibidas
+        <span class="sb-badge">2</span>
+      </button>
+      <button class="sb-btn" onclick="showTab('historial')" id="sb-historial">
+        <span class="sb-icon">📋</span> Historial de ventas
+      </button>
+      <button class="sb-btn" onclick="showTab('cobros')" id="sb-cobros">
+        <span class="sb-icon">💰</span> Cobros
+      </button>
+      <button class="sb-btn" onclick="showTab('reputacion')" id="sb-reputacion">
+        <span class="sb-icon">⭐</span> Reputación
+      </button>
+      <button class="sb-btn" onclick="showTab('disputas')" id="sb-disputas">
+        <span class="sb-icon">⚖️</span> Disputas
+        <span class="sb-badge" id="badge-disputas">1</span>
+      </button>
+      <div class="sb-divider"></div>
+      <button class="sb-btn" onclick="window.location.href='dashboard-usuario.html'">
+        <span class="sb-icon">👤</span> Mi perfil
+      </button>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card clickable" onclick="showTab('publicaciones')" title="Ver mis publicaciones">
+          <div class="stat-icon">📢</div>
+          <div class="stat-val">3</div>
+          <div class="stat-lbl">Publicaciones activas</div>
+        </div>
+        <div class="stat-card clickable" onclick="showTab('ofertas')" title="Ver ofertas recibidas">
+          <div class="stat-icon" style="color:var(--gold)">📩</div>
+          <div class="stat-val" style="color:var(--gold)">2</div>
+          <div class="stat-lbl">Ofertas pendientes</div>
+        </div>
+        <div class="stat-card clickable" onclick="showTab('cobros')" title="Ver cobros del mes">
+          <div class="stat-icon">💰</div>
+          <div class="stat-val" style="color:var(--green)">$348.000</div>
+          <div class="stat-lbl">Cobros este mes</div>
+        </div>
+      </div>
+      <div class="stats-row-2">
+        <div class="stat-card clickable" onclick="showTab('reputacion')" title="Ver mi reputación">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-val">4.9</div>
+          <div class="stat-lbl">Reputación como vendedor</div>
+        </div>
+        <div class="stat-card clickable" onclick="showTab('disputas')" title="Ver mis disputas" style="border-color:rgba(245,158,11,.25);">
+          <div class="stat-icon" style="position:relative; display:inline-block;">⚖️<span style="position:absolute; top:-6px; right:-8px; background:var(--red); color:#fff; font-size:0.55rem; padding:1px 5px; border-radius:8px; font-weight:700;">1</span></div>
+          <div class="stat-val" style="color:var(--gold);">1</div>
+          <div class="stat-lbl">Disputas abiertas</div>
+        </div>
+      </div>
+
+
+      <!-- ── TAB: MIS PUBLICACIONES ── -->
+      <div class="tab-pane active" id="tab-publicaciones">
+
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="section-label" style="margin-bottom:0">Publicaciones activas</div>
+          <button class="btn-primary" style="padding:7px 14px; font-size:0.78rem;" onclick="showPage('pagePublicar')">+ Nueva entrada</button>
+        </div>
+
+        <div class="listing-card">
+          <div class="listing-icon">⚽</div>
+          <div>
+            <div class="listing-ev">River vs Boca · Superclásico</div>
+            <div class="listing-meta">📍 El Monumental · Platea Alta · Sab 14 Jun 2025 · 20:00hs · x1 entrada</div>
+          </div>
+          <div class="listing-price">
+            <div class="val">$90.000</div>
+            <div class="sub">Mín: $75.000 · Puja libre</div>
+          </div>
+          <span class="pill pill-offer">⚡ Oferta activa</span>
+          <button class="action-btn" onclick="showTab('ofertas')">Ver oferta</button>
+        </div>
+
+        <div class="listing-card">
+          <div class="listing-icon">🎸</div>
+          <div>
+            <div class="listing-ev">The Rolling Stones · Estadio Único</div>
+            <div class="listing-meta">📍 La Plata · Campo · Vie 20 Jun 2025 · 21:00hs · x1 entrada</div>
+          </div>
+          <div class="listing-price">
+            <div class="val">$150.000</div>
+            <div class="sub">Precio fijo</div>
+          </div>
+          <span class="pill pill-active">✓ Activa</span>
+          <button class="action-btn" onclick="showToast('Editar publicación')">Editar</button>
+        </div>
+
+        <div class="listing-card">
+          <div class="listing-icon">🎭</div>
+          <div>
+            <div class="listing-ev">Luis Miguel · Luna Park</div>
+            <div class="listing-meta">📍 Buenos Aires · Platea · Dom 29 Jun 2025 · 21:30hs · x1 entrada</div>
+          </div>
+          <div class="listing-price">
+            <div class="val">$85.000</div>
+            <div class="sub">Mín: $70.000 · Puja libre</div>
+          </div>
+          <span class="pill pill-escrow">🔐 En escrow</span>
+          <a href="escrow-visual.html" class="action-btn" style="text-decoration:none;">🔐 Ver escrow →</a>
+        </div>
+
+      </div><!-- /tab-publicaciones -->
+
+
+      <!-- ── TAB: OFERTAS RECIBIDAS ── -->
+      <div class="tab-pane" id="tab-ofertas">
+
+        <div class="section-label">Ofertas pendientes de respuesta</div>
+
+        <!-- Oferta 1: urgente -->
+        <div class="offer-card urgent" id="offer1">
+          <div class="offer-top">
+            <div class="buyer-avatar" style="background:linear-gradient(135deg,#7c3aed,#5b21b6)">FR</div>
+            <div class="offer-info">
+              <div class="offer-buyer-name">FanáticoRivera <span style="font-size:0.72rem; color:var(--muted2); font-weight:400;">· 🥇 Fan Pro</span></div>
+              <div class="offer-buyer-meta">⭐ 4.7 reputación · 23 transacciones</div>
+            </div>
+            <span class="pill pill-offer" style="flex-shrink:0">Nueva oferta</span>
+          </div>
+          <div class="offer-event">🎟 River vs Boca · Superclásico — Platea Alta · x1 entrada</div>
+          <div class="offer-amounts">
+            <div class="amount-block">
+              <div class="amount-label">Tu precio publicado</div>
+              <div class="amount-val">$90.000</div>
+            </div>
+            <div class="amount-arrow">→</div>
+            <div class="amount-block">
+              <div class="amount-label">Su oferta</div>
+              <div class="amount-val" style="color:var(--gold)">$82.000</div>
+            </div>
+            <div class="amount-arrow">→</div>
+            <div class="amount-block">
+              <div class="amount-label">Tu ganancia neta</div>
+              <div class="amount-val" style="color:var(--green)">$77.490</div>
+              <div style="font-size:0.65rem; color:var(--muted)">−5% comisión</div>
+            </div>
+          </div>
+          <div class="offer-timer urgent">
+            <div class="timer-dot"></div>
+            <span style="color:var(--gold)">Quedan <strong>43 min</strong> para responder · Respondé antes de 1h y sumás +20 pts</span>
+          </div>
+          <div class="offer-actions">
+            <button class="btn-accept" onclick="acceptOffer('offer1', 'River vs Boca', 82000)">✓ Aceptar $82.000</button>
+            <button class="btn-counter" onclick="toggleCounter('counter1')">↔ Contraofertar</button>
+            <button class="btn-reject" onclick="rejectOffer('offer1')">✕ Rechazar</button>
+          </div>
+          <div class="counter-form" id="counter1">
+            <div class="form-row" style="margin-bottom:0">
+              <label class="form-label">Tu contraoferta (mín: $75.000 · máx: $90.000)</label>
+              <input type="number" class="form-input" id="counter1-val" placeholder="Ej: 86000" min="75000" max="90000">
+            </div>
+            <div style="font-size:0.72rem; color:var(--muted)">El comprador tendrá 2 horas para aceptar o rechazar tu contraoferta.</div>
+            <div style="display:flex; gap:8px;">
+              <button class="counter-send" onclick="sendCounter('offer1', 'counter1')">Enviar contraoferta</button>
+              <button class="counter-cancel" onclick="toggleCounter('counter1')">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Oferta 2 -->
+        <div class="offer-card normal" id="offer2">
+          <div class="offer-top">
+            <div class="buyer-avatar" style="background:linear-gradient(135deg,#0891b2,#0e7490)">MS</div>
+            <div class="offer-info">
+              <div class="offer-buyer-name">MillonarioxSiempre <span style="font-size:0.72rem; color:var(--muted2); font-weight:400;">· 🥉 Fan</span></div>
+              <div class="offer-buyer-meta">⭐ 5.0 reputación · 8 transacciones</div>
+            </div>
+            <span class="pill pill-offer" style="flex-shrink:0">Nueva oferta</span>
+          </div>
+          <div class="offer-event">🎟 River vs Boca · Superclásico — Platea Alta · x1 entrada</div>
+          <div class="offer-amounts">
+            <div class="amount-block">
+              <div class="amount-label">Tu precio publicado</div>
+              <div class="amount-val">$90.000</div>
+            </div>
+            <div class="amount-arrow">→</div>
+            <div class="amount-block">
+              <div class="amount-label">Su oferta</div>
+              <div class="amount-val" style="color:var(--gold)">$78.000</div>
+            </div>
+            <div class="amount-arrow">→</div>
+            <div class="amount-block">
+              <div class="amount-label">Tu ganancia neta</div>
+              <div class="amount-val" style="color:var(--green)">$73.710</div>
+              <div style="font-size:0.65rem; color:var(--muted)">−5% comisión</div>
+            </div>
+          </div>
+          <div class="offer-timer normal">
+            <div class="timer-dot"></div>
+            <span style="color:var(--teal-light)">Quedan <strong>1h 38 min</strong> para responder</span>
+          </div>
+          <div class="offer-actions">
+            <button class="btn-accept" onclick="acceptOffer('offer2', 'River vs Boca', 78000)">✓ Aceptar $78.000</button>
+            <button class="btn-counter" onclick="toggleCounter('counter2')">↔ Contraofertar</button>
+            <button class="btn-reject" onclick="rejectOffer('offer2')">✕ Rechazar</button>
+          </div>
+          <div class="counter-form" id="counter2">
+            <div class="form-row" style="margin-bottom:0">
+              <label class="form-label">Tu contraoferta (mín: $75.000 · máx: $90.000)</label>
+              <input type="number" class="form-input" id="counter2-val" placeholder="Ej: 84000" min="75000" max="90000">
+            </div>
+            <div style="font-size:0.72rem; color:var(--muted)">El comprador tendrá 2 horas para aceptar o rechazar tu contraoferta.</div>
+            <div style="display:flex; gap:8px;">
+              <button class="counter-send" onclick="sendCounter('offer2', 'counter2')">Enviar contraoferta</button>
+              <button class="counter-cancel" onclick="toggleCounter('counter2')">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:10px 14px; background:var(--teal-glow); border-radius:8px; font-size:0.78rem; color:var(--muted2); display:flex; align-items:center; gap:10px;">
+          <span>💡</span>
+          <span>Si no respondés en <strong style="color:var(--text)">48 horas</strong>, la oferta caduca y perdés <strong style="color:var(--red)">−20 pts</strong>. Responder en menos de 1 hora te suma <strong style="color:var(--teal-light)">+20 pts</strong>.</span>
+        </div>
+
+      </div><!-- /tab-ofertas -->
+
+
+      <!-- ── TAB: HISTORIAL ── -->
+      <div class="tab-pane" id="tab-historial">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <div class="section-label" style="margin-bottom:0">Ventas completadas</div>
+          <div style="font-size:0.78rem; color:var(--muted2)">Total cobrado: <strong style="color:var(--green)">$3.485.000</strong></div>
+        </div>
+
+        <div class="card" style="padding:0; overflow:hidden;">
+          <table class="hist-table">
+            <thead>
+              <tr>
+                <th>Evento</th>
+                <th>Comprador</th>
+                <th>Precio acordado</th>
+                <th>Comisión</th>
+                <th>Cobrado</th>
+                <th>Puntos</th>
+                <th>Blockchain</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div style="font-weight:600; font-size:0.85rem;">Coldplay · River</div><div style="font-size:0.72rem; color:var(--muted)">Campo · x1</div></td>
+                <td><span style="font-size:0.8rem;">🥈 JuanP92</span></td>
+                <td>$135.000</td>
+                <td style="color:var(--red); font-size:0.8rem;">−$6.750</td>
+                <td class="amount-in">$128.250</td>
+                <td style="color:var(--green); font-size:0.78rem;">+80 pts</td>
+                <td><div class="chain-hash"><span class="chain-dot">⬡</span> 0x3f9a…c1b2</div></td>
+                <td style="color:var(--muted); font-size:0.76rem; white-space:nowrap;">12 oct 2024</td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600; font-size:0.85rem;">The Rolling Stones</div><div style="font-size:0.72rem; color:var(--muted)">Campo · x1</div></td>
+                <td><span style="font-size:0.8rem;">🥇 FanProUser</span></td>
+                <td>$148.000</td>
+                <td style="color:var(--red); font-size:0.8rem;">−$7.400</td>
+                <td class="amount-in">$140.600</td>
+                <td style="color:var(--green); font-size:0.78rem;">+80 pts</td>
+                <td><div class="chain-hash"><span class="chain-dot">⬡</span> 0x7d2e…a83f</div></td>
+                <td style="color:var(--muted); font-size:0.76rem; white-space:nowrap;">5 sep 2024</td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600; font-size:0.85rem;">Boca vs Racing · Copa</div><div style="font-size:0.72rem; color:var(--muted)">Platea Baja · x2</div></td>
+                <td><span style="font-size:0.8rem;">🥉 RiojaFan</span></td>
+                <td>$126.000</td>
+                <td style="color:var(--red); font-size:0.8rem;">−$6.300</td>
+                <td class="amount-in">$119.700</td>
+                <td style="color:var(--green); font-size:0.78rem;">+80 pts</td>
+                <td><div class="chain-hash"><span class="chain-dot">⬡</span> 0x1c5b…f74d</div></td>
+                <td style="color:var(--muted); font-size:0.76rem; white-space:nowrap;">20 ago 2024</td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600; font-size:0.85rem;">Luis Miguel · Luna Park</div><div style="font-size:0.72rem; color:var(--muted)">Platea · x1</div></td>
+                <td><span style="font-size:0.8rem;">🪨 NuevoFan99</span></td>
+                <td>$78.000</td>
+                <td style="color:var(--red); font-size:0.8rem;">−$3.900</td>
+                <td class="amount-in">$74.100</td>
+                <td style="color:var(--green); font-size:0.78rem;">+80 pts</td>
+                <td><div class="chain-hash"><span class="chain-dot">⬡</span> 0x9e4f…2b1a</div></td>
+                <td style="color:var(--muted); font-size:0.76rem; white-space:nowrap;">4 jul 2024</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /tab-historial -->
+
+
+      <!-- ── TAB: COBROS ── -->
+      <div class="tab-pane" id="tab-cobros">
+
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div class="section-label" style="margin-bottom:2px;" id="cobros-title">Cobros — Mayo 2025</div>
+            <div style="font-size:0.78rem; color:var(--muted2)">Total: <strong style="color:var(--green)" id="cobros-total">$348.000</strong></div>
+          </div>
+          <select id="cobros-select" onchange="setCobrosView(this.value)" style="background:var(--surface2); border:1px solid var(--teal); color:var(--teal-light); border-radius:6px; padding:5px 10px; font-size:0.8rem; cursor:pointer;">
+            <option value="1">Enero 2025</option>
+            <option value="2">Febrero 2025</option>
+            <option value="3">Marzo 2025</option>
+            <option value="4">Abril 2025</option>
+            <option value="5" selected>Mayo 2025</option>
+            <option value="6">Junio 2025</option>
+            <option value="7">Julio 2025</option>
+            <option value="8">Agosto 2025</option>
+            <option value="9">Septiembre 2025</option>
+            <option value="10">Octubre 2025</option>
+            <option value="11">Noviembre 2025</option>
+            <option value="12">Diciembre 2025</option>
+            <option value="anio">── Año completo 2025</option>
+          </select>
+        </div>
+
+        <!-- Bar chart canvas -->
+        <div class="card" style="padding:20px;">
+          <canvas id="cobrosChart" height="220"></canvas>
+        </div>
+
+        <!-- Detalle de operaciones (mes) -->
+        <div id="detalle-mes">
+          <div class="section-label">Operaciones de Mayo</div>
+          <div class="card" style="padding:0; overflow:hidden;">
+            <table class="hist-table">
+              <thead>
+                <tr><th>Evento</th><th>Comprador</th><th>Precio acordado</th><th>Comisión (−5%)</th><th>Cobrado</th><th>Fecha</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div style="font-weight:600;font-size:.85rem;">Coldplay · River</div><div style="font-size:.72rem;color:var(--muted)">Campo · x1</div></td>
+                  <td style="font-size:.8rem;">🥈 JuanP92</td><td>$135.000</td>
+                  <td style="color:var(--red);font-size:.8rem;">−$6.750</td>
+                  <td class="amount-in">$128.250</td>
+                  <td style="color:var(--muted);font-size:.76rem;white-space:nowrap;">1 may</td>
+                </tr>
+                <tr>
+                  <td><div style="font-weight:600;font-size:.85rem;">The Rolling Stones</div><div style="font-size:.72rem;color:var(--muted)">Campo · x1</div></td>
+                  <td style="font-size:.8rem;">🥇 FanProUser</td><td>$148.000</td>
+                  <td style="color:var(--red);font-size:.8rem;">−$7.400</td>
+                  <td class="amount-in">$140.600</td>
+                  <td style="color:var(--muted);font-size:.76rem;white-space:nowrap;">8 may</td>
+                </tr>
+                <tr>
+                  <td><div style="font-weight:600;font-size:.85rem;">Boca vs Racing · Copa</div><div style="font-size:.72rem;color:var(--muted)">Platea Baja · x2</div></td>
+                  <td style="font-size:.8rem;">🥉 RiojaFan</td><td>$84.000</td>
+                  <td style="color:var(--red);font-size:.8rem;">−$4.200</td>
+                  <td class="amount-in">$79.150</td>
+                  <td style="color:var(--muted);font-size:.76rem;white-space:nowrap;">15 may</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Detalle anual -->
+        <div id="detalle-anio" style="display:none;">
+          <div class="section-label">Resumen por mes — 2025</div>
+          <div class="card" style="padding:0; overflow:hidden;">
+            <table class="hist-table">
+              <thead>
+                <tr><th>Mes</th><th>Operaciones</th><th>Total facturado</th><th>Comisiones</th><th>Neto cobrado</th></tr>
+              </thead>
+              <tbody>
+                <tr><td style="font-weight:600;">Enero</td><td>1</td><td>$95.000</td><td style="color:var(--red);font-size:.8rem;">−$4.750</td><td class="amount-in">$90.250</td></tr>
+                <tr><td style="font-weight:600;">Febrero</td><td>0</td><td>—</td><td>—</td><td style="color:var(--muted);">$0</td></tr>
+                <tr><td style="font-weight:600;">Marzo</td><td>2</td><td>$210.000</td><td style="color:var(--red);font-size:.8rem;">−$10.500</td><td class="amount-in">$199.500</td></tr>
+                <tr><td style="font-weight:600;">Abril</td><td>1</td><td>$78.000</td><td style="color:var(--red);font-size:.8rem;">−$3.900</td><td class="amount-in">$74.100</td></tr>
+                <tr><td style="font-weight:600; color:var(--teal-light);">Mayo ← actual</td><td>3</td><td>$367.000</td><td style="color:var(--red);font-size:.8rem;">−$18.350</td><td class="amount-in">$348.000</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="padding:10px 14px; background:var(--teal-glow); border-radius:8px; font-size:0.78rem; color:var(--muted2); display:flex; align-items:center; gap:10px;">
+          <span>💡</span>
+          <span>Los cobros se acreditan automáticamente cuando la ticketera valida la transferencia de la entrada al comprador.</span>
+        </div>
+
+      </div><!-- /tab-cobros -->
+
+
+      <!-- ── TAB: REPUTACIÓN ── -->
+      <div class="tab-pane" id="tab-reputacion">
+
+        <div class="section-label">Mi reputación como vendedor</div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+          <!-- Score -->
+          <div class="card">
+            <div style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:14px;">Puntuación general</div>
+            <div style="display:flex; gap:20px; align-items:flex-start; margin-bottom:16px;">
+              <div>
+                <div style="font-size:3rem; font-weight:800; color:var(--gold); line-height:1;">4.9</div>
+                <div style="font-size:1.1rem; margin-top:4px;">⭐⭐⭐⭐⭐</div>
+                <div style="font-size:0.72rem; color:var(--muted); margin-top:3px;">20 reseñas</div>
+              </div>
+              <div style="flex:1;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="font-size:.72rem;color:var(--muted2);width:12px;">5</span><div style="flex:1;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;"><div style="height:100%;width:85%;background:var(--gold);border-radius:3px;"></div></div><span style="font-size:.7rem;color:var(--muted);width:18px;">17</span></div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="font-size:.72rem;color:var(--muted2);width:12px;">4</span><div style="flex:1;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;"><div style="height:100%;width:10%;background:var(--gold);border-radius:3px;"></div></div><span style="font-size:.7rem;color:var(--muted);width:18px;">2</span></div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="font-size:.72rem;color:var(--muted2);width:12px;">3</span><div style="flex:1;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;"><div style="height:100%;width:5%;background:var(--gold);border-radius:3px;"></div></div><span style="font-size:.7rem;color:var(--muted);width:18px;">1</span></div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="font-size:.72rem;color:var(--muted2);width:12px;">2</span><div style="flex:1;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;"><div style="height:100%;width:0%;background:var(--gold);border-radius:3px;"></div></div><span style="font-size:.7rem;color:var(--muted);width:18px;">0</span></div>
+                <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:.72rem;color:var(--muted2);width:12px;">1</span><div style="flex:1;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;"><div style="height:100%;width:0%;background:var(--gold);border-radius:3px;"></div></div><span style="font-size:.7rem;color:var(--muted);width:18px;">0</span></div>
+              </div>
+            </div>
+            <div style="padding:10px 14px; background:rgba(34,197,94,.08); border-radius:8px; border:1px solid rgba(34,197,94,.2); font-size:0.78rem; color:#4ade80;">
+              ✅ Vendedor confiable · sin cancelaciones en los últimos 90 días
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="card">
+            <div style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:14px;">Estadísticas</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2);border-radius:8px;">
+                <span style="font-size:.82rem;color:var(--muted2);">⚡ Tiempo de respuesta promedio</span>
+                <span style="font-size:.88rem;font-weight:600;color:var(--green);">28 min</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2);border-radius:8px;">
+                <span style="font-size:.82rem;color:var(--muted2);">✅ Tasa de completado</span>
+                <span style="font-size:.88rem;font-weight:600;color:var(--green);">100%</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2);border-radius:8px;">
+                <span style="font-size:.82rem;color:var(--muted2);">❌ Cancelaciones</span>
+                <span style="font-size:.88rem;font-weight:600;color:var(--green);">0 en 90 días</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2);border-radius:8px;">
+                <span style="font-size:.82rem;color:var(--muted2);">🔥 Racha actual</span>
+                <span style="font-size:.88rem;font-weight:600;color:var(--gold);">4 ops sin cancelaciones</span>
+              </div>
+              <div style="padding:10px 14px;background:var(--teal-glow);border-radius:8px;font-size:.78rem;color:var(--muted2);">
+                💡 1 venta más sin cancelar = <strong style="color:var(--teal-light)">+200 pts bonus</strong> 🔥
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="section-label" style="margin-top:4px;">Quiénes te puntuaron</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+
+          <div class="card" style="display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:flex-start;">
+            <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#5b21b6);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#fff;">FR</div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="font-size:.88rem;font-weight:700;">FanáticoRivera</span>
+                <span style="font-size:.72rem;color:var(--muted2);">🥇 Fan Pro</span>
+                <span style="font-size:.85rem;">⭐⭐⭐⭐⭐</span>
+              </div>
+              <div style="font-size:.8rem;color:var(--muted2);line-height:1.55;">"Excelente vendedor, muy rápido en responder. La entrada llegó exactamente como se describía. 100% recomendado."</div>
+              <div style="font-size:.7rem;color:var(--muted);margin-top:5px;">15 mayo 2025 · Venta de River vs Boca</div>
+            </div>
+            <div class="pill pill-active" style="font-size:.68rem;white-space:nowrap;">Compra verificada</div>
+          </div>
+
+          <div class="card" style="display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:flex-start;">
+            <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#0891b2,#0e7490);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#fff;">MS</div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="font-size:.88rem;font-weight:700;">MillonarioxSiempre</span>
+                <span style="font-size:.72rem;color:var(--muted2);">🥈 Fan Plus</span>
+                <span style="font-size:.85rem;">⭐⭐⭐⭐⭐</span>
+              </div>
+              <div style="font-size:.8rem;color:var(--muted2);line-height:1.55;">"Todo perfecto. El proceso fue muy fácil, el escrow da mucha tranquilidad. Volvería a comprarle sin dudar."</div>
+              <div style="font-size:.7rem;color:var(--muted);margin-top:5px;">2 mayo 2025 · Venta de The Rolling Stones</div>
+            </div>
+            <div class="pill pill-active" style="font-size:.68rem;white-space:nowrap;">Compra verificada</div>
+          </div>
+
+          <div class="card" style="display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:flex-start;">
+            <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#475569,#334155);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#fff;">NF</div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="font-size:.88rem;font-weight:700;">NuevoFan99</span>
+                <span style="font-size:.72rem;color:var(--muted2);">🪨 Rookie</span>
+                <span style="font-size:.85rem;">⭐⭐⭐⭐</span>
+              </div>
+              <div style="font-size:.8rem;color:var(--muted2);line-height:1.55;">"Muy buena experiencia. Tardó un poco en responder pero al final todo salió bien."</div>
+              <div style="font-size:.7rem;color:var(--muted);margin-top:5px;">18 abril 2025 · Venta de Boca vs Racing</div>
+            </div>
+            <div class="pill pill-active" style="font-size:.68rem;white-space:nowrap;">Compra verificada</div>
+          </div>
+
+          <div class="card" style="display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:flex-start;">
+            <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#b45309,#92400e);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#fff;">JP</div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="font-size:.88rem;font-weight:700;">JuanP92</span>
+                <span style="font-size:.72rem;color:var(--muted2);">🥈 Fan Plus</span>
+                <span style="font-size:.85rem;">⭐⭐⭐⭐⭐</span>
+              </div>
+              <div style="font-size:.8rem;color:var(--muted2);line-height:1.55;">"Primera vez que compro por FanChain y fue una experiencia genial. El vendedor muy atento y la entrada llegó perfecta."</div>
+              <div style="font-size:.7rem;color:var(--muted);margin-top:5px;">10 abril 2025 · Venta de Coldplay · River</div>
+            </div>
+            <div class="pill pill-active" style="font-size:.68rem;white-space:nowrap;">Compra verificada</div>
+          </div>
+
+        </div>
+      </div><!-- /tab-reputacion -->
+
+
+      <!-- ── TAB: DISPUTAS ── -->
+      <div class="tab-pane" id="tab-disputas">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div>
+            <div class="section-label" style="margin-bottom:2px;">Centro de disputas</div>
+            <div style="font-size:0.76rem; color:var(--muted2);">Mientras una disputa está abierta, el escrow permanece congelado hasta la resolución.</div>
+          </div>
+          <button class="btn-primary" style="padding:7px 14px; font-size:0.78rem;" onclick="showToast('Abrí una disputa desde la transacción correspondiente', '💡')">+ Abrir disputa</button>
+        </div>
+
+        <!-- Stats row -->
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px;">
+          <div style="background:var(--surface2); border:1px solid rgba(245,158,11,.35); border-radius:10px; padding:14px; text-align:center; cursor:pointer; transition:border-color .2s;" onmouseover="this.style.borderColor='rgba(245,158,11,.7)'" onmouseout="this.style.borderColor='rgba(245,158,11,.35)'">
+            <div style="font-size:1.5rem; font-weight:800; color:var(--gold);">1</div>
+            <div style="font-size:0.68rem; color:var(--muted); margin-top:3px; text-transform:uppercase; letter-spacing:.5px;">Abiertas</div>
+          </div>
+          <div style="background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; cursor:pointer; transition:border-color .2s;" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:1.5rem; font-weight:800; color:var(--muted2);">1</div>
+            <div style="font-size:0.68rem; color:var(--muted); margin-top:3px; text-transform:uppercase; letter-spacing:.5px;">Cerradas</div>
+          </div>
+          <div style="background:var(--surface2); border:1px solid rgba(34,197,94,.25); border-radius:10px; padding:14px; text-align:center; cursor:pointer; transition:border-color .2s;" onmouseover="this.style.borderColor='rgba(34,197,94,.6)'" onmouseout="this.style.borderColor='rgba(34,197,94,.25)'">
+            <div style="font-size:1.5rem; font-weight:800; color:var(--green);">1</div>
+            <div style="font-size:0.68rem; color:var(--muted); margin-top:3px; text-transform:uppercase; letter-spacing:.5px;">Ganadas</div>
+          </div>
+          <div style="background:var(--surface2); border:1px solid rgba(239,68,68,.2); border-radius:10px; padding:14px; text-align:center; cursor:pointer; transition:border-color .2s;" onmouseover="this.style.borderColor='rgba(239,68,68,.5)'" onmouseout="this.style.borderColor='rgba(239,68,68,.2)'">
+            <div style="font-size:1.5rem; font-weight:800; color:var(--red);">0</div>
+            <div style="font-size:0.68rem; color:var(--muted); margin-top:3px; text-transform:uppercase; letter-spacing:.5px;">Perdidas</div>
+          </div>
+        </div>
+
+        <!-- Sistema de penalidades -->
+        <div style="padding:14px 18px; background:rgba(239,68,68,.05); border:1px solid rgba(239,68,68,.2); border-radius:8px; margin-bottom:16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;" onclick="togglePenalties(this)">
+            <div style="font-weight:600; color:var(--text); font-size:0.85rem;">⚠️ Sistema de penalidades por disputas abusivas</div>
+            <span id="pen-arrow" style="color:var(--muted); font-size:0.75rem; transition:transform .2s;">▼ ver</span>
+          </div>
+          <div id="pen-body" style="margin-top:12px; display:none;">
+            <div style="font-size:0.75rem; color:var(--muted2); margin-bottom:10px; line-height:1.6;">FanChain verifica cada disputa antes de procesarla. Si fue abierta sin fundamento real, se aplican penalidades exponenciales para desalentar el abuso del sistema.</div>
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              <div style="display:grid; grid-template-columns:80px 1fr 1fr; gap:8px; font-size:0.65rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; padding:0 8px; margin-bottom:2px;">
+                <span>Infracción</span><span>Penalidad pts</span><span>Consecuencia</span>
+              </div>
+              <div style="display:grid; grid-template-columns:80px 1fr 1fr; gap:8px; background:var(--surface2); border-radius:6px; padding:8px 10px; font-size:0.78rem; align-items:center;">
+                <span style="color:var(--gold); font-weight:700;">1ra vez</span>
+                <span style="color:var(--red); font-weight:700;">−50 pts</span>
+                <span style="color:var(--muted2);">Advertencia formal</span>
+              </div>
+              <div style="display:grid; grid-template-columns:80px 1fr 1fr; gap:8px; background:var(--surface2); border-radius:6px; padding:8px 10px; font-size:0.78rem; align-items:center;">
+                <span style="color:var(--gold); font-weight:700;">2da vez</span>
+                <span style="color:var(--red); font-weight:700;">−150 pts</span>
+                <span style="color:var(--muted2);">Restricción 7 días</span>
+              </div>
+              <div style="display:grid; grid-template-columns:80px 1fr 1fr; gap:8px; background:var(--surface2); border-radius:6px; padding:8px 10px; font-size:0.78rem; align-items:center;">
+                <span style="color:var(--gold); font-weight:700;">3ra vez</span>
+                <span style="color:var(--red); font-weight:700;">−300 pts</span>
+                <span style="color:var(--muted2);">Restricción 30 días</span>
+              </div>
+              <div style="display:grid; grid-template-columns:80px 1fr 1fr; gap:8px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:6px; padding:8px 10px; font-size:0.78rem; align-items:center;">
+                <span style="color:var(--red); font-weight:800;">4ta+ vez</span>
+                <span style="color:var(--red); font-weight:800;">−500 pts</span>
+                <span style="color:var(--red); font-weight:600;">Suspensión de cuenta</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Disputa activa -->
+        <div class="card" style="border-color:rgba(245,158,11,.35); background:rgba(245,158,11,.04);">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="font-size:1.4rem;">⚖️</div>
+              <div>
+                <div style="font-size:0.9rem; font-weight:700;">Fondos retenidos sin validación</div>
+                <div style="font-size:0.75rem; color:var(--muted); margin-top:2px;">Disputa #FAN-2025-0042 · Abierta hace 2 días</div>
+              </div>
+            </div>
+            <span class="pill pill-offer">En revisión</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px;">
+            <div style="background:var(--surface2); border-radius:8px; padding:10px 14px;">
+              <div style="font-size:0.68rem; color:var(--muted); margin-bottom:3px;">Evento</div>
+              <div style="font-size:0.82rem; font-weight:600;">Coldplay · River</div>
+              <div style="font-size:0.72rem; color:var(--muted2);">Campo · x1</div>
+            </div>
+            <div style="background:var(--surface2); border-radius:8px; padding:10px 14px;">
+              <div style="font-size:0.68rem; color:var(--muted); margin-bottom:3px;">Monto en escrow</div>
+              <div style="font-size:0.82rem; font-weight:700; color:var(--gold);">$135.000</div>
+              <div style="font-size:0.72rem; color:var(--muted2);">Retenido desde 1 may</div>
+            </div>
+            <div style="background:var(--surface2); border-radius:8px; padding:10px 14px;">
+              <div style="font-size:0.68rem; color:var(--muted); margin-bottom:3px;">Contraparte</div>
+              <div style="font-size:0.82rem; font-weight:600;">🥈 JuanP92</div>
+              <div style="font-size:0.72rem; color:var(--muted2);">⭐ 4.9 reputación</div>
+            </div>
+          </div>
+
+          <!-- Timeline -->
+          <div style="font-size:0.72rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px;">Estado de la disputa</div>
+          <div style="display:flex; flex-direction:column; gap:0;">
+            <div style="display:flex; gap:12px; align-items:flex-start;">
+              <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0;">
+                <div style="width:22px; height:22px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#fff; font-weight:700;">✓</div>
+                <div style="width:2px; flex:1; background:var(--border); min-height:24px;"></div>
+              </div>
+              <div style="padding-bottom:16px;">
+                <div style="font-size:0.82rem; font-weight:600;">Disputa abierta por el vendedor</div>
+                <div style="font-size:0.72rem; color:var(--muted); margin-top:2px;">1 mayo 2025 · 18:42hs · La ticketera no respondió en 48hs</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:flex-start;">
+              <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0;">
+                <div style="width:22px; height:22px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#fff; font-weight:700;">✓</div>
+                <div style="width:2px; flex:1; background:var(--border); min-height:24px;"></div>
+              </div>
+              <div style="padding-bottom:16px;">
+                <div style="font-size:0.82rem; font-weight:600;">FanChain recibió la disputa</div>
+                <div style="font-size:0.72rem; color:var(--muted); margin-top:2px;">2 mayo 2025 · 09:15hs · Equipo de mediación asignado</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:flex-start;">
+              <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0;">
+                <div style="width:22px; height:22px; border-radius:50%; background:var(--gold); display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#fff; font-weight:700; animation:blink 1.5s infinite;">●</div>
+                <div style="width:2px; flex:1; background:var(--border); min-height:24px; opacity:.3;"></div>
+              </div>
+              <div style="padding-bottom:16px;">
+                <div style="font-size:0.82rem; font-weight:600; color:var(--gold);">Revisión en curso</div>
+                <div style="font-size:0.72rem; color:var(--muted); margin-top:2px;">Se está verificando el estado de la transferencia con la ticketera. Tiempo estimado: 24-72hs.</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; align-items:flex-start;">
+              <div style="display:flex; flex-direction:column; align-items:center; flex-shrink:0;">
+                <div style="width:22px; height:22px; border-radius:50%; background:var(--surface3); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:var(--muted);">4</div>
+              </div>
+              <div>
+                <div style="font-size:0.82rem; font-weight:600; color:var(--muted);">Resolución</div>
+                <div style="font-size:0.72rem; color:var(--muted); margin-top:2px;">Fondos liberados al vendedor o reembolsados al comprador según el resultado.</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="action-btn" onclick="showToast('Subir evidencia: capturas, emails, etc.')">📎 Agregar evidencia</button>
+            <button class="action-btn" onclick="showToast('Chat con el mediador de FanChain')">💬 Contactar mediador</button>
+            <button class="action-btn" onclick="showToast('Ver historial completo de la disputa')">📋 Ver historial</button>
+          </div>
+
+          <!-- Justificativos -->
+          <div style="margin-top:14px; border-top:1px solid var(--border); padding-top:12px;">
+            <div style="font-size:0.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;">📎 Justificativos adjuntados</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div style="display:flex; align-items:center; gap:10px; background:var(--surface2); border-radius:6px; padding:8px 12px;">
+                <span style="font-size:1rem;">📷</span>
+                <div style="flex:1;">
+                  <div style="font-size:0.8rem; font-weight:600;">Captura · Conversación con el comprador.jpg</div>
+                  <div style="font-size:0.68rem; color:var(--muted); margin-top:1px;">Subido por vos · 1 mayo 2025 · 18:45hs</div>
+                </div>
+                <button class="action-btn" style="padding:3px 10px; font-size:0.7rem;" onclick="showToast('Abriendo archivo...', '👁')">Ver</button>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; background:var(--surface2); border-radius:6px; padding:8px 12px;">
+                <span style="font-size:1rem;">📧</span>
+                <div style="flex:1;">
+                  <div style="font-size:0.8rem; font-weight:600;">Email · Confirmación de transferencia ticketera.pdf</div>
+                  <div style="font-size:0.68rem; color:var(--muted); margin-top:1px;">Subido por vos · 1 mayo 2025 · 18:52hs</div>
+                </div>
+                <button class="action-btn" style="padding:3px 10px; font-size:0.7rem;" onclick="showToast('Abriendo archivo...', '👁')">Ver</button>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; background:rgba(245,158,11,.06); border:1px dashed rgba(245,158,11,.35); border-radius:6px; padding:8px 12px;">
+                <span style="font-size:1rem;">⏳</span>
+                <div>
+                  <div style="font-size:0.8rem; font-weight:600; color:var(--gold);">Análisis FanChain en curso</div>
+                  <div style="font-size:0.68rem; color:var(--muted); margin-top:1px;">El mediador está evaluando los documentos. Resultado estimado: 24–48hs.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Disputa resuelta -->
+        <div class="card" style="border-color:rgba(34,197,94,.2); background:rgba(34,197,94,.03);">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="font-size:1.4rem;">✅</div>
+              <div>
+                <div style="font-size:0.9rem; font-weight:700;">Entrada inválida en el evento</div>
+                <div style="font-size:0.75rem; color:var(--muted); margin-top:2px;">Disputa #FAN-2025-0031 · Resuelta hace 12 días</div>
+              </div>
+            </div>
+            <span class="pill pill-active">Resuelta · a favor del vendedor</span>
+          </div>
+          <div style="font-size:0.8rem; color:var(--muted2); line-height:1.6; margin-bottom:10px;">
+            El comprador alegó que el QR no funcionó en el estadio. Tras verificar los logs de la ticketera, se confirmó que el código fue validado correctamente a las 20:14hs del evento. Los fondos fueron liberados al vendedor.
+          </div>
+          <div style="font-size:0.78rem; color:var(--muted);">💰 $90.250 liberados · 18 abril 2025 · Resuelta en 48hs</div>
+
+          <!-- Justificativo de resolución -->
+          <div style="margin-top:12px; border-top:1px solid rgba(34,197,94,.15); padding-top:12px;">
+            <div style="font-size:0.7rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;">📋 Justificativo de resolución</div>
+            <div style="background:rgba(34,197,94,.06); border:1px solid rgba(34,197,94,.2); border-radius:8px; padding:12px 14px;">
+              <div style="font-size:0.8rem; font-weight:700; color:var(--green); margin-bottom:6px;">✅ Fallo FanChain · A favor del vendedor</div>
+              <div style="font-size:0.75rem; color:var(--muted2); line-height:1.65; margin-bottom:10px;">Los logs de acceso de la ticketera confirman que el código QR fue escaneado y validado exitosamente a las 20:14hs del evento. El registro blockchain en bloque #8842915 corrobora la validación. La disputa del comprador fue declarada infundada según los registros técnicos.</div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <div style="font-size:0.68rem; color:var(--muted); background:var(--surface2); border-radius:4px; padding:3px 8px;">📋 Resolución #FAN-R-2025-0031</div>
+                <div style="font-size:0.68rem; color:var(--teal-light); background:var(--surface2); border-radius:4px; padding:3px 8px; cursor:pointer;" onclick="showToast('Hash verificado en blockchain', '🔗')">🔗 Hash: 0x7f3a…d92c</div>
+                <div style="font-size:0.68rem; color:var(--muted); background:var(--surface2); border-radius:4px; padding:3px 8px;">18 abril 2025 · 14:30hs</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info box -->
+        <div style="padding:14px 18px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; font-size:0.78rem; color:var(--muted2); line-height:1.7;">
+          <div style="font-weight:600; color:var(--text); margin-bottom:8px;">⚖️ ¿Cómo funciona la mediación de FanChain?</div>
+          <div style="display:flex; flex-direction:column; gap:5px;">
+            <div>🔐 <strong style="color:var(--text)">El escrow queda congelado</strong> desde que se abre la disputa hasta la resolución. Nadie puede acceder a los fondos.</div>
+            <div>📋 <strong style="color:var(--text)">Ambas partes pueden subir evidencia</strong>: capturas, correos, historial de mensajes o comprobantes de pago.</div>
+            <div>⏱ <strong style="color:var(--text)">El equipo de FanChain media</strong> y resuelve en 24–72 horas hábiles según la complejidad.</div>
+            <div>⚡ <strong style="color:var(--text)">La resolución es vinculante</strong>: los fondos se liberan automáticamente según el fallo, sin posibilidad de bloqueo externo.</div>
+          </div>
+        </div>
+
+      </div><!-- /tab-disputas -->
+
+
+    </main>
+  </div>
+</div><!-- /pageDashboard -->
+
+
+<!-- ══════════════════════════════
+     PAGE: PUBLICAR ENTRADA
+══════════════════════════════ -->
+<div class="page" id="pagePublicar">
+  <div class="pub-wrap">
+
+    <div class="pub-header">
+      <button class="back-btn" onclick="showPage('pageDashboard')">← Volver</button>
+      <div>
+        <div class="pub-title">Publicar entrada</div>
+        <div class="pub-sub">Completá los 3 pasos para publicar tu entrada de forma segura</div>
+      </div>
+    </div>
+
+    <!-- STEP BAR -->
+    <div class="step-bar">
+      <div class="step-item">
+        <div class="step-circle current" id="sc1">1</div>
+        <div class="step-label current" id="sl1">Evento y sector</div>
+      </div>
+      <div class="step-connector" id="conn1"></div>
+      <div class="step-item">
+        <div class="step-circle pending" id="sc2">2</div>
+        <div class="step-label" id="sl2">Precio y tipo</div>
+      </div>
+      <div class="step-connector" id="conn2"></div>
+      <div class="step-item">
+        <div class="step-circle pending" id="sc3">3</div>
+        <div class="step-label" id="sl3">Revisión y publicación</div>
+      </div>
+    </div>
+
+    <!-- PASO 1: Evento y sector -->
+    <div class="step-pane active" id="step1">
+
+      <div class="form-card">
+        <div class="form-row">
+          <label class="form-label">¿A qué evento es la entrada?</label>
+          <div class="event-search">
+            <input type="text" class="form-input" id="eventInput" placeholder="Buscá por nombre del evento..." oninput="searchEvents(this.value)" autocomplete="off">
+            <div class="event-results" id="eventResults">
+              <div class="event-option" onclick="selectEvent('River vs Boca · Superclásico', '14 Jun 2025 · El Monumental')">
+                <div class="event-option-icon">⚽</div>
+                <div><div class="event-option-name">River vs Boca · Superclásico</div><div class="event-option-meta">Sab 14 Jun 2025 · El Monumental · Buenos Aires</div></div>
+              </div>
+              <div class="event-option" onclick="selectEvent('The Rolling Stones', '20 Jun 2025 · Estadio Único, La Plata')">
+                <div class="event-option-icon">🎸</div>
+                <div><div class="event-option-name">The Rolling Stones</div><div class="event-option-meta">Vie 20 Jun 2025 · Estadio Único · La Plata</div></div>
+              </div>
+              <div class="event-option" onclick="selectEvent('Luis Miguel · Luna Park', '29 Jun 2025 · Luna Park, Buenos Aires')">
+                <div class="event-option-icon">🎭</div>
+                <div><div class="event-option-name">Luis Miguel · Luna Park</div><div class="event-option-meta">Dom 29 Jun 2025 · Luna Park · Buenos Aires</div></div>
+              </div>
+              <div class="event-option" onclick="selectEvent('Coldplay · River Plate', '5 Ago 2025 · El Monumental, Buenos Aires')">
+                <div class="event-option-icon">🎵</div>
+                <div><div class="event-option-name">Coldplay · River Plate</div><div class="event-option-meta">Mar 5 Ago 2025 · El Monumental · Buenos Aires</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="form-hint">Escribí al menos 3 caracteres para buscar</div>
+        </div>
+
+        <div id="eventSelected" style="display:none; background:var(--teal-glow); border:1px solid var(--teal); border-radius:6px; padding:10px 14px; margin-top:4px; font-size:0.84rem; display:none; align-items:center; gap:8px;">
+          <span>✅</span>
+          <span id="eventSelectedName" style="font-weight:600;"></span>
+          <span id="eventSelectedDate" style="color:var(--muted2); font-size:0.76rem;"></span>
+          <button onclick="clearEvent()" style="margin-left:auto; background:none; border:none; color:var(--muted); cursor:pointer; font-size:0.8rem;">✕ Cambiar</button>
+        </div>
+      </div>
+
+      <div class="form-card" id="sectorCard" style="display:none;">
+        <div class="form-row" style="margin-bottom:0">
+          <label class="form-label">¿En qué sector es tu entrada?</label>
+          <div class="sector-chips" id="sectorChips">
+            <div class="sector-chip" onclick="selectSector(this,'Platea Baja','$85.000')">Platea Baja</div>
+            <div class="sector-chip" onclick="selectSector(this,'Platea Alta','$72.000')">Platea Alta</div>
+            <div class="sector-chip" onclick="selectSector(this,'Populares','$38.000')">Populares</div>
+            <div class="sector-chip" onclick="selectSector(this,'Visitante','$55.000')">Visitante</div>
+            <div class="sector-chip" onclick="selectSector(this,'Preferencial','$110.000')">Preferencial</div>
+            <div class="sector-chip" onclick="selectSector(this,'Box Premium','$180.000')">Box Premium</div>
+          </div>
+          <div class="form-hint" style="margin-top:8px;" id="sectorPriceHint"></div>
+
+          <!-- DEMANDA ACTIVA: aparece al seleccionar sector -->
+          <div id="sectorDemandBanner" style="display:none; margin-top:12px; background:rgba(249,115,22,.07); border:1px solid rgba(249,115,22,.22); border-radius:10px; padding:10px 14px; font-size:0.78rem; align-items:center; gap:10px;">
+            <span style="font-size:1.2rem;">🔥</span>
+            <div style="flex:1;">
+              <span id="demandCountLabel" style="font-weight:800; color:#f97316;"></span>
+              <span style="color:var(--muted2);"> personas están esperando entradas de este sector ahora mismo. ¡Publicá rápido!</span>
+            </div>
+            <a href="notificaciones.html" style="font-size:0.68rem; color:var(--teal-light); font-weight:700; text-decoration:none; white-space:nowrap;">Ver demanda →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card" id="qtyCard" style="display:none;">
+        <div class="form-two">
+          <div class="form-row" style="margin-bottom:0">
+            <label class="form-label">Cantidad de entradas</label>
+            <select class="form-select" id="qtySelect">
+              <option>1 entrada</option>
+              <option>2 entradas</option>
+              <option>3 entradas</option>
+              <option>4 entradas</option>
+            </select>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <label class="form-label">Tipo de entrada</label>
+            <select class="form-select">
+              <option>Digital (QR)</option>
+              <option>Física (papel)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn-secondary" onclick="showPage('pageDashboard')">Cancelar</button>
+        <button class="btn-primary" onclick="goToStep(2)">Continuar →</button>
+      </div>
+    </div>
+
+
+    <!-- PASO 2: Precio y tipo de venta -->
+    <div class="step-pane" id="step2">
+
+      <div class="form-card">
+        <div class="section-label">Tipo de venta</div>
+        <div class="type-toggle">
+          <button class="type-btn selected" id="type-puja" onclick="setSaleType('puja')">
+            <span class="type-icon">⚡</span>
+            <span class="type-name">Puja libre</span>
+            <span class="type-desc">Definís precio mínimo y máximo. El comprador puede ofertarte cualquier valor entre esos límites.</span>
+          </button>
+          <button class="type-btn" id="type-fijo" onclick="setSaleType('fijo')">
+            <span class="type-icon">🔒</span>
+            <span class="type-name">Precio fijo</span>
+            <span class="type-desc">El comprador paga el precio exacto que publicás. Sin negociación.</span>
+          </button>
+        </div>
+        <div style="margin-top:10px; font-size:0.75rem; color:var(--muted); padding:8px 12px; background:var(--surface2); border-radius:6px;">
+          💡 En TicketSwap solo existe precio fijo con techo del 120%. En FanChain la puja libre te permite capturar el precio real del mercado.
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="section-label">Precio</div>
+        <div class="form-two" id="priceFields">
+          <div class="form-row" style="margin-bottom:0">
+            <label class="form-label">Precio mínimo aceptado</label>
+            <input type="number" class="form-input" id="priceMin" placeholder="Ej: 70000" value="75000" oninput="updateCommission()">
+            <div class="form-hint">No podés vender por debajo de este precio</div>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <label class="form-label">Precio publicado / máximo</label>
+            <input type="number" class="form-input" id="priceMax" placeholder="Ej: 90000" value="90000" oninput="updateCommission()">
+            <div class="form-hint">El precio que ven los compradores</div>
+          </div>
+        </div>
+
+        <div class="commission-box" id="commBox">
+          <div style="font-size:0.72rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;">Desglose si vendés al precio publicado</div>
+          <div class="comm-row">
+            <span class="comm-label">Precio de venta</span>
+            <span class="comm-val" id="comm-precio">$90.000</span>
+          </div>
+          <div class="comm-row">
+            <span class="comm-label">Comisión FanChain <span style="font-size:0.68rem;">(Fan Plus · −5%)</span></span>
+            <span class="comm-val comm-neg" id="comm-fee">−$4.500</span>
+          </div>
+          <div class="comm-row">
+            <span class="comm-label" style="font-weight:700; color:var(--text)">Recibís</span>
+            <span class="comm-val comm-final" id="comm-final">$85.500</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="section-label">Foto de la entrada (opcional pero recomendado)</div>
+        <div class="photo-drop" onclick="addPhoto()">
+          <div class="photo-drop-icon">📎</div>
+          <p>Subí una foto de tu entrada o el QR</p>
+          <small>JPG, PNG · máx 5MB · Aumenta la confianza del comprador</small>
+        </div>
+        <div class="photo-added" id="photoAdded"></div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-row">
+          <label class="form-label">Descripción adicional (opcional)</label>
+          <textarea class="form-input" rows="3" placeholder="Ej: Entrada original, comprada en Ticketek. Sector con excelente visibilidad..." style="resize:vertical;"></textarea>
+        </div>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn-secondary" onclick="goToStep(1)">← Anterior</button>
+        <button class="btn-primary" onclick="goToStep(3)">Continuar →</button>
+      </div>
+    </div>
+
+
+    <!-- PASO 3: Revisión y publicación -->
+    <div class="step-pane" id="step3">
+
+      <!-- CARGA DEL QR — BÓVEDA DIGITAL -->
+      <div class="form-card" id="qrUploadCard" style="border-color:rgba(245,158,11,.3);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <span style="font-size:1.4rem;">🔒</span>
+          <div>
+            <div style="font-size:0.88rem;font-weight:800;">Subí el QR para activar la bóveda digital</div>
+            <div style="font-size:0.73rem;color:var(--muted2);margin-top:2px;">FanChain custodia el QR hasta que el comprador confirme la recepción. Esto protege al comprador y te protege a vos.</div>
+          </div>
+        </div>
+
+        <div id="qrDropZone" onclick="simulateQrUpload()" style="border:2px dashed rgba(245,158,11,.35);border-radius:12px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(245,158,11,.03);" onmouseover="this.style.borderColor='rgba(245,158,11,.6)';this.style.background='rgba(245,158,11,.06)'" onmouseout="this.style.borderColor='rgba(245,158,11,.35)';this.style.background='rgba(245,158,11,.03)'">
+          <div style="font-size:2.5rem;margin-bottom:8px;">📷</div>
+          <div style="font-size:0.84rem;font-weight:700;margin-bottom:4px;">Tocá para subir el QR de tu entrada</div>
+          <div style="font-size:0.72rem;color:var(--muted2);">PNG, JPG o PDF · Máx. 5MB</div>
+        </div>
+
+        <div id="qrUploaded" style="display:none;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:12px 16px;margin-top:12px;align-items:center;gap:12px;">
+          <div style="font-size:2rem;">🔲</div>
+          <div style="flex:1;">
+            <div style="font-size:0.82rem;font-weight:700;color:var(--green);">✅ QR cargado y validado</div>
+            <div style="font-size:0.7rem;color:var(--muted2);margin-top:2px;">Hash: <span style="font-family:monospace;color:var(--teal-light);">4f8a2c7b…d91e</span> · Bloqueado para esta venta</div>
+          </div>
+          <button onclick="resetQr()" style="background:none;border:none;color:var(--muted);font-size:0.72rem;cursor:pointer;text-decoration:underline;">Cambiar</button>
+        </div>
+
+        <div style="margin-top:12px;font-size:0.72rem;color:var(--muted2);display:flex;align-items:flex-start;gap:6px;line-height:1.5;">
+          <span style="color:var(--teal-light);flex-shrink:0;">🛡</span>
+          <span>Una vez subido, <strong style="color:var(--text);">no podés usar este QR en otra plataforma</strong>. Queda vinculado exclusivamente a esta venta hasta que se complete o cancele.</span>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="section-label">Revisá tu publicación antes de publicar</div>
+        <div class="review-row"><span class="review-key">Evento</span><span class="review-val" id="rv-event">River vs Boca · Superclásico</span></div>
+        <div class="review-row"><span class="review-key">Fecha</span><span class="review-val">Sab 14 Jun 2025 · 20:00hs</span></div>
+        <div class="review-row"><span class="review-key">Sector</span><span class="review-val" id="rv-sector">Platea Alta</span></div>
+        <div class="review-row"><span class="review-key">Cantidad</span><span class="review-val">1 entrada</span></div>
+        <div class="review-row"><span class="review-key">Tipo de venta</span><span class="review-val" id="rv-type">Puja libre</span></div>
+        <div class="review-row"><span class="review-key">Precio mínimo</span><span class="review-val" id="rv-min">$75.000</span></div>
+        <div class="review-row"><span class="review-key">Precio publicado</span><span class="review-val" id="rv-max">$90.000</span></div>
+        <div class="review-row"><span class="review-key">Ganancia estimada</span><span class="review-val" style="color:var(--green)" id="rv-net">$85.500</span></div>
+      </div>
+
+      <div class="form-card" style="border-color:rgba(13,148,136,.3);">
+        <div style="font-size:0.82rem; font-weight:700; margin-bottom:10px;">⛓ Registro en blockchain</div>
+        <div style="font-size:0.78rem; color:var(--muted2); line-height:1.6;">Al publicar, tu entrada queda registrada de forma inmutable en la blockchain. No puede ser duplicada ni vendida en otra plataforma mientras esté activa en FanChain. Si cancela el comprador o no se concreta la venta, la entrada se reactiva automáticamente.</div>
+      </div>
+
+      <div class="form-card">
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" id="termsCheck" style="accent-color:var(--teal); width:16px; height:16px; margin-top:2px;">
+          <span style="font-size:0.8rem; color:var(--muted2); line-height:1.55;">Acepto que si cancelo con una oferta activa pierdo <strong style="color:var(--text)">−100 pts</strong>, y si cancelo con acuerdo confirmado en menos de 48hs del evento pierdo <strong style="color:var(--text)">−400 pts</strong> y quedo restringido por 30 días.</span>
+        </label>
+      </div>
+
+      <div class="step-nav">
+        <button class="btn-secondary" onclick="goToStep(2)">← Anterior</button>
+        <button class="btn-primary" onclick="publish()" style="padding:12px 32px; font-size:0.95rem;">🚀 Publicar entrada</button>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /pagePublicar -->
+
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-box">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">¡Entrada publicada!</div>
+    <div class="success-sub">Tu entrada quedó registrada en la blockchain y ya es visible para los compradores. Te avisamos por email y notificación cuando alguien te haga una oferta.</div>
+    <div class="success-hash" id="successHash">⬡ 0x8f2a4d1c9b…e7f3</div>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button class="btn-primary" onclick="closeSuccess()">Ver mis publicaciones</button>
+    </div>
+    <div style="font-size:0.72rem; color:var(--muted); margin-top:12px;">+80 pts acreditados · Fan Plus 🥈</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-icon">✅</span>
+  <span id="toast-msg">Acción completada</span>
+</div>
+
+
+<script>
+// ── PAGES ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if (id === 'pagePublicar') { goToStep(1, false); }
+}
+
+// ── SIDEBAR TABS ──
+let chartInstance = null;
+function showTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const sbBtn = document.getElementById('sb-' + name);
+  if (sbBtn) sbBtn.classList.add('active');
+  if (name === 'cobros') setTimeout(() => renderCobrosChart(5), 80);
+}
+
+const MESES_NOMBRES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES_DATA = {
+  1:  { total:'$90.250',  ops:1, chart:[{label:'Luis Miguel\n12 ene', value:90250}] },
+  2:  { total:'$0',       ops:0, chart:[] },
+  3:  { total:'$199.500', ops:2, chart:[{label:'Coldplay\n5 mar', value:128250},{label:'NBA Mexico\n20 mar', value:71250}] },
+  4:  { total:'$74.100',  ops:1, chart:[{label:'Boca vs Racing\n18 abr', value:74100}] },
+  5:  { total:'$348.000', ops:3, chart:[{label:'Coldplay · Rio\n1 may', value:128250},{label:'Rolling Stones\n8 may', value:140600},{label:'Boca vs Racing\n15 may', value:79150}] },
+  6:  { total:'$0',       ops:0, chart:[] },
+  7:  { total:'$0',       ops:0, chart:[] },
+  8:  { total:'$0',       ops:0, chart:[] },
+  9:  { total:'$0',       ops:0, chart:[] },
+  10: { total:'$0',       ops:0, chart:[] },
+  11: { total:'$0',       ops:0, chart:[] },
+  12: { total:'$0',       ops:0, chart:[] },
+};
+
+function setCobrosView(val) {
+  const isAnio = val === 'anio';
+  const mesNum = parseInt(val);
+  const mesNombre = isAnio ? 'Año 2025' : MESES_NOMBRES[mesNum] + ' 2025';
+  document.getElementById('cobros-title').textContent = 'Cobros — ' + mesNombre;
+  document.getElementById('cobros-total').textContent = isAnio ? '$712.100' : (MESES_DATA[mesNum]?.total || '$0');
+  document.getElementById('detalle-mes').style.display = isAnio ? 'none' : '';
+  document.getElementById('detalle-anio').style.display = isAnio ? '' : 'none';
+  renderCobrosChart(isAnio ? 'anio' : mesNum);
+}
+
+function renderCobrosChart(view) {
+  const canvas = document.getElementById('cobrosChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const mesNum = typeof view === 'number' ? view : 5;
+  const mesInfo = MESES_DATA[mesNum] || { chart:[] };
+  const DATA_MES = mesInfo.chart.length > 0 ? mesInfo.chart : [{ label: 'Sin cobros\neste mes', value: 0 }];
+
+  const DATA_ANIO = [
+    { label: 'Ene', value: 90250 },
+    { label: 'Feb', value: 0 },
+    { label: 'Mar', value: 199500 },
+    { label: 'Abr', value: 74100 },
+    { label: 'May ★', value: 348000 },
+  ];
+
+  const data  = view === 'anio' ? DATA_ANIO : DATA_MES;
+  const maxVal = view === 'anio' ? 380000 : 160000;
+  const gridSteps = view === 'anio' ? [0,100000,200000,300000,380000] : [0,40000,80000,120000,160000];
+  const labelFmt  = v => v === 0 ? '$0' : '$' + (v/1000) + 'k';
+
+  const W = canvas.parentElement.clientWidth - 40;
+  const H = 220;
+  canvas.width = W; canvas.height = H;
+
+  const pL = 72, pR = 16, pT = 24, pB = view==='anio' ? 36 : 58;
+  const cW = W - pL - pR;
+  const cH = H - pT - pB;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(30,50,84,0.9)';
+  ctx.lineWidth = 1;
+  gridSteps.forEach(v => {
+    const y = pT + cH - (v / maxVal) * cH;
+    ctx.beginPath(); ctx.moveTo(pL, y); ctx.lineTo(W - pR, y); ctx.stroke();
+    ctx.fillStyle = '#64748b';
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText(labelFmt(v), pL - 6, y + 4);
+  });
+
+  const gap  = cW / data.length;
+  const barW = Math.min(view==='anio' ? 44 : 62, gap * 0.55);
+
+  data.forEach((op, i) => {
+    const x    = pL + gap * i + gap / 2 - barW / 2;
+    const bH   = op.value > 0 ? Math.max(4, (op.value / maxVal) * cH) : 0;
+    const y    = pT + cH - bH;
+    const isCurrent = view==='anio' && op.label.includes('★');
+
+    // Bar
+    ctx.fillStyle = isCurrent ? '#14b8a6' : (op.value > 0 ? '#0d9488' : 'rgba(30,50,84,0.6)');
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, barW, bH, [4,4,0,0]);
+    else ctx.rect(x, y, barW, bH);
+    ctx.fill();
+
+    // Value label on top
+    if (op.value > 0) {
+      ctx.fillStyle = isCurrent ? '#14b8a6' : '#e2e8f0';
+      ctx.font = 'bold 11px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('$' + Math.round(op.value/1000) + 'k', x + barW/2, y - 7);
+    }
+
+    // X label
+    ctx.fillStyle = isCurrent ? '#14b8a6' : '#94a3b8';
+    ctx.font = (isCurrent ? 'bold ' : '') + '10px system-ui';
+    ctx.textAlign = 'center';
+    const lines = op.label.split('\n');
+    lines.forEach((line, li) => {
+      ctx.fillText(line, x + barW/2, pT + cH + 14 + li * 13);
+    });
+  });
+}
+
+// ── PUBLISH STEPS ──
+let pubState = { event:'River vs Boca · Superclásico', sector:'Platea Alta', saleType:'puja', priceMin:75000, priceMax:90000 };
+
+function goToStep(n, scroll=true) {
+  [1,2,3].forEach(i => {
+    document.getElementById('step'+i).classList.toggle('active', i===n);
+    const sc = document.getElementById('sc'+i);
+    const sl = document.getElementById('sl'+i);
+    if (i < n)  { sc.className='step-circle done'; sc.textContent='✓'; sl.className='step-label'; }
+    if (i === n){ sc.className='step-circle current'; sc.textContent=i; sl.className='step-label current'; }
+    if (i > n)  { sc.className='step-circle pending'; sc.textContent=i; sl.className='step-label'; }
+    if (i < n)  document.getElementById('conn'+i).classList.add('done');
+    else if(document.getElementById('conn'+i)) document.getElementById('conn'+i).classList.remove('done');
+  });
+  if (n===3) fillReview();
+  if (scroll) window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── EVENT SEARCH ──
+function searchEvents(val) {
+  const res = document.getElementById('eventResults');
+  res.classList.toggle('open', val.length >= 2);
+}
+function selectEvent(name, date) {
+  document.getElementById('eventInput').value = name;
+  document.getElementById('eventResults').classList.remove('open');
+  document.getElementById('eventSelected').style.display = 'flex';
+  document.getElementById('eventSelectedName').textContent = name;
+  document.getElementById('eventSelectedDate').textContent = '· ' + date;
+  document.getElementById('sectorCard').style.display = 'block';
+  pubState.event = name;
+}
+function clearEvent() {
+  document.getElementById('eventInput').value = '';
+  document.getElementById('eventSelected').style.display = 'none';
+  document.getElementById('sectorCard').style.display = 'none';
+  document.getElementById('qtyCard').style.display = 'none';
+}
+
+// ── SECTOR ──
+const SECTOR_DEMAND_SELLER = {
+  'Platea Baja': 47, 'Platea Alta': 23, 'Populares': 15,
+  'Visitante': 19, 'Preferencial': 8, 'Box Premium': 4
+};
+
+function selectSector(el, name, price) {
+  document.querySelectorAll('.sector-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('sectorPriceHint').textContent = '📊 Precio promedio actual en ' + name + ': ' + price;
+  document.getElementById('qtyCard').style.display = 'block';
+  pubState.sector = name;
+
+  // Mostrar demanda activa
+  const demand = SECTOR_DEMAND_SELLER[name] || 0;
+  const banner = document.getElementById('sectorDemandBanner');
+  if (demand > 0) {
+    document.getElementById('demandCountLabel').textContent = demand;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+// ── SALE TYPE ──
+function setSaleType(type) {
+  pubState.saleType = type;
+  document.getElementById('type-puja').classList.toggle('selected', type==='puja');
+  document.getElementById('type-fijo').classList.toggle('selected', type==='fijo');
+  const fields = document.getElementById('priceFields');
+  if (type === 'fijo') {
+    fields.style.gridTemplateColumns = '1fr';
+    fields.children[0].style.display = 'none';
+    fields.children[1].querySelector('label').textContent = 'Precio fijo';
+  } else {
+    fields.style.gridTemplateColumns = '1fr 1fr';
+    fields.children[0].style.display = '';
+    fields.children[1].querySelector('label').textContent = 'Precio publicado / máximo';
+  }
+  updateCommission();
+}
+
+// ── COMMISSION ──
+function updateCommission() {
+  const max = parseInt(document.getElementById('priceMax').value) || 0;
+  const min = parseInt(document.getElementById('priceMin').value) || 0;
+  const fee = Math.round(max * 0.05);
+  const net = max - fee;
+  document.getElementById('comm-precio').textContent = '$' + max.toLocaleString('es-AR');
+  document.getElementById('comm-fee').textContent = '−$' + fee.toLocaleString('es-AR');
+  document.getElementById('comm-final').textContent = '$' + net.toLocaleString('es-AR');
+  pubState.priceMin = min;
+  pubState.priceMax = max;
+}
+
+// ── PHOTOS ──
+let photoCount = 0;
+const photoEmojis = ['🎟','📋','🪪'];
+function addPhoto() {
+  if (photoCount >= 3) return showToast('Máximo 3 fotos', '⚠️');
+  const div = document.getElementById('photoAdded');
+  const thumb = document.createElement('div');
+  thumb.className = 'photo-thumb';
+  thumb.innerHTML = `${photoEmojis[photoCount]}<div class="remove">✕</div>`;
+  thumb.querySelector('.remove').onclick = (e) => { e.stopPropagation(); thumb.remove(); photoCount--; };
+  div.appendChild(thumb);
+  photoCount++;
+  showToast('Foto agregada correctamente');
+}
+
+// ── REVIEW ──
+function fillReview() {
+  const max = parseInt(document.getElementById('priceMax').value)||90000;
+  const net = Math.round(max * 0.95);
+  document.getElementById('rv-event').textContent = pubState.event;
+  document.getElementById('rv-sector').textContent = pubState.sector;
+  document.getElementById('rv-type').textContent = pubState.saleType === 'puja' ? 'Puja libre' : 'Precio fijo';
+  document.getElementById('rv-min').textContent = '$' + (pubState.priceMin||75000).toLocaleString('es-AR');
+  document.getElementById('rv-max').textContent = '$' + (max).toLocaleString('es-AR');
+  document.getElementById('rv-net').textContent = '$' + net.toLocaleString('es-AR');
+}
+
+// ── QR UPLOAD ──
+let qrUploaded = false;
+
+function simulateQrUpload() {
+  const zone = document.getElementById('qrDropZone');
+  zone.innerHTML = '<div style="font-size:1.8rem;margin-bottom:6px;">⏳</div><div style="font-size:0.82rem;font-weight:700;">Validando QR con la ticketera…</div>';
+  zone.style.cursor = 'default';
+  zone.onmouseover = null;
+  zone.onmouseout = null;
+  setTimeout(() => {
+    zone.style.display = 'none';
+    const uploaded = document.getElementById('qrUploaded');
+    uploaded.style.display = 'flex';
+    qrUploaded = true;
+    showToast('QR validado y guardado en la bóveda', '🔒');
+  }, 1200);
+}
+
+function resetQr() {
+  qrUploaded = false;
+  const zone = document.getElementById('qrDropZone');
+  zone.style.display = 'block';
+  zone.innerHTML = '<div style="font-size:2.5rem;margin-bottom:8px;">📷</div><div style="font-size:0.84rem;font-weight:700;margin-bottom:4px;">Tocá para subir el QR de tu entrada</div><div style="font-size:0.72rem;color:var(--muted2);">PNG, JPG o PDF · Máx. 5MB</div>';
+  zone.style.cursor = 'pointer';
+  zone.onmouseover = function(){ this.style.borderColor='rgba(245,158,11,.6)'; this.style.background='rgba(245,158,11,.06)'; };
+  zone.onmouseout  = function(){ this.style.borderColor='rgba(245,158,11,.35)'; this.style.background='rgba(245,158,11,.03)'; };
+  document.getElementById('qrUploaded').style.display = 'none';
+}
+
+// ── PUBLISH ──
+function publish() {
+  if (!qrUploaded) return showToast('Subí el QR de tu entrada para continuar', '📷');
+  if (!document.getElementById('termsCheck').checked) return showToast('Aceptá los términos para continuar', '⚠️');
+  const hash = '0x' + Math.random().toString(16).substr(2,8) + '…' + Math.random().toString(16).substr(2,4);
+  document.getElementById('successHash').textContent = '⬡ ' + hash;
+  document.getElementById('successOverlay').classList.add('show');
+}
+function closeSuccess() {
+  document.getElementById('successOverlay').classList.remove('show');
+  showPage('pageDashboard');
+}
+
+// ── OFFERS ──
+function acceptOffer(cardId, event, amount) {
+  const net = Math.round(amount * 0.95);
+  document.getElementById(cardId).innerHTML = `
+    <div style="padding:12px; background:rgba(34,197,94,.08); border-radius:8px; border:1px solid rgba(34,197,94,.25); font-size:0.84rem; display:flex; align-items:center; gap:10px;">
+      <span style="font-size:1.2rem;">✅</span>
+      <div>
+        <div style="font-weight:700; color:#4ade80;">Oferta aceptada — $${amount.toLocaleString('es-AR')}</div>
+        <div style="font-size:0.75rem; color:var(--muted2); margin-top:3px;">Los fondos entrarán al escrow. Recibirás $${net.toLocaleString('es-AR')} cuando la ticketera valide la transferencia. +80 pts</div>
+      </div>
+    </div>`;
+  updateOfferBadge();
+  showToast('¡Oferta aceptada! Fondos en escrow 🔐');
+}
+
+function rejectOffer(cardId) {
+  document.getElementById(cardId).innerHTML = `
+    <div style="padding:12px; background:rgba(239,68,68,.06); border-radius:8px; border:1px solid rgba(239,68,68,.2); font-size:0.84rem; display:flex; align-items:center; gap:10px;">
+      <span style="font-size:1.2rem;">✕</span>
+      <div>
+        <div style="font-weight:700; color:#f87171;">Oferta rechazada</div>
+        <div style="font-size:0.75rem; color:var(--muted2); margin-top:3px;">Tu entrada sigue activa y visible para otros compradores.</div>
+      </div>
+    </div>`;
+  updateOfferBadge();
+  showToast('Oferta rechazada. Tu entrada sigue activa.', '❌');
+}
+
+function toggleCounter(id) {
+  const form = document.getElementById(id);
+  form.classList.toggle('open');
+}
+
+function sendCounter(cardId, counterId) {
+  const val = document.getElementById(counterId + '-val').value;
+  if (!val) return showToast('Ingresá un monto para contraofertar', '⚠️');
+  const amount = parseInt(val);
+  document.getElementById(cardId).querySelector('.offer-actions').insertAdjacentHTML('afterend', `
+    <div style="margin-top:10px; padding:10px 14px; background:rgba(13,148,136,.1); border:1px solid rgba(13,148,136,.3); border-radius:8px; font-size:0.8rem; color:var(--teal-light); display:flex; align-items:center; gap:8px;">
+      <span>↔</span> Contraoferta de <strong>$${amount.toLocaleString('es-AR')}</strong> enviada. El comprador tiene 2h para responder.
+    </div>`);
+  document.getElementById(counterId).classList.remove('open');
+  showToast(`Contraoferta de $${amount.toLocaleString('es-AR')} enviada ↔`);
+}
+
+function updateOfferBadge() {
+  const pending = document.querySelectorAll('.offer-card .btn-accept').length;
+  const badge = document.querySelector('#sb-ofertas .sb-badge');
+  if (badge) badge.textContent = pending || '';
+}
+
+// ── TOAST ──
+function togglePenalties(header) {
+  const body = document.getElementById('pen-body');
+  const arrow = document.getElementById('pen-arrow');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  arrow.textContent = open ? '▼ ver' : '▲ ocultar';
+}
+
+function showToast(msg, icon='✅') {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast-icon').textContent = icon;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Init
+updateCommission();
+document.addEventListener('click', e => {
+  if (!e.target.closest('.event-search')) document.getElementById('eventResults').classList.remove('open');
+});
+</script>
+</body>
+</html>
