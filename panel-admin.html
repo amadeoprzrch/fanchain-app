@@ -1,0 +1,2100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FanChain — Panel Admin</title>
+<style>
+  :root {
+    --bg: #0b1120;
+    --surface: #131f35;
+    --surface2: #1a2a45;
+    --surface3: #1e3254;
+    --border: #1e3254;
+    --teal: #0d9488;
+    --teal2: #0f766e;
+    --teal-light: #14b8a6;
+    --teal-glow: rgba(13,148,136,0.15);
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+    --gold: #f59e0b;
+    --green: #22c55e;
+    --red: #ef4444;
+    --purple: #7c3aed;
+    --orange: #f97316;
+    --blue: #3b82f6;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; }
+
+  /* ── TOPNAV ── */
+  .topnav { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; height:58px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .logo { font-size:1.15rem; font-weight:800; color:var(--teal-light); letter-spacing:-.3px; }
+  .logo span { color:var(--text); }
+  .admin-badge { background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); color:#f87171; font-size:0.68rem; font-weight:800; padding:3px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:.5px; }
+  .nav-right { display:flex; align-items:center; gap:12px; }
+  .live-dot { display:flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--green); }
+  .live-dot::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .avatar-mini { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#dc2626,#b91c1c); display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:800; color:#fff; cursor:pointer; }
+
+  /* ── LAYOUT ── */
+  .layout { max-width:1260px; margin:0 auto; padding:24px 20px; display:flex; gap:22px; }
+  .sidebar { width:214px; flex-shrink:0; display:flex; flex-direction:column; gap:4px; position:sticky; top:74px; align-self:flex-start; }
+  .sb-btn { display:flex; align-items:center; gap:10px; padding:9px 13px; border-radius:var(--radius-sm); border:none; background:none; color:var(--muted2); font-size:0.84rem; cursor:pointer; transition:all .18s; width:100%; text-align:left; }
+  .sb-btn:hover { color:var(--text); background:var(--surface2); }
+  .sb-btn.active { color:var(--teal-light); background:var(--teal-glow); font-weight:600; }
+  .sb-icon { width:20px; text-align:center; font-size:0.95rem; }
+  .sb-badge { margin-left:auto; background:var(--red); color:#fff; font-size:0.62rem; padding:2px 6px; border-radius:10px; font-weight:700; }
+  .sb-badge.gold { background:var(--gold); color:#1a1a00; }
+  .sb-divider { height:1px; background:var(--border); margin:6px 0; }
+  .sb-section { font-size:0.63rem; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; padding:10px 13px 3px; }
+
+  /* ── MAIN ── */
+  .main { flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .tab-pane { display:none; flex-direction:column; gap:16px; }
+  .tab-pane.active { display:flex; }
+
+  /* ── PAGE HEADER ── */
+  .page-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .page-title { font-size:1.25rem; font-weight:800; }
+  .page-sub { font-size:0.78rem; color:var(--text-dim); margin-top:2px; }
+
+  /* ── CARDS ── */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+  .card-title { font-size:0.8rem; font-weight:700; color:var(--teal-light); text-transform:uppercase; letter-spacing:.6px; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+
+  /* ── STAT GRID ── */
+  .stats-grid-5 { display:grid; grid-template-columns:repeat(5,1fr); gap:11px; }
+  .stats-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:11px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; transition:border-color .2s; }
+  .stat-card:hover { border-color:var(--teal); }
+  .stat-icon { font-size:1.2rem; margin-bottom:6px; }
+  .stat-val { font-size:1.45rem; font-weight:800; line-height:1.1; margin-bottom:3px; }
+  .stat-lbl { font-size:0.7rem; color:var(--muted2); }
+  .stat-delta { font-size:0.68rem; margin-top:3px; font-weight:600; }
+  .d-up { color:var(--green); }
+  .d-dn { color:var(--red); }
+  .d-neu { color:var(--gold); }
+
+  /* ── TABLE ── */
+  .data-table { width:100%; border-collapse:collapse; }
+  .data-table th { font-size:0.66rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; padding:8px 12px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+  .data-table td { padding:10px 12px; font-size:0.81rem; border-bottom:1px solid rgba(255,255,255,.03); vertical-align:middle; }
+  .data-table tr:last-child td { border-bottom:none; }
+  .data-table tr:hover td { background:rgba(255,255,255,.025); cursor:pointer; }
+
+  /* ── PILLS ── */
+  .pill { display:inline-flex; align-items:center; gap:3px; font-size:0.67rem; font-weight:700; padding:3px 8px; border-radius:20px; white-space:nowrap; }
+  .pill-green  { background:rgba(34,197,94,.12);  color:var(--green); }
+  .pill-gold   { background:rgba(245,158,11,.14); color:var(--gold); }
+  .pill-red    { background:rgba(239,68,68,.12);  color:#f87171; }
+  .pill-teal   { background:var(--teal-glow);     color:var(--teal-light); }
+  .pill-purple { background:rgba(124,58,237,.15); color:#a78bfa; }
+  .pill-blue   { background:rgba(59,130,246,.13); color:#93c5fd; }
+  .pill-gray   { background:rgba(100,116,139,.15);color:var(--text-dim); }
+  .pill-orange { background:rgba(249,115,22,.13); color:#fb923c; }
+
+  /* ── BUTTONS ── */
+  .btn-primary { background:var(--teal); color:#fff; border:none; border-radius:8px; padding:9px 18px; font-size:0.84rem; font-weight:600; cursor:pointer; transition:background .2s; }
+  .btn-primary:hover { background:var(--teal2); }
+  .btn-outline { background:none; border:1px solid var(--border); color:var(--muted2); border-radius:8px; padding:7px 14px; font-size:0.8rem; cursor:pointer; transition:all .2s; }
+  .btn-outline:hover { border-color:var(--teal); color:var(--teal-light); }
+  .btn-danger { background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); color:#f87171; border-radius:7px; padding:5px 12px; font-size:0.75rem; cursor:pointer; transition:all .2s; }
+  .btn-danger:hover { background:rgba(239,68,68,.22); }
+  .btn-warn  { background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.3); color:var(--gold); border-radius:7px; padding:5px 12px; font-size:0.75rem; cursor:pointer; transition:all .2s; }
+  .btn-warn:hover { background:rgba(245,158,11,.2); }
+  .btn-sm { background:var(--surface2); border:1px solid var(--border); color:var(--muted2); border-radius:6px; padding:4px 10px; font-size:0.73rem; cursor:pointer; transition:all .18s; }
+  .btn-sm:hover { border-color:var(--teal); color:var(--teal-light); }
+
+  /* ── SEARCH BAR ── */
+  .search-row { display:flex; gap:10px; align-items:center; }
+  .search-input { flex:1; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:9px; padding:9px 14px; font-size:0.84rem; outline:none; transition:border-color .2s; }
+  .search-input:focus { border-color:var(--teal); }
+  .search-input::placeholder { color:var(--muted); }
+  .filter-chip { background:var(--surface2); border:1px solid var(--border); color:var(--muted2); border-radius:20px; padding:6px 14px; font-size:0.75rem; cursor:pointer; transition:all .18s; }
+  .filter-chip:hover, .filter-chip.active { background:var(--teal-glow); border-color:var(--teal); color:var(--teal-light); }
+
+  /* ── DISPUTE CARD ── */
+  .dispute-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px; transition:border-color .2s; }
+  .dispute-card:hover { border-color:var(--teal); }
+  .dispute-card.priority-alta { border-left:3px solid var(--red); }
+  .dispute-card.priority-media { border-left:3px solid var(--gold); }
+  .dispute-card.priority-baja { border-left:3px solid var(--green); }
+
+  /* ── TIMELINE (audit) ── */
+  .timeline { display:flex; flex-direction:column; gap:0; }
+  .tl-item { display:flex; gap:14px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.03); }
+  .tl-item:last-child { border-bottom:none; }
+  .tl-dot { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem; flex-shrink:0; margin-top:2px; }
+  .tl-body { flex:1; }
+  .tl-action { font-size:0.82rem; font-weight:600; }
+  .tl-meta { font-size:0.72rem; color:var(--muted2); margin-top:2px; }
+
+  /* ── SUBSCRIPTION CARD ── */
+  .sub-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; display:flex; align-items:center; gap:14px; }
+  .sub-avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; font-weight:700; }
+
+  /* ── MINI CHART ── */
+  .mini-chart { height:50px; display:flex; align-items:flex-end; gap:3px; }
+  .mini-bar { flex:1; border-radius:3px 3px 0 0; transition:opacity .2s; }
+  .mini-bar:hover { opacity:.75; }
+
+  /* ── MODAL ── */
+  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:500; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
+  .modal-bg.open { display:flex; }
+  .modal-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; width:min(520px,94vw); overflow:hidden; }
+  .modal-head { padding:18px 20px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .modal-body { padding:20px; }
+  .modal-foot { padding:14px 20px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; }
+  .modal-close { background:rgba(255,255,255,.07); border:none; color:var(--text); border-radius:7px; width:30px; height:30px; cursor:pointer; font-size:1rem; }
+
+  /* ── TOGGLE SWITCH ── */
+  .toggle-switch { position:relative; width:38px; height:21px; }
+  .toggle-switch input { opacity:0; width:0; height:0; }
+  .toggle-slider { position:absolute; inset:0; background:var(--surface3); border-radius:21px; cursor:pointer; transition:.2s; }
+  .toggle-slider::before { content:''; position:absolute; width:15px; height:15px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; }
+  .toggle-switch input:checked + .toggle-slider { background:var(--teal); }
+  .toggle-switch input:checked + .toggle-slider::before { transform:translateX(17px); }
+
+  /* ── TOAST ── */
+  #toast { position:fixed; bottom:28px; right:28px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 18px; font-size:0.84rem; display:flex; align-items:center; gap:10px; box-shadow:0 8px 32px rgba(0,0,0,.5); z-index:9999; transform:translateY(80px); opacity:0; transition:all .3s cubic-bezier(.34,1.56,.64,1); pointer-events:none; max-width:360px; }
+  #toast.show { transform:translateY(0); opacity:1; }
+
+  /* ── SCORE RING ── */
+  .score-ring { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:800; flex-shrink:0; }
+
+  /* ── USER DETAIL MODAL ── */
+  .ud-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:0.82rem; }
+  .ud-row:last-child { border-bottom:none; }
+  .ud-label { color:var(--muted2); }
+  .ud-val { font-weight:600; }
+
+  /* ── DRILLABLE CARDS ── */
+  .drillable { cursor:pointer; position:relative; }
+  .drillable:hover { border-color:var(--teal); background:var(--surface2); }
+  .drill-hint { font-size:0.67rem; color:var(--teal); opacity:0; margin-top:6px; font-weight:700; transition:opacity .18s; }
+  .drillable:hover .drill-hint { opacity:1; }
+
+  /* ── DRILL-DOWN MODAL ── */
+  #drillModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:600; align-items:flex-start; justify-content:center; backdrop-filter:blur(4px); padding-top:48px; overflow-y:auto; }
+  #drillModal.open { display:flex; }
+  #drillBox { background:var(--surface); border:1px solid var(--border); border-radius:18px; width:min(720px,95vw); margin-bottom:48px; overflow:hidden; }
+  .drill-head { padding:18px 22px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:flex-start; position:sticky; top:0; background:var(--surface); z-index:2; }
+  .drill-kpi-row { display:grid; gap:10px; padding:18px 22px; border-bottom:1px solid rgba(255,255,255,.05); }
+  .drill-kpi { background:var(--surface2); border-radius:10px; padding:12px 14px; }
+  .drill-kpi-val { font-size:1.3rem; font-weight:800; }
+  .drill-kpi-lbl { font-size:0.69rem; color:var(--muted2); margin-top:2px; }
+  .drill-content { padding:0 22px 22px; }
+  .drill-section-title { font-size:0.7rem; font-weight:700; color:var(--teal-light); text-transform:uppercase; letter-spacing:.6px; margin:16px 0 10px; }
+  .txn-row { display:grid; align-items:center; padding:9px 12px; border-radius:8px; font-size:0.8rem; border-bottom:1px solid rgba(255,255,255,.03); transition:background .15s; }
+  .txn-row:hover { background:rgba(255,255,255,.03); }
+  .txn-row:last-child { border-bottom:none; }
+
+  /* responsive */
+  @media(max-width:900px) {
+    .sidebar { display:none; }
+    .stats-grid-5 { grid-template-columns:repeat(2,1fr); }
+    .stats-grid-4 { grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ TOPNAV ══ -->
+<nav class="topnav">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <div class="logo">Fan<span>Chain</span></div>
+    <div class="admin-badge">🛡️ Super Admin</div>
+  </div>
+  <div class="nav-right">
+    <div class="live-dot">Sistema activo</div>
+    <div style="font-size:0.78rem;color:var(--text-dim);">Última actualización: hace 12 s</div>
+    <div class="avatar-mini">SA</div>
+  </div>
+</nav>
+
+<!-- ══ LAYOUT ══ -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-section">General</div>
+    <button class="sb-btn active" onclick="showTab('monitor')">
+      <span class="sb-icon">📊</span> Monitor global
+    </button>
+    <button class="sb-btn" onclick="showTab('eventos')">
+      <span class="sb-icon">🎟️</span> Eventos
+    </button>
+
+    <div class="sb-divider"></div>
+    <div class="sb-section">Usuarios</div>
+    <button class="sb-btn" onclick="showTab('usuarios')">
+      <span class="sb-icon">👥</span> Gestión de usuarios
+    </button>
+    <button class="sb-btn" onclick="showTab('sanciones')">
+      <span class="sb-icon">⚠️</span> Sanciones
+      <span class="sb-badge">3</span>
+    </button>
+    <button class="sb-btn" onclick="showTab('subs')">
+      <span class="sb-icon">⭐</span> Fan Pro / Elite
+      <span class="sb-badge gold">12</span>
+    </button>
+
+    <div class="sb-divider"></div>
+    <div class="sb-section">Operaciones</div>
+    <button class="sb-btn" onclick="showTab('disputas')">
+      <span class="sb-icon">🔥</span> Disputas
+      <span class="sb-badge">5</span>
+    </button>
+    <button class="sb-btn" onclick="showTab('escrow')">
+      <span class="sb-icon">🔐</span> Escrow activos
+    </button>
+
+    <div class="sb-divider"></div>
+    <div class="sb-section">Plataforma</div>
+    <button class="sb-btn" onclick="showTab('analytics')">
+      <span class="sb-icon">📈</span> Analytics
+    </button>
+    <button class="sb-btn" onclick="showTab('auditlog')">
+      <span class="sb-icon">📋</span> Audit log
+    </button>
+    <button class="sb-btn" onclick="showTab('config')">
+      <span class="sb-icon">⚙️</span> Configuración
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ═══════════════════════════════════
+         TAB: MONITOR GLOBAL
+    ════════════════════════════════════ -->
+    <div id="tab-monitor" class="tab-pane active">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Monitor global 📊</div>
+          <div class="page-sub">Vista en tiempo real de toda la plataforma — Miércoles 10 Jun 2026</div>
+        </div>
+        <button class="btn-outline" onclick="showToast('Exportando reporte PDF…','📄')">Exportar reporte</button>
+      </div>
+
+      <!-- KPIs principales -->
+      <div class="stats-grid-5">
+        <div class="stat-card drillable" onclick="openDrillDown('txn')">
+          <div class="stat-icon">🎟️</div>
+          <div class="stat-val" style="color:var(--teal-light);">8.432</div>
+          <div class="stat-lbl">Transacciones hoy</div>
+          <div class="stat-delta d-up">↑ +14% vs ayer</div>
+          <div class="drill-hint">Ver detalle →</div>
+        </div>
+        <div class="stat-card drillable" onclick="openDrillDown('volumen')">
+          <div class="stat-icon">💰</div>
+          <div class="stat-val" style="color:var(--green);">$182M</div>
+          <div class="stat-lbl">Volumen total hoy</div>
+          <div class="stat-delta d-up">↑ +22% esta semana</div>
+          <div class="drill-hint">Ver detalle →</div>
+        </div>
+        <div class="stat-card drillable" onclick="openDrillDown('usuarios')">
+          <div class="stat-icon">👥</div>
+          <div class="stat-val">24.109</div>
+          <div class="stat-lbl">Usuarios activos</div>
+          <div class="stat-delta d-up">↑ +8% vs ayer</div>
+          <div class="drill-hint">Ver detalle →</div>
+        </div>
+        <div class="stat-card drillable" onclick="openDrillDown('escrows')">
+          <div class="stat-icon">🔐</div>
+          <div class="stat-val" style="color:var(--gold);">347</div>
+          <div class="stat-lbl">Escrows activos</div>
+          <div class="stat-delta d-neu">$48M bloqueados</div>
+          <div class="drill-hint">Ver detalle →</div>
+        </div>
+        <div class="stat-card drillable" onclick="openDrillDown('disputas')">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-val" style="color:var(--red);">5</div>
+          <div class="stat-lbl">Disputas abiertas</div>
+          <div class="stat-delta d-dn">2 de alta prioridad</div>
+          <div class="drill-hint">Ver detalle →</div>
+        </div>
+      </div>
+
+      <!-- Segunda fila de KPIs -->
+      <div class="stats-grid-4">
+        <div class="stat-card drillable" onclick="openDrillDown('comisiones')">
+          <div class="stat-icon">💳</div>
+          <div class="stat-val">$4.2M</div>
+          <div class="stat-lbl">Comisiones generadas</div>
+          <div class="stat-delta d-up">↑ +31% vs mes anterior</div>
+          <div class="drill-hint">Ver detalle →</div>
+        </div>
+        <div class="stat-card drillable" onclick="openDrillDown('subs')">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-val">1.847</div>
+          <div class="stat-lbl">Suscriptores Pro/Elite</div>
+          <div class="stat-delta d-up">↑ +43 esta semana</div>
+          <div class="drill-hint">Ver detalle →</div>
+        </div>
+        <div class="stat-card drillable" onclick="openDrillDown('resolucion')">
+          <div class="stat-icon">✅</div>
+          <div class="stat-val">98.3%</div>
+          <div class="stat-lbl">Tasa de resolución</div>
+          <div class="stat-delta d-up">↑ 0.4 pp vs mes ant.</div>
+          <div class="drill-hint">Ver detalle →</div>
+        </div>
+        <div class="stat-card drillable" onclick="openDrillDown('sistema')">
+          <div class="stat-icon">🌡️</div>
+          <div class="stat-val" style="color:var(--green);">Normal</div>
+          <div class="stat-lbl">Estado del sistema</div>
+          <div class="stat-delta d-up">Latencia: 38 ms</div>
+          <div class="drill-hint">Ver detalle →</div>
+        </div>
+      </div>
+
+      <!-- Eventos activos + actividad reciente -->
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;">
+
+        <div class="card">
+          <div class="card-title">🎟️ Eventos con más actividad ahora</div>
+          <table class="data-table">
+            <thead><tr>
+              <th>Evento</th>
+              <th>Transac. hoy</th>
+              <th>Precio prom.</th>
+              <th>Tendencia</th>
+            </tr></thead>
+            <tbody>
+              <tr onclick="showToast('Coldplay — 3 fechas activas','🎵')">
+                <td><div style="font-weight:600;">Coldplay</div><div style="font-size:0.7rem;color:var(--text-dim);">River · 12–14 Jun</div></td>
+                <td style="font-weight:700;">3.241</td>
+                <td style="color:var(--teal-light);">$148.000</td>
+                <td><span style="color:var(--green);font-weight:700;">↑ +28%</span></td>
+              </tr>
+              <tr onclick="showToast('River vs Vélez — alta demanda','⚽')">
+                <td><div style="font-weight:600;">River vs Vélez</div><div style="font-size:0.7rem;color:var(--text-dim);">Monumental · 15 Jun</div></td>
+                <td style="font-weight:700;">1.892</td>
+                <td style="color:var(--teal-light);">$82.000</td>
+                <td><span style="color:var(--green);font-weight:700;">↑ +41%</span></td>
+              </tr>
+              <tr onclick="showToast('Lali — sold out en 3 sectores','🎤')">
+                <td><div style="font-weight:600;">Lali</div><div style="font-size:0.7rem;color:var(--text-dim);">Movistar Arena · 20 Jun</div></td>
+                <td style="font-weight:700;">1.104</td>
+                <td style="color:var(--teal-light);">$64.000</td>
+                <td><span style="color:var(--orange);font-weight:700;">→ estable</span></td>
+              </tr>
+              <tr onclick="showToast('Duki — 18 días para el evento','🎧')">
+                <td><div style="font-weight:600;">Duki</div><div style="font-size:0.7rem;color:var(--text-dim);">Estadio GEBA · 28 Jun</div></td>
+                <td style="font-weight:700;">872</td>
+                <td style="color:var(--teal-light);">$93.000</td>
+                <td><span style="color:var(--green);font-weight:700;">↑ +12%</span></td>
+              </tr>
+              <tr onclick="showToast('Bizarrap — alta especulación de precios','⚠️')">
+                <td><div style="font-weight:600;">Bizarrap</div><div style="font-size:0.7rem;color:var(--text-dim);">Campo Argentino · 5 Jul</div></td>
+                <td style="font-weight:700;">323</td>
+                <td style="color:var(--red);">$210.000 ⚠️</td>
+                <td><span style="color:var(--red);font-weight:700;">↑ +89%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-title">⚡ Actividad reciente</div>
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-dot" style="background:rgba(239,68,68,.12);">🔥</div>
+              <div class="tl-body">
+                <div class="tl-action">Disputa abierta — Coldplay platea</div>
+                <div class="tl-meta">@marinaR92 · hace 4 min · <span style="color:var(--red);">prioridad alta</span></div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot" style="background:rgba(34,197,94,.1);">✅</div>
+              <div class="tl-body">
+                <div class="tl-action">Escrow liberado — River vs Vélez</div>
+                <div class="tl-meta">@lucas_g → @caroF_ba · hace 8 min · $82.000</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot" style="background:rgba(245,158,11,.1);">⚠️</div>
+              <div class="tl-body">
+                <div class="tl-action">Alerta precio — Bizarrap +89%</div>
+                <div class="tl-meta">Sector Campo · precio promedio $210k · hace 12 min</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot" style="background:rgba(124,58,237,.12);">⭐</div>
+              <div class="tl-body">
+                <div class="tl-action">Nuevo suscriptor Fan Elite</div>
+                <div class="tl-meta">@pablo_rk · Plan anual $28.000 · hace 18 min</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot" style="background:rgba(239,68,68,.12);">🚫</div>
+              <div class="tl-body">
+                <div class="tl-action">Usuario suspendido 72hs</div>
+                <div class="tl-meta">@fake_reseller · 3 advertencias acumuladas · hace 24 min</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot" style="background:rgba(13,148,136,.12);">🔐</div>
+              <div class="tl-body">
+                <div class="tl-action">Escrow congelado preventivamente</div>
+                <div class="tl-meta">@tomasV ↔ @nicoBA · disputa pendiente · hace 31 min</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         TAB: EVENTOS
+    ════════════════════════════════════ -->
+    <div id="tab-eventos" class="tab-pane">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Eventos 🎟️</div>
+          <div class="page-sub">Todos los eventos activos y próximos en la plataforma</div>
+        </div>
+        <button class="btn-primary" onclick="showToast('Nuevo evento registrado','🎟️')">+ Registrar evento</button>
+      </div>
+
+      <div class="card">
+        <div class="search-row" style="margin-bottom:14px;">
+          <input class="search-input" placeholder="🔍  Buscar por nombre, artista o venue…" oninput="filterEvents(this.value)">
+          <button class="filter-chip active" onclick="filterEventStatus('todos',this)">Todos</button>
+          <button class="filter-chip" onclick="filterEventStatus('activos',this)">Activos</button>
+          <button class="filter-chip" onclick="filterEventStatus('proximos',this)">Próximos</button>
+          <button class="filter-chip" onclick="filterEventStatus('pasados',this)">Pasados</button>
+        </div>
+
+        <table class="data-table" id="eventsTable">
+          <thead><tr>
+            <th>Evento</th>
+            <th>Venue</th>
+            <th>Fecha</th>
+            <th>Capacidad</th>
+            <th>Vendidas</th>
+            <th>En reventa</th>
+            <th>Recaudación</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr></thead>
+          <tbody id="eventsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         TAB: GESTIÓN DE USUARIOS
+    ════════════════════════════════════ -->
+    <div id="tab-usuarios" class="tab-pane">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Usuarios 👥</div>
+          <div class="page-sub">24.109 usuarios registrados · 1.847 verificados RENAPER</div>
+        </div>
+        <button class="btn-outline" onclick="showToast('Exportando CSV de usuarios…','📊')">Exportar CSV</button>
+      </div>
+
+      <div class="card">
+        <div class="search-row" style="margin-bottom:14px;">
+          <input class="search-input" id="userSearch" placeholder="🔍  Buscar por usuario, email o DNI…" oninput="filterUsers(this.value)">
+          <button class="filter-chip active" onclick="filterUserLevel('todos',this)">Todos</button>
+          <button class="filter-chip" onclick="filterUserLevel('rookie',this)">Rookie</button>
+          <button class="filter-chip" onclick="filterUserLevel('fan',this)">Fan</button>
+          <button class="filter-chip" onclick="filterUserLevel('fanplus',this)">Fan+</button>
+          <button class="filter-chip" onclick="filterUserLevel('pro',this)">Pro</button>
+          <button class="filter-chip" onclick="filterUserLevel('elite',this)">Elite</button>
+        </div>
+
+        <table class="data-table">
+          <thead><tr>
+            <th>Usuario</th>
+            <th>Nivel</th>
+            <th>RENAPER</th>
+            <th>Registro</th>
+            <th>Compras</th>
+            <th>Ventas</th>
+            <th>Puntos</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr></thead>
+          <tbody id="usersTbody"></tbody>
+        </table>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:0.78rem;color:var(--text-dim);">
+          <span id="userCount">Mostrando 10 de 24.109 usuarios</span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-sm">← Anterior</button>
+            <button class="btn-sm">Siguiente →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         TAB: SANCIONES
+    ════════════════════════════════════ -->
+    <div id="tab-sanciones" class="tab-pane">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Sanciones ⚠️</div>
+          <div class="page-sub">Historial de advertencias, suspensiones y baneos</div>
+        </div>
+        <button class="btn-danger" onclick="openSancionModal()">+ Nueva sanción</button>
+      </div>
+
+      <!-- Contadores -->
+      <div class="stats-grid-4">
+        <div class="stat-card">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-val" style="color:var(--gold);">18</div>
+          <div class="stat-lbl">Advertencias activas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏸️</div>
+          <div class="stat-val" style="color:var(--orange);">3</div>
+          <div class="stat-lbl">Suspensiones activas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🚫</div>
+          <div class="stat-val" style="color:var(--red);">7</div>
+          <div class="stat-lbl">Baneos permanentes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-val" style="color:var(--green);">94</div>
+          <div class="stat-lbl">Sanciones resueltas (30d)</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔴 Sanciones activas</div>
+        <table class="data-table">
+          <thead><tr>
+            <th>Usuario</th>
+            <th>Tipo</th>
+            <th>Motivo</th>
+            <th>Fecha</th>
+            <th>Duración</th>
+            <th>Admin</th>
+            <th>Acciones</th>
+          </tr></thead>
+          <tbody id="sancionesTbody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Historial reciente (últimas 30 sanciones)</div>
+        <table class="data-table">
+          <thead><tr>
+            <th>Usuario</th>
+            <th>Tipo</th>
+            <th>Motivo</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+          </tr></thead>
+          <tbody id="sancionesHistTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         TAB: FAN PRO / ELITE
+    ════════════════════════════════════ -->
+    <div id="tab-subs" class="tab-pane">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Fan Pro / Fan Elite ⭐</div>
+          <div class="page-sub">Gestión de suscripciones premium</div>
+        </div>
+        <button class="btn-primary" onclick="showToast('Activación manual iniciada','⭐')">+ Activar manual</button>
+      </div>
+
+      <div class="stats-grid-4">
+        <div class="stat-card">
+          <div class="stat-icon">🥈</div>
+          <div class="stat-val" style="color:#60a5fa;">1.204</div>
+          <div class="stat-lbl">Fan Pro activos</div>
+          <div class="stat-delta d-up">↑ +28 esta semana</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🥇</div>
+          <div class="stat-val" style="color:var(--gold);">643</div>
+          <div class="stat-lbl">Fan Elite activos</div>
+          <div class="stat-delta d-up">↑ +15 esta semana</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-val" style="color:var(--green);">$38.2M</div>
+          <div class="stat-lbl">MRR suscripciones</div>
+          <div class="stat-delta d-up">↑ +7% vs mes ant.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔄</div>
+          <div class="stat-val">3</div>
+          <div class="stat-lbl">Cancelaciones pendientes</div>
+          <div class="stat-delta d-dn">2 solicitan reembolso</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+          <div class="card-title">🥈 Fan Pro — suscripciones recientes</div>
+          <div id="subProList" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🥇 Fan Elite — suscripciones recientes</div>
+          <div id="subEliteList" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+      </div>
+
+      <!-- Cancelaciones / reembolsos -->
+      <div class="card">
+        <div class="card-title">🔄 Solicitudes de cancelación y reembolso</div>
+        <table class="data-table">
+          <thead><tr>
+            <th>Usuario</th>
+            <th>Plan</th>
+            <th>Inicio</th>
+            <th>Días restantes</th>
+            <th>Monto</th>
+            <th>Motivo</th>
+            <th>Acciones</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>@vale_bsas</strong></td>
+              <td><span class="pill pill-gold">Fan Elite</span></td>
+              <td>01/06/2026</td>
+              <td>21 días</td>
+              <td>$28.000</td>
+              <td>No usa las funciones</td>
+              <td style="display:flex;gap:6px;margin-top:2px;">
+                <button class="btn-sm" onclick="showToast('Reembolso procesado a @vale_bsas','✅')" style="color:var(--green);border-color:rgba(34,197,94,.3);">Reembolsar</button>
+                <button class="btn-sm" onclick="showToast('Cancelación rechazada','❌')">Rechazar</button>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>@diego_fc</strong></td>
+              <td><span class="pill pill-blue">Fan Pro</span></td>
+              <td>15/05/2026</td>
+              <td>5 días</td>
+              <td>$14.000</td>
+              <td>Muy caro</td>
+              <td style="display:flex;gap:6px;margin-top:2px;">
+                <button class="btn-sm" onclick="showToast('Reembolso parcial procesado','✅')" style="color:var(--green);border-color:rgba(34,197,94,.3);">Reembolsar</button>
+                <button class="btn-sm" onclick="showToast('Cancelación rechazada','❌')">Rechazar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         TAB: DISPUTAS
+    ════════════════════════════════════ -->
+    <div id="tab-disputas" class="tab-pane">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Disputas 🔥</div>
+          <div class="page-sub">5 disputas abiertas · Tiempo promedio de resolución: 4.2 hs</div>
+        </div>
+      </div>
+
+      <div class="stats-grid-4">
+        <div class="stat-card"><div class="stat-icon">🔴</div><div class="stat-val" style="color:var(--red);">2</div><div class="stat-lbl">Alta prioridad</div></div>
+        <div class="stat-card"><div class="stat-icon">🟡</div><div class="stat-val" style="color:var(--gold);">2</div><div class="stat-lbl">Media prioridad</div></div>
+        <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-val" style="color:var(--green);">1</div><div class="stat-lbl">Baja prioridad</div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-val">47</div><div class="stat-lbl">Resueltas este mes</div></div>
+      </div>
+
+      <div id="disputasList" style="display:flex;flex-direction:column;gap:12px;"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         TAB: ESCROW
+    ════════════════════════════════════ -->
+    <div id="tab-escrow" class="tab-pane">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Escrow activos 🔐</div>
+          <div class="page-sub">347 operaciones con fondos bloqueados · $48.2M en custodia</div>
+        </div>
+        <button class="btn-outline" onclick="showToast('Exportando estado de escrow…','🔐')">Exportar</button>
+      </div>
+
+      <div class="stats-grid-4">
+        <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-val" style="color:var(--gold);">287</div><div class="stat-lbl">Esperando confirmación</div></div>
+        <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-val" style="color:var(--red);">8</div><div class="stat-lbl">Congelados (disputa)</div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-val" style="color:var(--green);">52</div><div class="stat-lbl">Liberados hoy</div></div>
+        <div class="stat-card"><div class="stat-icon">💸</div><div class="stat-val">$48.2M</div><div class="stat-lbl">Total en custodia</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔒 Escrow congelados — requieren atención</div>
+        <table class="data-table">
+          <thead><tr>
+            <th>ID</th>
+            <th>Comprador</th>
+            <th>Vendedor</th>
+            <th>Evento</th>
+            <th>Monto</th>
+            <th>Bloqueado hace</th>
+            <th>Motivo</th>
+            <th>Acciones</th>
+          </tr></thead>
+          <tbody id="escrowTbody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⏳ Escrow próximos a vencer (más de 48hs sin confirmar)</div>
+        <table class="data-table">
+          <thead><tr>
+            <th>ID</th>
+            <th>Comprador</th>
+            <th>Vendedor</th>
+            <th>Evento</th>
+            <th>Monto</th>
+            <th>Tiempo restante</th>
+            <th>Acciones</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="pill pill-gray">#ESC-2291</span></td>
+              <td>@lauraM</td>
+              <td>@roberto_a</td>
+              <td>Lali · Movistar Arena</td>
+              <td style="font-weight:700;color:var(--teal-light);">$64.000</td>
+              <td><span style="color:var(--gold);">⏰ 2hs restantes</span></td>
+              <td style="display:flex;gap:6px;margin-top:2px;">
+                <button class="btn-sm" onclick="showToast('Recordatorio enviado al comprador','📱')">Recordar</button>
+                <button class="btn-warn" onclick="showToast('Escrow extendido 24hs','⏳')">Extender</button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="pill pill-gray">#ESC-2289</span></td>
+              <td>@marce_g</td>
+              <td>@federicoT</td>
+              <td>Duki · Estadio GEBA</td>
+              <td style="font-weight:700;color:var(--teal-light);">$93.000</td>
+              <td><span style="color:var(--orange);">⏰ 5hs restantes</span></td>
+              <td style="display:flex;gap:6px;margin-top:2px;">
+                <button class="btn-sm" onclick="showToast('Recordatorio enviado al comprador','📱')">Recordar</button>
+                <button class="btn-warn" onclick="showToast('Escrow extendido 24hs','⏳')">Extender</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         TAB: ANALYTICS
+    ════════════════════════════════════ -->
+    <div id="tab-analytics" class="tab-pane">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Analytics 📈</div>
+          <div class="page-sub">Métricas de negocio — últimos 30 días</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="filter-chip active" id="an-7d" onclick="switchAnalyticsPeriod('7d',this)">7 días</button>
+          <button class="filter-chip" id="an-30d" onclick="switchAnalyticsPeriod('30d',this)">30 días</button>
+          <button class="filter-chip" id="an-90d" onclick="switchAnalyticsPeriod('90d',this)">90 días</button>
+        </div>
+      </div>
+
+      <div class="stats-grid-4">
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-val" style="color:var(--green);" id="an-rev">$4.2M</div>
+          <div class="stat-lbl">Comisiones totales</div>
+          <div class="stat-delta d-up" id="an-rev-d">↑ +31% vs período ant.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔄</div>
+          <div class="stat-val" id="an-conv">6.8%</div>
+          <div class="stat-lbl">Tasa de conversión</div>
+          <div class="stat-delta d-up">↑ +0.9 pp</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-val" id="an-time">3.4 hs</div>
+          <div class="stat-lbl">Tiempo promedio de venta</div>
+          <div class="stat-delta d-up">↓ -22 min vs mes ant.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-val" id="an-nps">72</div>
+          <div class="stat-lbl">NPS de plataforma</div>
+          <div class="stat-delta d-up">↑ +4 puntos</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px;">
+        <div class="card">
+          <div class="card-title">📊 Comisiones por día</div>
+          <canvas id="revenueChart" height="180"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">🎟️ Distribución por evento</div>
+          <div id="eventBreakdown" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <div class="card">
+          <div class="card-title">📱 Canal de acceso</div>
+          <div id="channelChart" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">⭐ Nivel de usuarios compradores</div>
+          <div id="levelChart" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">💳 Método de pago preferido</div>
+          <div id="paymentChart" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         TAB: AUDIT LOG
+    ════════════════════════════════════ -->
+    <div id="tab-auditlog" class="tab-pane">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Audit Log 📋</div>
+          <div class="page-sub">Registro cronológico de todas las acciones sensibles</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <input class="search-input" style="width:240px;" placeholder="🔍  Filtrar por usuario o acción…">
+          <button class="btn-outline" onclick="showToast('Exportando audit log…','📋')">Exportar</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="display:flex;gap:0;border-bottom:1px solid var(--border);">
+          <button class="filter-chip active" style="border-radius:0;border:none;border-right:1px solid var(--border);padding:12px 18px;" onclick="filterAudit('todos',this)">Todos</button>
+          <button class="filter-chip" style="border-radius:0;border:none;border-right:1px solid var(--border);padding:12px 18px;" onclick="filterAudit('sanciones',this)">Sanciones</button>
+          <button class="filter-chip" style="border-radius:0;border:none;border-right:1px solid var(--border);padding:12px 18px;" onclick="filterAudit('escrow',this)">Escrow</button>
+          <button class="filter-chip" style="border-radius:0;border:none;border-right:1px solid var(--border);padding:12px 18px;" onclick="filterAudit('usuarios',this)">Usuarios</button>
+          <button class="filter-chip" style="border-radius:0;border:none;padding:12px 18px;" onclick="filterAudit('config',this)">Config</button>
+        </div>
+        <div style="padding:0 18px;" id="auditLogList"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         TAB: CONFIGURACIÓN
+    ════════════════════════════════════ -->
+    <div id="tab-config" class="tab-pane">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Configuración ⚙️</div>
+          <div class="page-sub">Parámetros globales de la plataforma</div>
+        </div>
+        <button class="btn-primary" onclick="showToast('Cambios guardados correctamente','✅')">Guardar cambios</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+        <div class="card">
+          <div class="card-title">💰 Comisiones</div>
+          <div class="config-row">
+            <div><div class="config-label">Comisión comprador (Rookie)</div><div class="config-desc">Se aplica al precio final de la transacción</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><input type="range" min="3" max="12" value="8" oninput="this.nextSibling.textContent=this.value+'%'"><span class="config-val">8%</span></div>
+          </div>
+          <div class="config-row">
+            <div><div class="config-label">Comisión comprador (Fan / Fan+)</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><input type="range" min="2" max="10" value="6" oninput="this.nextSibling.textContent=this.value+'%'"><span class="config-val">6%</span></div>
+          </div>
+          <div class="config-row">
+            <div><div class="config-label">Comisión comprador (Pro / Elite)</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><input type="range" min="1" max="8" value="4" oninput="this.nextSibling.textContent=this.value+'%'"><span class="config-val">4%</span></div>
+          </div>
+          <div class="config-row">
+            <div><div class="config-label">Comisión vendedor</div><div class="config-desc">Fija para todos los niveles</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><input type="range" min="2" max="10" value="5" oninput="this.nextSibling.textContent=this.value+'%'"><span class="config-val">5%</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔔 Alertas de precio</div>
+          <div class="config-row">
+            <div><div class="config-label">Alerta reventa — umbral</div><div class="config-desc">Notifica al organizador y al admin cuando el precio supera este % del precio oficial</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><input type="range" min="10" max="100" value="40" oninput="this.nextSibling.textContent='+'+this.value+'%'"><span class="config-val">+40%</span></div>
+          </div>
+          <div class="config-row">
+            <div><div class="config-label">Alerta de concentración</div><div class="config-desc">Cuando un usuario publica más de X entradas en el mismo evento</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><input type="range" min="2" max="20" value="5" oninput="this.nextSibling.textContent=this.value+' ent.'"><span class="config-val">5 ent.</span></div>
+          </div>
+          <div class="config-row">
+            <div><div class="config-label">Bloqueo automático de cuenta</div><div class="config-desc">Suspender si hay 3 advertencias activas en menos de 30 días</div></div>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔐 Escrow</div>
+          <div class="config-row">
+            <div><div class="config-label">Tiempo para confirmar recepción</div><div class="config-desc">El comprador tiene este plazo para confirmar que recibió la entrada</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><input type="range" min="12" max="72" value="48" oninput="this.nextSibling.textContent=this.value+'hs'"><span class="config-val">48hs</span></div>
+          </div>
+          <div class="config-row">
+            <div><div class="config-label">Liberación automática si no hay disputa</div><div class="config-desc">Después del plazo, liberar fondos automáticamente</div></div>
+            <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="config-row">
+            <div><div class="config-label">Tiempo máximo de disputa abierta</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><input type="range" min="24" max="168" value="72" oninput="this.nextSibling.textContent=this.value+'hs'"><span class="config-val">72hs</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">⭐ Puntos y niveles</div>
+          <div class="config-row">
+            <div><div class="config-label">Puntos por compra completada</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><input type="range" min="50" max="500" step="50" value="200" oninput="this.nextSibling.textContent=this.value+' pts'"><span class="config-val">200 pts</span></div>
+          </div>
+          <div class="config-row">
+            <div><div class="config-label">Puntos por venta completada</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><input type="range" min="50" max="500" step="50" value="150" oninput="this.nextSibling.textContent=this.value+' pts'"><span class="config-val">150 pts</span></div>
+          </div>
+          <div class="config-row">
+            <div><div class="config-label">Umbral Fan → Fan Plus</div></div>
+            <div style="display:flex;align-items:center;gap:10px;"><input type="range" min="500" max="5000" step="500" value="2000" oninput="this.nextSibling.textContent=this.value+' pts'"><span class="config-val">2000 pts</span></div>
+          </div>
+          <div class="config-row">
+            <div><div class="config-label">Precio Fan Pro (mensual)</div></div>
+            <div class="config-val">$14.000 / mes</div>
+          </div>
+          <div class="config-row">
+            <div><div class="config-label">Precio Fan Elite (mensual)</div></div>
+            <div class="config-val">$28.000 / mes</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══ MODAL: DRILL-DOWN ══ -->
+<div id="drillModal">
+  <div id="drillBox">
+    <div class="drill-head">
+      <div>
+        <div id="drill-title" style="font-size:1.05rem;font-weight:800;"></div>
+        <div id="drill-sub" style="font-size:0.76rem;color:var(--text-dim);margin-top:3px;"></div>
+      </div>
+      <button onclick="closeDrill()" style="background:rgba(255,255,255,.07);border:none;color:var(--text);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:1rem;flex-shrink:0;">✕</button>
+    </div>
+    <div id="drill-kpi-row" class="drill-kpi-row" style="grid-template-columns:repeat(4,1fr);"></div>
+    <div id="drill-content" class="drill-content"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: DETALLE USUARIO ══ -->
+<div class="modal-bg" id="userModal">
+  <div class="modal-box" style="width:min(560px,94vw);">
+    <div class="modal-head">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div id="um-avatar" style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;"></div>
+        <div>
+          <div id="um-name" style="font-weight:800;font-size:1rem;"></div>
+          <div id="um-email" style="font-size:0.75rem;color:var(--text-dim);"></div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('userModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px;">
+      <div id="um-body"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-warn" onclick="closeModal('userModal');openSancionModal()">⚠️ Advertir</button>
+      <button class="btn-danger" onclick="closeModal('userModal');showToast('Suspensión aplicada','⏸️')">⏸️ Suspender</button>
+      <button class="btn-primary" onclick="closeModal('userModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: NUEVA SANCIÓN ══ -->
+<div class="modal-bg" id="sancionModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div style="font-weight:800;">⚠️ Nueva sanción</div>
+      <button class="modal-close" onclick="closeModal('sancionModal')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label style="font-size:0.78rem;color:var(--text-dim);display:block;margin-bottom:5px;">Usuario</label>
+        <input class="search-input" placeholder="@usuario" style="width:100%;">
+      </div>
+      <div>
+        <label style="font-size:0.78rem;color:var(--text-dim);display:block;margin-bottom:5px;">Tipo de sanción</label>
+        <div style="display:flex;gap:8px;">
+          <button class="filter-chip active" id="st-warn" onclick="selectSancionType('warn',this)">⚠️ Advertencia</button>
+          <button class="filter-chip" id="st-susp" onclick="selectSancionType('susp',this)">⏸️ Suspensión</button>
+          <button class="filter-chip" id="st-ban"  onclick="selectSancionType('ban',this)">🚫 Baneo</button>
+        </div>
+      </div>
+      <div id="sancionDuracion">
+        <label style="font-size:0.78rem;color:var(--text-dim);display:block;margin-bottom:5px;">Duración</label>
+        <div style="display:flex;gap:8px;">
+          <button class="filter-chip active">24hs</button>
+          <button class="filter-chip">72hs</button>
+          <button class="filter-chip">7 días</button>
+          <button class="filter-chip">30 días</button>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;color:var(--text-dim);display:block;margin-bottom:5px;">Motivo</label>
+        <textarea class="search-input" rows="3" placeholder="Descripción del motivo de la sanción…" style="width:100%;resize:none;"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeModal('sancionModal')">Cancelar</button>
+      <button class="btn-danger" onclick="closeModal('sancionModal');showToast('Sanción aplicada correctamente','✅')">Aplicar sanción</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: DETALLE DISPUTA ══ -->
+<div class="modal-bg" id="disputaModal">
+  <div class="modal-box" style="width:min(600px,95vw);">
+    <div class="modal-head">
+      <div>
+        <div id="dm-title" style="font-weight:800;font-size:1rem;"></div>
+        <div id="dm-sub" style="font-size:0.75rem;color:var(--text-dim);margin-top:2px;"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('disputaModal')">✕</button>
+    </div>
+    <div class="modal-body" id="dm-body" style="padding:16px 20px;"></div>
+    <div class="modal-foot">
+      <button class="btn-sm" onclick="closeModal('disputaModal');showToast('Escrow liberado al comprador','✅')" style="color:var(--green);border-color:rgba(34,197,94,.3);">💚 Liberar → Comprador</button>
+      <button class="btn-sm" onclick="closeModal('disputaModal');showToast('Escrow liberado al vendedor','✅')" style="color:var(--blue);border-color:rgba(59,130,246,.3);">💙 Liberar → Vendedor</button>
+      <button class="btn-danger" onclick="closeModal('disputaModal');showToast('Escrow congelado indefinidamente','🔒')">🔒 Congelar</button>
+      <button class="btn-outline" onclick="closeModal('disputaModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  DATOS
+// ══════════════════════════════════════
+
+const USERS = [
+  { id:'u01', user:'@marinaR92',   email:'marina@gmail.com',   nivel:'Fan Plus',  renaper:true,  reg:'Ene 2025', compras:14, ventas:3,  pts:3240, estado:'activo',    color:'#0d9488' },
+  { id:'u02', user:'@lucas_g',     email:'lucas@outlook.com',  nivel:'Fan Pro',   renaper:true,  reg:'Mar 2025', compras:28, ventas:12, pts:7810, estado:'activo',    color:'#3b82f6' },
+  { id:'u03', user:'@caroF_ba',    email:'caro@gmail.com',     nivel:'Fan',       renaper:true,  reg:'Jun 2025', compras:6,  ventas:1,  pts:1240, estado:'activo',    color:'#7c3aed' },
+  { id:'u04', user:'@juanP92',     email:'juan@yahoo.com',     nivel:'Rookie',    renaper:false, reg:'Nov 2025', compras:2,  ventas:0,  pts:300,  estado:'activo',    color:'#64748b' },
+  { id:'u05', user:'@nicoBA',      email:'nico@gmail.com',     nivel:'Fan Elite', renaper:true,  reg:'Feb 2025', compras:41, ventas:28, pts:12400,estado:'activo',    color:'#f59e0b' },
+  { id:'u06', user:'@sofiaM',      email:'sofia@live.com',     nivel:'Fan Plus',  renaper:true,  reg:'Abr 2025', compras:9,  ventas:4,  pts:2890, estado:'activo',    color:'#0d9488' },
+  { id:'u07', user:'@fake_reseller',email:'fake@anon.com',     nivel:'Rookie',    renaper:false, reg:'Dic 2025', compras:0,  ventas:47, pts:0,    estado:'suspendido',color:'#ef4444' },
+  { id:'u08', user:'@pablo_rk',    email:'pablo@gmail.com',    nivel:'Fan Elite', renaper:true,  reg:'Ene 2025', compras:55, ventas:18, pts:18200,estado:'activo',    color:'#f59e0b' },
+  { id:'u09', user:'@lauraM',      email:'laura@outlook.com',  nivel:'Fan',       renaper:true,  reg:'May 2025', compras:7,  ventas:2,  pts:1580, estado:'activo',    color:'#7c3aed' },
+  { id:'u10', user:'@diego_fc',    email:'diego@gmail.com',    nivel:'Fan Pro',   renaper:true,  reg:'Mar 2025', compras:22, ventas:9,  pts:6200, estado:'activo',    color:'#3b82f6' },
+];
+
+const NIVEL_PILL = {
+  'Rookie':    'pill-gray',
+  'Fan':       'pill-teal',
+  'Fan Plus':  'pill-teal',
+  'Fan Pro':   'pill-blue',
+  'Fan Elite': 'pill-gold',
+};
+
+const EVENTS_DATA = [
+  { name:'Coldplay',       venue:'Estadio Monumental',    fecha:'12–14 Jun 2026', cap:'57.000', vendidas:'52.410', reventa:'4.820', rec:'$774M',  estado:'activo'  },
+  { name:'River vs Vélez', venue:'Estadio Monumental',    fecha:'15 Jun 2026',    cap:'84.000', vendidas:'79.200', reventa:'3.200', rec:'$651M',  estado:'activo'  },
+  { name:'Lali',           venue:'Movistar Arena',         fecha:'20 Jun 2026',    cap:'15.000', vendidas:'13.400', reventa:'1.200', rec:'$86M',   estado:'activo'  },
+  { name:'Duki',           venue:'Estadio GEBA',           fecha:'28 Jun 2026',    cap:'22.000', vendidas:'9.800',  reventa:'820',   rec:'$91M',   estado:'proximo' },
+  { name:'Bizarrap',       venue:'Campo Argentino de Polo',fecha:'5 Jul 2026',     cap:'50.000', vendidas:'12.000', reventa:'2.100', rec:'$252M',  estado:'proximo' },
+  { name:'Bersuit',        venue:'Teatro Gran Rex',        fecha:'18 May 2026',    cap:'2.200',  vendidas:'2.200',  reventa:'0',     rec:'$22M',   estado:'pasado'  },
+];
+
+const SANCIONES_ACTIVAS = [
+  { user:'@fake_reseller', tipo:'suspension', motivo:'Publicación masiva de entradas sin verificar', fecha:'10/06/2026', dur:'72hs', admin:'SA' },
+  { user:'@resellBot99',   tipo:'ban',        motivo:'Uso de bots para pujas automáticas',           fecha:'09/06/2026', dur:'Permanente', admin:'SA' },
+  { user:'@speculador_mx', tipo:'warning',    motivo:'Precio de reventa excede +120% del oficial',   fecha:'10/06/2026', dur:'Activa',     admin:'SA' },
+];
+
+const SANCIONES_HIST = [
+  { user:'@juan_anon',   tipo:'warning',    motivo:'Lenguaje inapropiado en negociación', fecha:'08/06/2026', estado:'resuelta' },
+  { user:'@resel_01',    tipo:'suspension', motivo:'Publicación de entradas duplicadas',  fecha:'07/06/2026', estado:'vencida'  },
+  { user:'@carla_xx',    tipo:'warning',    motivo:'Incumplimiento de venta acordada',    fecha:'05/06/2026', estado:'resuelta' },
+  { user:'@tomas_bot',   tipo:'ban',        motivo:'Fraude: entradas falsas detectadas',  fecha:'03/06/2026', estado:'activa'   },
+  { user:'@speculador2', tipo:'warning',    motivo:'Precio excesivo — advertencia preventiva', fecha:'01/06/2026', estado:'resuelta' },
+];
+
+const DISPUTAS = [
+  { id:'D-441', prioridad:'alta',  comprador:'@marinaR92',  vendedor:'@lucas_g',   evento:'Coldplay · Platea Baja', monto:'$85.000', motivo:'Entrada entregada ilegible / QR inválido', abierta:'hace 4 min',  escrow:'congelado', msgs:[
+    { quien:'@marinaR92', texto:'El QR que me enviaron no funciona, probé 3 veces en la aplicación oficial', hora:'14:02' },
+    { quien:'@lucas_g',   texto:'Yo la usé antes sin problemas, debe ser un error del sistema', hora:'14:08' },
+    { quien:'Admin',      texto:'Verificando autenticidad del ticket con el organizador', hora:'14:15' },
+  ]},
+  { id:'D-440', prioridad:'alta',  comprador:'@caroF_ba',   vendedor:'@nicoBA',    evento:'River vs Vélez · Popular', monto:'$38.000', motivo:'Vendedor no transfirió la entrada dentro del plazo', abierta:'hace 1 hs', escrow:'congelado', msgs:[
+    { quien:'@caroF_ba', texto:'Pagué hace 2 horas y todavía no recibo nada', hora:'13:10' },
+    { quien:'@nicoBA',   texto:'Tuve un problema técnico, lo soluciono en 20 minutos', hora:'13:45' },
+  ]},
+  { id:'D-438', prioridad:'media', comprador:'@sofiaM',     vendedor:'@juanP92',   evento:'Lali · Platea Alta', monto:'$62.000', motivo:'Sector diferente al publicado', abierta:'hace 3 hs', escrow:'retenido', msgs:[
+    { quien:'@sofiaM',  texto:'Compré Platea Baja y me asignaron Platea Alta', hora:'11:20' },
+    { quien:'@juanP92', texto:'En mi publicación decía Platea, no especificaba cual', hora:'11:35' },
+  ]},
+  { id:'D-437', prioridad:'media', comprador:'@lauraM',     vendedor:'@roberto_a', evento:'Duki · Campo', monto:'$93.000', motivo:'Precio acordado difiere del cobrado', abierta:'hace 5 hs', escrow:'retenido', msgs:[
+    { quien:'@lauraM',    texto:'Acordamos $90.000 y me cobraron $93.000', hora:'09:10' },
+    { quien:'@roberto_a', texto:'El precio incluía el cargo por servicio', hora:'09:30' },
+  ]},
+  { id:'D-435', prioridad:'baja',  comprador:'@marce_g',    vendedor:'@federicoT', evento:'Bizarrap · Box', monto:'$280.000', motivo:'Demora en entrega — usuario impaciente', abierta:'hace 8 hs', escrow:'activo', msgs:[
+    { quien:'@marce_g',    texto:'Hace 6 horas que espero, cuándo llega la entrada?', hora:'06:45' },
+    { quien:'@federicoT',  texto:'La envío a las 18hs cuando salgo del trabajo', hora:'07:00' },
+  ]},
+];
+
+const ESCROW_FROZEN = [
+  { id:'ESC-2287', comprador:'@marinaR92', vendedor:'@lucas_g',   evento:'Coldplay · Platea', monto:'$85.000', hace:'4 min',  motivo:'Disputa D-441' },
+  { id:'ESC-2286', comprador:'@caroF_ba',  vendedor:'@nicoBA',    evento:'River · Popular',   monto:'$38.000', hace:'1 hs',   motivo:'Disputa D-440' },
+  { id:'ESC-2280', comprador:'@sofiaM',    vendedor:'@juanP92',   evento:'Lali · Platea',     monto:'$62.000', hace:'3 hs',   motivo:'Disputa D-438' },
+  { id:'ESC-2278', comprador:'@lauraM',    vendedor:'@roberto_a', evento:'Duki · Campo',      monto:'$93.000', hace:'5 hs',   motivo:'Disputa D-437' },
+  { id:'ESC-2270', comprador:'@tomasV',    vendedor:'@nicoBA',    evento:'Duki · VIP',        monto:'$140.000',hace:'6 hs',   motivo:'Investigación preventiva' },
+  { id:'ESC-2261', comprador:'@marce_g',   vendedor:'@federicoT', evento:'Bizarrap · Box',    monto:'$280.000',hace:'8 hs',   motivo:'Disputa D-435' },
+  { id:'ESC-2244', comprador:'@pablo_rk',  vendedor:'@speculador_mx',evento:'Coldplay · VIP', monto:'$320.000',hace:'14 hs',  motivo:'Verificación de identidad pendiente' },
+  { id:'ESC-2230', comprador:'@diego_fc',  vendedor:'@resellBOT', evento:'Bizarrap · Campo',  monto:'$210.000',hace:'1 día',  motivo:'Cuenta suspendida' },
+];
+
+const AUDIT_LOG = [
+  { cat:'sanciones', icon:'🚫', color:'rgba(239,68,68,.12)', action:'Suspensión aplicada a @fake_reseller (72hs)', admin:'SuperAdmin', time:'10/06/2026 14:18' },
+  { cat:'escrow',    icon:'🔒', color:'rgba(13,148,136,.1)',  action:'Escrow #ESC-2287 congelado por disputa D-441', admin:'Sistema', time:'10/06/2026 14:15' },
+  { cat:'usuarios',  icon:'✅', color:'rgba(34,197,94,.1)',   action:'Escrow #ESC-2285 liberado — @lucas_g → @caroF_ba', admin:'Sistema', time:'10/06/2026 14:07' },
+  { cat:'sanciones', icon:'⚠️', color:'rgba(245,158,11,.1)', action:'Advertencia enviada a @speculador_mx (precio excesivo)', admin:'SuperAdmin', time:'10/06/2026 13:50' },
+  { cat:'usuarios',  icon:'⭐', color:'rgba(124,58,237,.12)', action:'Fan Elite activado manualmente — @pablo_rk', admin:'SuperAdmin', time:'10/06/2026 13:30' },
+  { cat:'config',    icon:'⚙️', color:'rgba(59,130,246,.1)', action:'Umbral de alerta modificado: 40% → 35%', admin:'SuperAdmin', time:'10/06/2026 12:10' },
+  { cat:'escrow',    icon:'✅', color:'rgba(34,197,94,.1)',   action:'Escrow #ESC-2279 liberado — $93.000 a @roberto_a', admin:'Sistema', time:'10/06/2026 11:55' },
+  { cat:'sanciones', icon:'🚫', color:'rgba(239,68,68,.12)', action:'Ban permanente aplicado a @resellBot99', admin:'SuperAdmin', time:'09/06/2026 18:40' },
+  { cat:'config',    icon:'⚙️', color:'rgba(59,130,246,.1)', action:'Comisión Fan Pro modificada: 5% → 4%', admin:'SuperAdmin', time:'09/06/2026 16:20' },
+  { cat:'usuarios',  icon:'👤', color:'rgba(100,116,139,.1)', action:'Usuario @carla_xx — RENAPER verificado', admin:'Sistema', time:'09/06/2026 15:00' },
+  { cat:'escrow',    icon:'🔒', color:'rgba(13,148,136,.1)',  action:'Escrow #ESC-2270 congelado — investigación preventiva', admin:'SuperAdmin', time:'09/06/2026 08:30' },
+  { cat:'sanciones', icon:'⚠️', color:'rgba(245,158,11,.1)', action:'Advertencia a @juan_anon — lenguaje inapropiado', admin:'SuperAdmin', time:'08/06/2026 20:15' },
+];
+
+const SUB_PRO = [
+  { user:'@lucas_g',   ini:'01/05/2026', sig:'01/07/2026', monto:'$14.000/mes', estado:'activo' },
+  { user:'@caroF_ba',  ini:'15/05/2026', sig:'15/06/2026', monto:'$14.000/mes', estado:'activo' },
+  { user:'@sofiaM',    ini:'01/06/2026', sig:'01/07/2026', monto:'$14.000/mes', estado:'activo' },
+  { user:'@diego_fc',  ini:'15/05/2026', sig:'15/06/2026', monto:'$14.000/mes', estado:'cancelar' },
+];
+
+const SUB_ELITE = [
+  { user:'@nicoBA',    ini:'01/03/2026', sig:'01/09/2026',  monto:'$25.000/bim', estado:'activo' },
+  { user:'@pablo_rk',  ini:'01/06/2026', sig:'01/07/2026',  monto:'$28.000/mes', estado:'activo' },
+  { user:'@vale_bsas', ini:'01/06/2026', sig:'01/07/2026',  monto:'$28.000/mes', estado:'cancelar' },
+];
+
+// ══════════════════════════════════════
+//  RENDER FUNCTIONS
+// ══════════════════════════════════════
+
+function renderAll() {
+  renderUsers(USERS);
+  renderEvents(EVENTS_DATA);
+  renderSanciones();
+  renderDisputas();
+  renderEscrow();
+  renderSubs();
+  renderAnalytics();
+  renderAuditLog(AUDIT_LOG);
+}
+
+// USERS
+function renderUsers(list) {
+  const tb = document.getElementById('usersTbody');
+  tb.innerHTML = list.map(u => {
+    const nivelClass = NIVEL_PILL[u.nivel] || 'pill-gray';
+    const estadoPill = u.estado === 'activo'
+      ? '<span class="pill pill-green">●&nbsp;Activo</span>'
+      : '<span class="pill pill-red">●&nbsp;Suspendido</span>';
+    return `<tr onclick="openUserModal('${u.id}')">
+      <td><div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:30px;height:30px;border-radius:50%;background:${u.color}22;border:1px solid ${u.color}44;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;color:${u.color};">${u.user.substring(1,3).toUpperCase()}</div>
+        <div><div style="font-weight:600;">${u.user}</div><div style="font-size:0.7rem;color:var(--text-dim);">${u.email}</div></div>
+      </div></td>
+      <td><span class="pill ${nivelClass}">${u.nivel}</span></td>
+      <td>${u.renaper ? '<span class="pill pill-green">✓ Verificado</span>' : '<span class="pill pill-gray">Pendiente</span>'}</td>
+      <td style="color:var(--text-dim);font-size:0.78rem;">${u.reg}</td>
+      <td style="text-align:center;font-weight:700;">${u.compras}</td>
+      <td style="text-align:center;font-weight:700;">${u.ventas}</td>
+      <td style="color:var(--teal-light);font-weight:700;">${u.pts.toLocaleString()}</td>
+      <td>${estadoPill}</td>
+      <td style="display:flex;gap:5px;margin-top:2px;">
+        <button class="btn-sm" onclick="event.stopPropagation();openUserModal('${u.id}')">Ver</button>
+        <button class="btn-warn" onclick="event.stopPropagation();showToast('Advertencia enviada a ${u.user}','⚠️')">Advertir</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterUsers(q) {
+  const q2 = q.toLowerCase();
+  renderUsers(USERS.filter(u => u.user.toLowerCase().includes(q2) || u.email.toLowerCase().includes(q2)));
+}
+function filterUserLevel(lvl, btn) {
+  document.querySelectorAll('#tab-usuarios .filter-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderUsers(lvl==='todos' ? USERS : USERS.filter(u=>u.nivel.toLowerCase().replace(' ','').replace('+','plus')===lvl));
+}
+
+// EVENTS
+function renderEvents(list) {
+  const tb = document.getElementById('eventsTbody');
+  tb.innerHTML = list.map(e => {
+    const pill = e.estado==='activo' ? '<span class="pill pill-green">Activo</span>'
+                : e.estado==='proximo' ? '<span class="pill pill-blue">Próximo</span>'
+                : '<span class="pill pill-gray">Finalizado</span>';
+    return `<tr onclick="showToast('${e.name} — detalle próximamente','🎟️')">
+      <td><strong>${e.name}</strong></td>
+      <td style="font-size:0.78rem;color:var(--text-dim);">${e.venue}</td>
+      <td style="font-size:0.78rem;">${e.fecha}</td>
+      <td>${e.cap}</td>
+      <td style="color:var(--green);font-weight:700;">${e.vendidas}</td>
+      <td style="color:var(--orange);">${e.reventa}</td>
+      <td style="color:var(--teal-light);font-weight:700;">${e.rec}</td>
+      <td>${pill}</td>
+      <td><button class="btn-sm" onclick="event.stopPropagation();showToast('Panel del organizador — próximamente','⚙️')">Ver panel</button></td>
+    </tr>`;
+  }).join('');
+}
+function filterEvents(q) {
+  renderEvents(EVENTS_DATA.filter(e=>e.name.toLowerCase().includes(q.toLowerCase())||e.venue.toLowerCase().includes(q.toLowerCase())));
+}
+function filterEventStatus(st, btn) {
+  document.querySelectorAll('#tab-eventos .filter-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEvents(st==='todos' ? EVENTS_DATA : EVENTS_DATA.filter(e=>e.estado===st));
+}
+
+// SANCIONES
+function renderSanciones() {
+  const tb = document.getElementById('sancionesTbody');
+  tb.innerHTML = SANCIONES_ACTIVAS.map(s => {
+    const tipoPill = s.tipo==='ban' ? '<span class="pill pill-red">🚫 Baneo</span>'
+                   : s.tipo==='suspension' ? '<span class="pill pill-orange">⏸️ Suspensión</span>'
+                   : '<span class="pill pill-gold">⚠️ Advertencia</span>';
+    return `<tr>
+      <td><strong>${s.user}</strong></td>
+      <td>${tipoPill}</td>
+      <td style="font-size:0.78rem;color:var(--text-dim);max-width:200px;">${s.motivo}</td>
+      <td style="font-size:0.78rem;">${s.fecha}</td>
+      <td>${s.dur}</td>
+      <td style="font-size:0.78rem;">${s.admin}</td>
+      <td style="display:flex;gap:5px;margin-top:2px;">
+        <button class="btn-sm" onclick="showToast('Sanción levantada para ${s.user}','✅')" style="color:var(--green);border-color:rgba(34,197,94,.3);">Levantar</button>
+        <button class="btn-danger" onclick="showToast('Escalado a baneo permanente','🚫')">Escalar</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const tb2 = document.getElementById('sancionesHistTbody');
+  tb2.innerHTML = SANCIONES_HIST.map(s => {
+    const tipoPill = s.tipo==='ban' ? '<span class="pill pill-red">Baneo</span>'
+                   : s.tipo==='suspension' ? '<span class="pill pill-orange">Suspensión</span>'
+                   : '<span class="pill pill-gold">Advertencia</span>';
+    const estPill = s.estado==='resuelta' ? '<span class="pill pill-green">Resuelta</span>'
+                  : s.estado==='vencida'  ? '<span class="pill pill-gray">Vencida</span>'
+                  : '<span class="pill pill-red">Activa</span>';
+    return `<tr>
+      <td><strong>${s.user}</strong></td>
+      <td>${tipoPill}</td>
+      <td style="font-size:0.78rem;color:var(--text-dim);">${s.motivo}</td>
+      <td style="font-size:0.78rem;">${s.fecha}</td>
+      <td>${estPill}</td>
+    </tr>`;
+  }).join('');
+}
+
+// DISPUTAS
+function renderDisputas() {
+  const cont = document.getElementById('disputasList');
+  cont.innerHTML = DISPUTAS.map((d,i) => {
+    const priClass = 'priority-' + d.prioridad;
+    const priPill  = d.prioridad==='alta' ? '<span class="pill pill-red">🔴 Alta prioridad</span>'
+                   : d.prioridad==='media' ? '<span class="pill pill-gold">🟡 Media</span>'
+                   : '<span class="pill pill-green">🟢 Baja</span>';
+    const escPill  = d.escrow==='congelado' ? '<span class="pill pill-red">🔒 Congelado</span>'
+                   : d.escrow==='retenido' ? '<span class="pill pill-gold">⏸️ Retenido</span>'
+                   : '<span class="pill pill-teal">✅ Activo</span>';
+    return `<div class="dispute-card ${priClass}" onclick="openDisputaModal(${i})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="pill pill-gray">${d.id}</span>
+          ${priPill}
+          ${escPill}
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-dim);">Abierta ${d.abierta}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:14px;align-items:center;">
+        <div>
+          <div style="font-size:0.68rem;color:var(--text-dim);margin-bottom:2px;">Comprador</div>
+          <div style="font-weight:700;font-size:0.85rem;">${d.comprador}</div>
+        </div>
+        <div>
+          <div style="font-size:0.68rem;color:var(--text-dim);margin-bottom:2px;">Vendedor</div>
+          <div style="font-weight:700;font-size:0.85rem;">${d.vendedor}</div>
+        </div>
+        <div>
+          <div style="font-size:0.68rem;color:var(--text-dim);margin-bottom:2px;">Evento · Monto</div>
+          <div style="font-size:0.78rem;">${d.evento}</div>
+          <div style="font-weight:700;color:var(--teal-light);">${d.monto}</div>
+        </div>
+        <button class="btn-primary" onclick="event.stopPropagation();openDisputaModal(${i})" style="white-space:nowrap;">Ver disputa →</button>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05);font-size:0.78rem;color:var(--text-dim);">
+        <strong style="color:var(--text);">Motivo:</strong> ${d.motivo}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ESCROW
+function renderEscrow() {
+  const tb = document.getElementById('escrowTbody');
+  tb.innerHTML = ESCROW_FROZEN.map(e => `<tr>
+    <td><span class="pill pill-gray">#${e.id}</span></td>
+    <td>${e.comprador}</td>
+    <td>${e.vendedor}</td>
+    <td style="font-size:0.78rem;">${e.evento}</td>
+    <td style="font-weight:700;color:var(--teal-light);">${e.monto}</td>
+    <td style="font-size:0.78rem;color:var(--text-dim);">${e.hace}</td>
+    <td style="font-size:0.78rem;color:var(--red);">${e.motivo}</td>
+    <td style="display:flex;gap:5px;margin-top:2px;">
+      <a href="escrow-visual.html" class="btn-sm" style="text-decoration:none;color:var(--teal-light);border-color:rgba(13,148,136,.3);">🔐 Ver</a>
+      <button class="btn-sm" onclick="showToast('Liberado → comprador','✅')" style="color:var(--green);border-color:rgba(34,197,94,.3);">→ Comp.</button>
+      <button class="btn-sm" onclick="showToast('Liberado → vendedor','✅')" style="color:var(--blue);border-color:rgba(59,130,246,.3);">→ Vend.</button>
+    </td>
+  </tr>`).join('');
+}
+
+// SUBS
+function renderSubs() {
+  const listPro = document.getElementById('subProList');
+  listPro.innerHTML = SUB_PRO.map(s => {
+    const badge = s.estado==='cancelar' ? '<span class="pill pill-red">Cancelar</span>' : '<span class="pill pill-blue">Activo</span>';
+    return `<div class="sub-card">
+      <div class="sub-avatar" style="background:rgba(59,130,246,.1);color:#60a5fa;">${s.user.substring(1,3).toUpperCase()}</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:0.85rem;">${s.user}</div>
+        <div style="font-size:0.72rem;color:var(--text-dim);">Desde ${s.ini} · Renueva ${s.sig}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-weight:700;font-size:0.85rem;color:var(--teal-light);">${s.monto}</div>
+        ${badge}
+      </div>
+    </div>`;
+  }).join('');
+
+  const listElite = document.getElementById('subEliteList');
+  listElite.innerHTML = SUB_ELITE.map(s => {
+    const badge = s.estado==='cancelar' ? '<span class="pill pill-red">Cancelar</span>' : '<span class="pill pill-gold">Activo</span>';
+    return `<div class="sub-card">
+      <div class="sub-avatar" style="background:rgba(245,158,11,.1);color:var(--gold);">${s.user.substring(1,3).toUpperCase()}</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:0.85rem;">${s.user}</div>
+        <div style="font-size:0.72rem;color:var(--text-dim);">Desde ${s.ini} · Renueva ${s.sig}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-weight:700;font-size:0.85rem;color:var(--teal-light);">${s.monto}</div>
+        ${badge}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ANALYTICS
+function renderAnalytics() {
+  // Bar charts via HTML bars
+  renderBarList('eventBreakdown', [
+    { label:'Coldplay',       val:42, color:'#0d9488', amt:'$1.77M' },
+    { label:'River vs Vélez', val:28, color:'#3b82f6', amt:'$1.18M' },
+    { label:'Lali',           val:14, color:'#7c3aed', amt:'$588k'  },
+    { label:'Duki',           val:10, color:'#f59e0b', amt:'$420k'  },
+    { label:'Otros',          val:6,  color:'#64748b', amt:'$252k'  },
+  ]);
+  renderBarList('channelChart', [
+    { label:'App móvil',  val:58, color:'#0d9488', amt:'58%' },
+    { label:'Web',        val:29, color:'#3b82f6', amt:'29%' },
+    { label:'API',        val:13, color:'#7c3aed', amt:'13%' },
+  ]);
+  renderBarList('levelChart', [
+    { label:'Fan Plus',  val:34, color:'#0d9488', amt:'34%' },
+    { label:'Fan',       val:28, color:'#14b8a6', amt:'28%' },
+    { label:'Fan Pro',   val:22, color:'#3b82f6', amt:'22%' },
+    { label:'Fan Elite', val:10, color:'#f59e0b', amt:'10%' },
+    { label:'Rookie',    val:6,  color:'#64748b', amt:'6%'  },
+  ]);
+  renderBarList('paymentChart', [
+    { label:'Tarjeta crédito', val:47, color:'#0d9488', amt:'47%' },
+    { label:'USDT',            val:28, color:'#f59e0b', amt:'28%' },
+    { label:'Débito',          val:16, color:'#3b82f6', amt:'16%' },
+    { label:'CBU/CVU',         val:9,  color:'#7c3aed', amt:'9%'  },
+  ]);
+  drawRevenueChart();
+}
+
+function renderBarList(id, items) {
+  document.getElementById(id).innerHTML = items.map(it => `
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:4px;">
+        <span style="color:var(--text-dim);">${it.label}</span>
+        <span style="font-weight:700;color:var(--text);">${it.amt}</span>
+      </div>
+      <div style="height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${it.val}%;background:${it.color};border-radius:4px;transition:width .6s;"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function drawRevenueChart() {
+  const canvas = document.getElementById('revenueChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const data = [210,195,340,280,420,380,510,460,620,580,720,680,810,750,890,820,960,900,1050,980,1100,1020,1180,1100,1240,1160,1310,1280,1380,1420];
+  const W = canvas.offsetWidth || 400, H = 180;
+  canvas.width = W; canvas.height = H;
+  const max = Math.max(...data), pad = 20;
+  const barW = (W - pad * 2) / data.length;
+  ctx.clearRect(0,0,W,H);
+  data.forEach((v,i) => {
+    const x = pad + i * barW + barW * 0.15;
+    const h = ((v/max) * (H - pad * 1.5));
+    const y = H - h - 10;
+    const grd = ctx.createLinearGradient(0,y,0,H);
+    grd.addColorStop(0,'#0d9488');
+    grd.addColorStop(1,'rgba(13,148,136,.15)');
+    ctx.fillStyle = grd;
+    const bw = barW * 0.7;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, bw, h, [3,3,0,0]);
+    else ctx.rect(x, y, bw, h);
+    ctx.fill();
+  });
+  // X axis labels
+  ctx.fillStyle = 'rgba(148,163,184,.5)';
+  ctx.font = '9px sans-serif';
+  ctx.textAlign = 'center';
+  ['D1','','','D4','','','D7','','','D10','','','D13','','','D16','','','D19','','','D22','','','D25','','','D28','','','D30'].forEach((lbl,i) => {
+    if (lbl) ctx.fillText(lbl, pad + i * barW + barW * 0.5, H - 1);
+  });
+}
+
+function switchAnalyticsPeriod(period, btn) {
+  document.querySelectorAll('#tab-analytics .filter-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const vals = { '7d': ['$980k','↑ +18%','7.1%','3.1 hs','68'], '30d': ['$4.2M','↑ +31%','6.8%','3.4 hs','72'], '90d': ['$11.8M','↑ +44%','6.4%','3.8 hs','70'] };
+  const v = vals[period];
+  document.getElementById('an-rev').textContent = v[0];
+  document.getElementById('an-rev-d').textContent = v[1] + ' vs período ant.';
+  document.getElementById('an-conv').textContent = v[2];
+  document.getElementById('an-time').textContent = v[3];
+  document.getElementById('an-nps').textContent  = v[4];
+  drawRevenueChart();
+}
+
+// AUDIT LOG
+function renderAuditLog(list) {
+  const cont = document.getElementById('auditLogList');
+  cont.innerHTML = `<div class="timeline">${list.map(l => `
+    <div class="tl-item">
+      <div class="tl-dot" style="background:${l.color};">${l.icon}</div>
+      <div class="tl-body">
+        <div class="tl-action">${l.action}</div>
+        <div class="tl-meta">${l.admin} · ${l.time}</div>
+      </div>
+    </div>
+  `).join('')}</div>`;
+}
+
+function filterAudit(cat, btn) {
+  document.querySelectorAll('#tab-auditlog .filter-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAuditLog(cat==='todos' ? AUDIT_LOG : AUDIT_LOG.filter(l=>l.cat===cat));
+}
+
+// ══════════════════════════════════════
+//  MODALS
+// ══════════════════════════════════════
+
+function openUserModal(id) {
+  const u = USERS.find(x=>x.id===id);
+  if (!u) return;
+  const av = document.getElementById('um-avatar');
+  av.textContent = u.user.substring(1,3).toUpperCase();
+  av.style.background = u.color + '22';
+  av.style.color = u.color;
+  av.style.border = '1px solid ' + u.color + '44';
+  document.getElementById('um-name').textContent  = u.user;
+  document.getElementById('um-email').textContent = u.email;
+  const nivelClass = NIVEL_PILL[u.nivel] || 'pill-gray';
+  const estadoPill = u.estado === 'activo'
+    ? '<span class="pill pill-green">●&nbsp;Activo</span>'
+    : '<span class="pill pill-red">●&nbsp;Suspendido</span>';
+  document.getElementById('um-body').innerHTML = `
+    <div class="ud-row"><span class="ud-label">Nivel</span><span class="ud-val"><span class="pill ${nivelClass}">${u.nivel}</span></span></div>
+    <div class="ud-row"><span class="ud-label">RENAPER</span><span class="ud-val">${u.renaper ? '<span class="pill pill-green">✓ Verificado</span>' : '<span class="pill pill-gold">Pendiente</span>'}</span></div>
+    <div class="ud-row"><span class="ud-label">Estado</span><span class="ud-val">${estadoPill}</span></div>
+    <div class="ud-row"><span class="ud-label">Registro</span><span class="ud-val">${u.reg}</span></div>
+    <div class="ud-row"><span class="ud-label">Compras</span><span class="ud-val">${u.compras}</span></div>
+    <div class="ud-row"><span class="ud-label">Ventas</span><span class="ud-val">${u.ventas}</span></div>
+    <div class="ud-row"><span class="ud-label">Puntos acumulados</span><span class="ud-val" style="color:var(--teal-light);">${u.pts.toLocaleString()} pts</span></div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+      <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:8px;">Últimas transacciones</div>
+      <div style="font-size:0.8rem;color:var(--text-dim);font-style:italic;">No hay transacciones para mostrar en esta demo.</div>
+    </div>
+  `;
+  openModal('userModal');
+}
+
+function openDisputaModal(idx) {
+  const d = DISPUTAS[idx];
+  document.getElementById('dm-title').textContent = `Disputa ${d.id} — ${d.evento}`;
+  document.getElementById('dm-sub').textContent   = `${d.comprador} ↔ ${d.vendedor} · ${d.monto} · Abierta ${d.abierta}`;
+  const msgs = d.msgs.map(m => {
+    const isAdmin = m.quien==='Admin';
+    const isComp  = m.quien===d.comprador;
+    return `<div style="display:flex;${isAdmin?'justify-content:center':''}; margin-bottom:10px;">
+      ${isAdmin ? `<div style="background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.2);border-radius:8px;padding:8px 14px;font-size:0.78rem;color:var(--teal-light);max-width:90%;text-align:center;">🛡️ Admin: ${m.texto} <span style="color:var(--muted);font-size:0.7rem;">${m.hora}</span></div>`
+      : `<div style="${isComp?'':'margin-left:auto;'}max-width:80%;">
+          <div style="font-size:0.68rem;color:var(--muted2);margin-bottom:3px;">${m.quien} · ${m.hora}</div>
+          <div style="background:${isComp?'var(--surface2)':'rgba(59,130,246,.08)'};border:1px solid ${isComp?'var(--border)':'rgba(59,130,246,.2)'};border-radius:10px;padding:10px 14px;font-size:0.82rem;">${m.texto}</div>
+        </div>`
+      }
+    </div>`;
+  }).join('');
+  document.getElementById('dm-body').innerHTML = `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:0.78rem;font-weight:700;color:var(--red);margin-bottom:8px;">📋 Motivo de la disputa</div>
+      <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.15);border-radius:8px;padding:10px 14px;font-size:0.82rem;">${d.motivo}</div>
+    </div>
+    <div style="font-size:0.78rem;font-weight:700;color:var(--text-dim);margin-bottom:10px;">💬 Historial de mensajes</div>
+    <div style="max-height:260px;overflow-y:auto;padding-right:4px;">${msgs}</div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <input class="search-input" placeholder="Agregar mensaje como admin…" style="flex:1;">
+      <button class="btn-primary" onclick="showToast('Mensaje enviado a ambas partes','📨')">Enviar</button>
+    </div>
+  `;
+  openModal('disputaModal');
+}
+
+function openSancionModal() { openModal('sancionModal'); }
+
+function selectSancionType(t, btn) {
+  document.querySelectorAll('#sancionModal .filter-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('sancionDuracion').style.display = t==='ban' ? 'none' : 'block';
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ══════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════
+
+function showTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('.sb-btn').forEach(b=>{
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+name+"'")) b.classList.add('active');
+  });
+  if (name==='analytics') setTimeout(drawRevenueChart, 50);
+}
+
+// ══════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════
+function showToast(msg, icon='✅') {
+  const t = document.getElementById('toast');
+  t.innerHTML = `<span style="font-size:1.1rem;">${icon}</span><span>${msg}</span>`;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+// ══════════════════════════════════════
+//  DRILL-DOWN DATA
+// ══════════════════════════════════════
+
+// 40 transacciones mock para el drill de hoy
+const TXN_HOY = (()=>{
+  const eventos = ['Coldplay','Coldplay','Coldplay','River vs Vélez','River vs Vélez','Lali','Duki','Bizarrap'];
+  const sectores = ['Platea Baja','Campo','VIP','Popular Norte','Visitante','Platea Alta','Campo','Box'];
+  const tipos = ['Compra directa','Puja aceptada','Compra directa','Contraoferta aceptada','Puja aceptada','Compra directa','Contraoferta aceptada','Puja aceptada'];
+  const precios = [85000,148000,320000,38000,45000,62000,93000,280000];
+  const compradores = ['@marinaR92','@lucas_g','@caroF_ba','@juanP92','@nicoBA','@sofiaM','@lauraM','@pablo_rk','@diego_fc','@marce_g'];
+  const vendedores  = ['@roberto_a','@federicoT','@tomasV','@claudiaP','@carlosH','@vale_bsas','@ramiro_q','@natalia_k','@julian_p','@ceci_rs'];
+  const tiempos = ['hace 2 min','hace 4 min','hace 7 min','hace 11 min','hace 14 min','hace 19 min','hace 23 min','hace 28 min','hace 35 min','hace 41 min','hace 48 min','hace 55 min','hace 1 hs','hace 1.1 hs','hace 1.2 hs','hace 1.4 hs','hace 1.6 hs','hace 1.8 hs','hace 2 hs','hace 2.1 hs'];
+  const rows = [];
+  for (let i=0;i<40;i++){
+    const ei = i%8;
+    rows.push({
+      id: 'TXN-' + (9000+i),
+      comprador: compradores[i%10],
+      vendedor: vendedores[i%10],
+      evento: eventos[ei],
+      sector: sectores[ei],
+      tipo: tipos[ei],
+      monto: '$' + (precios[ei]*(0.9+Math.random()*0.3)|0).toLocaleString('es-AR'),
+      comision: '$' + ((precios[ei]*0.07)*(0.9+Math.random()*0.3)|0).toLocaleString('es-AR'),
+      estado: i<38 ? 'completada' : 'pendiente',
+      tiempo: tiempos[i%20],
+    });
+  }
+  return rows;
+})();
+
+// ══════════════════════════════════════
+//  DRILL-DOWN BUILDERS
+// ══════════════════════════════════════
+
+const DRILL_CONFIGS = {
+
+  txn: {
+    title: '🎟️ Transacciones hoy — 8.432 operaciones',
+    sub: 'Detalle en tiempo real · Mostrando las últimas 40',
+    kpis: [
+      { val:'5.218', lbl:'Compras directas',       col:'var(--teal-light)' },
+      { val:'2.841', lbl:'Pujas / contraofertas',   col:'var(--blue)'      },
+      { val:'373',   lbl:'Canceladas / expiradas',  col:'var(--red)'       },
+      { val:'$21.600', lbl:'Ticket promedio',       col:'var(--gold)'      },
+    ],
+    render: () => {
+      const cols = '2fr 1.2fr 1.4fr 1fr 1fr 1fr 0.8fr';
+      let html = `
+        <div class="drill-section-title">Últimas transacciones</div>
+        <div style="display:grid;grid-template-columns:${cols};gap:0;margin-bottom:4px;">
+          ${['ID','Comprador → Vendedor','Evento · Sector','Tipo','Monto','Comisión','Estado'].map(h=>`<div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:4px 8px;">${h}</div>`).join('')}
+        </div>`;
+      html += TXN_HOY.map(t=>{
+        const estPill = t.estado==='completada'
+          ? '<span class="pill pill-green" style="font-size:0.62rem;">✓</span>'
+          : '<span class="pill pill-gold" style="font-size:0.62rem;">⏳</span>';
+        return `<div class="txn-row" style="grid-template-columns:${cols};">
+          <div style="font-size:0.72rem;color:var(--text-dim);font-family:monospace;">${t.id}</div>
+          <div style="font-size:0.75rem;"><span style="color:var(--teal-light);">${t.comprador}</span> <span style="color:var(--muted);">→</span> <span>${t.vendedor}</span></div>
+          <div><div style="font-size:0.78rem;font-weight:600;">${t.evento}</div><div style="font-size:0.68rem;color:var(--text-dim);">${t.sector}</div></div>
+          <div style="font-size:0.72rem;color:var(--text-dim);">${t.tipo}</div>
+          <div style="font-weight:700;color:var(--text);">${t.monto}</div>
+          <div style="font-size:0.75rem;color:var(--green);">${t.comision}</div>
+          <div>${estPill}<span style="font-size:0.65rem;color:var(--muted);margin-left:4px;">${t.tiempo}</span></div>
+        </div>`;
+      }).join('');
+      html += `<div style="text-align:center;padding:14px;font-size:0.75rem;color:var(--text-dim);">+ 8.392 transacciones más hoy — <button class="btn-sm" onclick="showToast('Exportando CSV completo…','📊')">Exportar todas</button></div>`;
+      return html;
+    }
+  },
+
+  volumen: {
+    title: '💰 Volumen total hoy — $182.340.000',
+    sub: 'Desglose por evento, sector y tipo de operación',
+    kpis: [
+      { val:'$84.2M', lbl:'Coldplay (46%)',         col:'var(--teal-light)' },
+      { val:'$51.1M', lbl:'River vs Vélez (28%)',   col:'var(--blue)'      },
+      { val:'$29.8M', lbl:'Lali + Duki (16%)',      col:'var(--purple)'    },
+      { val:'$17.2M', lbl:'Otros eventos (10%)',    col:'var(--gold)'      },
+    ],
+    render: () => {
+      const eventos = [
+        { nombre:'Coldplay', fechas:'12–14 Jun', txn:3241, vol:'$84.200.000', prom:'$148.000', rev:'52%', tend:'+28%', trendCol:'var(--green)' },
+        { nombre:'River vs Vélez', fechas:'15 Jun', txn:1892, vol:'$51.100.000', prom:'$82.000', rev:'38%', tend:'+41%', trendCol:'var(--green)' },
+        { nombre:'Lali', fechas:'20 Jun', txn:1104, vol:'$18.300.000', prom:'$64.000', rev:'29%', tend:'estable', trendCol:'var(--orange)' },
+        { nombre:'Duki', fechas:'28 Jun', txn:872, vol:'$11.500.000', prom:'$93.000', rev:'22%', tend:'+12%', trendCol:'var(--green)' },
+        { nombre:'Bizarrap', fechas:'5 Jul', txn:323, vol:'$12.400.000', prom:'$210.000', rev:'78%', tend:'+89% ⚠️', trendCol:'var(--red)' },
+        { nombre:'Otros', fechas:'Varios', txn:1000, vol:'$4.840.000', prom:'$44.000', rev:'18%', tend:'+5%', trendCol:'var(--green)' },
+      ];
+      const cols = '1.5fr 1fr 1.2fr 1fr 0.8fr 0.8fr';
+      let html = `
+        <div class="drill-section-title">Volumen por evento</div>
+        <div style="display:grid;grid-template-columns:${cols};gap:0;margin-bottom:4px;">
+          ${['Evento','Transacciones','Volumen','Precio prom.','Reventa %','Tendencia'].map(h=>`<div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:4px 8px;">${h}</div>`).join('')}
+        </div>`;
+      html += eventos.map(e => `<div class="txn-row" style="grid-template-columns:${cols};">
+        <div><div style="font-weight:700;">${e.nombre}</div><div style="font-size:0.68rem;color:var(--text-dim);">${e.fechas}</div></div>
+        <div style="font-weight:700;">${e.txn.toLocaleString()}</div>
+        <div style="font-weight:700;color:var(--teal-light);">${e.vol}</div>
+        <div>${e.prom}</div>
+        <div style="color:var(--orange);">${e.rev}</div>
+        <div style="font-weight:700;color:${e.trendCol};">${e.tend}</div>
+      </div>`).join('');
+      html += `
+        <div class="drill-section-title">Por tipo de operación</div>
+        ${[
+          { tipo:'Compra directa',        vol:'$98.1M', pct:54, col:'#0d9488' },
+          { tipo:'Puja / subasta',         vol:'$54.7M', pct:30, col:'#3b82f6' },
+          { tipo:'Contraoferta aceptada', vol:'$29.5M', pct:16, col:'#7c3aed' },
+        ].map(t=>`<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+          <div style="width:160px;font-size:0.8rem;">${t.tipo}</div>
+          <div style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;"><div style="height:100%;width:${t.pct}%;background:${t.col};border-radius:4px;"></div></div>
+          <div style="width:70px;text-align:right;font-weight:700;font-size:0.82rem;color:var(--teal-light);">${t.vol}</div>
+          <div style="width:36px;text-align:right;font-size:0.75rem;color:var(--text-dim);">${t.pct}%</div>
+        </div>`).join('')}`;
+      return html;
+    }
+  },
+
+  usuarios: {
+    title: '👥 Usuarios activos — 24.109',
+    sub: 'Distribución por nivel, estado y actividad de hoy',
+    kpis: [
+      { val:'1.203', lbl:'Online ahora',            col:'var(--green)'     },
+      { val:'+312',  lbl:'Nuevos hoy',              col:'var(--teal-light)'},
+      { val:'22.906',lbl:'Verificados RENAPER',     col:'var(--blue)'      },
+      { val:'1.203', lbl:'Sin verificar',           col:'var(--gold)'      },
+    ],
+    render: () => {
+      const niveles = [
+        { nivel:'Fan Elite', icon:'🥇', cant:643,   pct:2.7,  color:'var(--gold)',        compras:'41 prom.',  comision:'4%' },
+        { nivel:'Fan Pro',   icon:'🥈', cant:1204,  pct:5.0,  color:'#60a5fa',            compras:'22 prom.',  comision:'4%' },
+        { nivel:'Fan Plus',  icon:'⭐', cant:4820,  pct:20.0, color:'var(--teal-light)',   compras:'9 prom.',   comision:'6%' },
+        { nivel:'Fan',       icon:'🎵', cant:8932,  pct:37.0, color:'var(--teal)',         compras:'6 prom.',   comision:'6%' },
+        { nivel:'Rookie',    icon:'🌱', cant:8510,  pct:35.3, color:'var(--muted2)',       compras:'2 prom.',   comision:'8%' },
+      ];
+      let html = `
+        <div class="drill-section-title">Distribución por nivel</div>
+        ${niveles.map(n=>`<div style="display:grid;grid-template-columns:140px 1fr 70px 80px 80px;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+          <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:0.84rem;">${n.icon} ${n.nivel}</div>
+          <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;"><div style="height:100%;width:${n.pct*2.5}%;background:${n.color};border-radius:4px;"></div></div>
+          <div style="font-weight:800;font-size:0.88rem;">${n.cant.toLocaleString()}</div>
+          <div style="font-size:0.75rem;color:var(--text-dim);">${n.pct}%</div>
+          <div style="font-size:0.72rem;color:var(--text-dim);">${n.comision} comis.</div>
+        </div>`).join('')}
+        <div class="drill-section-title">Actividad de hoy</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          ${[
+            { label:'Nuevos registros', val:'312', icon:'✨', col:'var(--teal-light)' },
+            { label:'Verificaciones RENAPER completadas', val:'84', icon:'✅', col:'var(--green)' },
+            { label:'Primeras compras', val:'47', icon:'🎟️', col:'var(--blue)' },
+            { label:'Primeras ventas', val:'23', icon:'💸', col:'var(--purple)' },
+            { label:'Suscripciones nuevas', val:'12', icon:'⭐', col:'var(--gold)' },
+            { label:'Cuentas suspendidas hoy', val:'3', icon:'⏸️', col:'var(--red)' },
+          ].map(s=>`<div style="background:var(--surface2);border-radius:8px;padding:12px 14px;">
+            <div style="font-size:1.1rem;">${s.icon}</div>
+            <div style="font-size:1.15rem;font-weight:800;color:${s.col};margin:4px 0 2px;">${s.val}</div>
+            <div style="font-size:0.7rem;color:var(--text-dim);">${s.label}</div>
+          </div>`).join('')}
+        </div>`;
+      return html;
+    }
+  },
+
+  escrows: {
+    title: '🔐 Escrows activos — 347 operaciones',
+    sub: '$48.200.000 en custodia en este momento',
+    kpis: [
+      { val:'287', lbl:'Esperando confirmación', col:'var(--gold)'      },
+      { val:'8',   lbl:'Congelados (disputa)',   col:'var(--red)'       },
+      { val:'52',  lbl:'Liberados hoy',          col:'var(--green)'     },
+      { val:'$48.2M', lbl:'Total bloqueado',     col:'var(--teal-light)'},
+    ],
+    render: () => {
+      const breakdown = [
+        { evento:'Coldplay',       cant:142, monto:'$21.100.000', prom:'$148.600', vence:'< 48hs', col:'var(--teal-light)' },
+        { evento:'River vs Vélez', cant:89,  monto:'$7.300.000',  prom:'$82.000',  vence:'< 24hs', col:'var(--blue)'       },
+        { evento:'Lali',           cant:48,  monto:'$2.980.000',  prom:'$62.000',  vence:'< 72hs', col:'var(--purple)'     },
+        { evento:'Duki',           cant:34,  monto:'$3.160.000',  prom:'$93.000',  vence:'< 48hs', col:'var(--orange)'     },
+        { evento:'Bizarrap',       cant:26,  monto:'$5.460.000',  prom:'$210.000', vence:'< 96hs', col:'var(--red)'        },
+        { evento:'Otros',          cant:8,   monto:'$8.200.000',  prom:'$44.000',  vence:'varios', col:'var(--muted2)'     },
+      ];
+      const cols = '1.5fr 0.8fr 1.2fr 1fr 1fr';
+      let html = `
+        <div class="drill-section-title">Por evento</div>
+        <div style="display:grid;grid-template-columns:${cols};gap:0;margin-bottom:4px;">
+          ${['Evento','Escrows','Monto bloqueado','Precio prom.','Tiempo restante'].map(h=>`<div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:4px 8px;">${h}</div>`).join('')}
+        </div>`;
+      html += breakdown.map(b=>`<div class="txn-row" style="grid-template-columns:${cols};">
+        <div style="font-weight:700;">${b.evento}</div>
+        <div style="font-weight:800;color:${b.col};">${b.cant}</div>
+        <div style="font-weight:700;color:var(--teal-light);">${b.monto}</div>
+        <div>${b.prom}</div>
+        <div style="font-size:0.75rem;color:var(--text-dim);">${b.vence}</div>
+      </div>`).join('');
+      html += `
+        <div class="drill-section-title">Escrows congelados ahora (requieren acción)</div>`;
+      html += ESCROW_FROZEN.slice(0,5).map(e=>`<div class="txn-row" style="grid-template-columns:1fr 1fr 1fr 0.8fr 1.2fr 1.4fr;">
+        <div style="font-family:monospace;font-size:0.72rem;color:var(--text-dim);">#${e.id}</div>
+        <div style="font-size:0.78rem;">${e.comprador}</div>
+        <div style="font-size:0.78rem;">${e.vendedor}</div>
+        <div style="font-weight:700;color:var(--teal-light);">${e.monto}</div>
+        <div style="font-size:0.72rem;color:var(--text-dim);">${e.hace}</div>
+        <div style="font-size:0.72rem;color:var(--red);">${e.motivo}</div>
+      </div>`).join('');
+      return html;
+    }
+  },
+
+  disputas: {
+    title: '⚡ Disputas abiertas — 5',
+    sub: 'Estado actual · 2 de alta prioridad · Tiempo promedio de resolución: 4.2 hs',
+    kpis: [
+      { val:'2', lbl:'Alta prioridad',   col:'var(--red)'       },
+      { val:'2', lbl:'Media prioridad',  col:'var(--gold)'      },
+      { val:'1', lbl:'Baja prioridad',   col:'var(--green)'     },
+      { val:'$558k', lbl:'Monto total en disputa', col:'var(--teal-light)'},
+    ],
+    render: () => {
+      const cols = '0.6fr 1.2fr 1.2fr 1.4fr 0.8fr 1.1fr 1fr';
+      let html = `
+        <div class="drill-section-title">Disputas activas — detalle completo</div>
+        <div style="display:grid;grid-template-columns:${cols};gap:0;margin-bottom:4px;">
+          ${['ID','Comprador','Vendedor','Evento','Monto','Escrow','Prioridad'].map(h=>`<div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:4px 8px;">${h}</div>`).join('')}
+        </div>`;
+      html += DISPUTAS.map((d,i)=>{
+        const priPill = d.prioridad==='alta' ? '<span class="pill pill-red">🔴 Alta</span>'
+                       : d.prioridad==='media' ? '<span class="pill pill-gold">🟡 Media</span>'
+                       : '<span class="pill pill-green">🟢 Baja</span>';
+        const escPill = d.escrow==='congelado' ? '<span class="pill pill-red">Congelado</span>'
+                       : d.escrow==='retenido'  ? '<span class="pill pill-gold">Retenido</span>'
+                       : '<span class="pill pill-teal">Activo</span>';
+        return `<div class="txn-row" style="grid-template-columns:${cols};cursor:pointer;" onclick="closeDrill();openDisputaModal(${i})">
+          <div style="font-family:monospace;font-size:0.72rem;color:var(--text-dim);">${d.id}</div>
+          <div style="font-size:0.8rem;font-weight:600;">${d.comprador}</div>
+          <div style="font-size:0.8rem;">${d.vendedor}</div>
+          <div><div style="font-size:0.78rem;font-weight:600;">${d.evento.split(' · ')[0]}</div><div style="font-size:0.68rem;color:var(--text-dim);">${d.evento.split(' · ')[1]||''}</div></div>
+          <div style="font-weight:700;color:var(--teal-light);">${d.monto}</div>
+          <div>${escPill}</div>
+          <div>${priPill}</div>
+        </div>`;
+      }).join('');
+      html += `
+        <div class="drill-section-title">Historial últimos 30 días</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+          ${[
+            { label:'Disputas abiertas', val:'52', col:'var(--text)' },
+            { label:'Resueltas a favor comprador', val:'31 (60%)', col:'var(--teal-light)' },
+            { label:'Resueltas a favor vendedor', val:'18 (35%)', col:'var(--blue)' },
+            { label:'Reembolsos parciales', val:'3 (5%)', col:'var(--gold)' },
+          ].map(s=>`<div style="background:var(--surface2);border-radius:8px;padding:10px 12px;">
+            <div style="font-size:1.1rem;font-weight:800;color:${s.col};">${s.val}</div>
+            <div style="font-size:0.7rem;color:var(--text-dim);margin-top:2px;">${s.label}</div>
+          </div>`).join('')}
+        </div>`;
+      return html;
+    }
+  },
+
+  comisiones: {
+    title: '💳 Comisiones generadas — $4.200.000',
+    sub: 'Desglose por evento, nivel de usuario y tipo · Últimos 30 días',
+    kpis: [
+      { val:'$2.42M', lbl:'Comisión compradores (57%)', col:'var(--teal-light)' },
+      { val:'$1.78M', lbl:'Comisión vendedores (43%)',  col:'var(--blue)'       },
+      { val:'7.1%',   lbl:'Tasa efectiva promedio',     col:'var(--gold)'       },
+      { val:'$603k',  lbl:'MRR suscripciones',          col:'var(--green)'      },
+    ],
+    render: () => {
+      const porEvento = [
+        { evento:'Coldplay',       comision:'$1.770.000', txn:'3.241', tasa:'7.1%', col:'var(--teal-light)' },
+        { evento:'River vs Vélez', comision:'$1.180.000', txn:'1.892', tasa:'6.9%', col:'var(--blue)'       },
+        { evento:'Lali',           comision:'$588.000',   txn:'1.104', tasa:'7.2%', col:'var(--purple)'     },
+        { evento:'Duki',           comision:'$420.000',   txn:'872',   tasa:'6.8%', col:'var(--orange)'     },
+        { evento:'Otros',          comision:'$242.000',   txn:'1.323', tasa:'7.0%', col:'var(--muted2)'     },
+      ];
+      const cols = '1.4fr 1fr 0.8fr 0.7fr';
+      let html = `
+        <div class="drill-section-title">Por evento</div>
+        <div style="display:grid;grid-template-columns:${cols};gap:0;margin-bottom:4px;">
+          ${['Evento','Comisión generada','Transacciones','Tasa efectiva'].map(h=>`<div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:4px 8px;">${h}</div>`).join('')}
+        </div>`;
+      html += porEvento.map(e=>`<div class="txn-row" style="grid-template-columns:${cols};">
+        <div style="font-weight:700;">${e.evento}</div>
+        <div style="font-weight:700;color:${e.col};">${e.comision}</div>
+        <div>${e.txn}</div>
+        <div style="color:var(--text-dim);">${e.tasa}</div>
+      </div>`).join('');
+      html += `
+        <div class="drill-section-title">Por nivel de usuario</div>
+        ${[
+          { nivel:'Rookie',   comis:'8% comprador · 5% vendedor', contrib:'$1.26M', pct:30 },
+          { nivel:'Fan',      comis:'6% comprador · 5% vendedor', contrib:'$1.09M', pct:26 },
+          { nivel:'Fan Plus', comis:'6% comprador · 5% vendedor', contrib:'$0.92M', pct:22 },
+          { nivel:'Fan Pro',  comis:'4% comprador · 5% vendedor', contrib:'$0.63M', pct:15 },
+          { nivel:'Fan Elite',comis:'4% comprador · 5% vendedor', contrib:'$0.30M', pct:7  },
+        ].map(n=>`<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03);">
+          <div style="width:120px;font-size:0.8rem;font-weight:600;">${n.nivel}</div>
+          <div style="flex:1;height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;"><div style="height:100%;width:${n.pct*3}%;background:var(--teal);border-radius:4px;"></div></div>
+          <div style="width:80px;text-align:right;font-weight:700;font-size:0.82rem;color:var(--teal-light);">${n.contrib}</div>
+          <div style="width:30px;text-align:right;font-size:0.72rem;color:var(--text-dim);">${n.pct}%</div>
+        </div>`).join('')}`;
+      return html;
+    }
+  },
+
+  subs: {
+    title: '⭐ Suscriptores Pro / Elite — 1.847',
+    sub: 'MRR total: $38.200.000 · Churn rate mensual: 2.3%',
+    kpis: [
+      { val:'1.204', lbl:'Fan Pro activos',      col:'#60a5fa'         },
+      { val:'643',   lbl:'Fan Elite activos',    col:'var(--gold)'     },
+      { val:'+43',   lbl:'Nuevos esta semana',   col:'var(--green)'    },
+      { val:'2.3%',  lbl:'Churn mensual',        col:'var(--orange)'   },
+    ],
+    render: () => {
+      let html = `
+        <div class="drill-section-title">Crecimiento por semana (últimas 8 semanas)</div>
+        <div style="display:flex;align-items:flex-end;gap:6px;height:80px;margin-bottom:16px;">
+          ${[1680,1710,1728,1742,1755,1768,1792,1847].map((v,i)=>{
+            const h = Math.round((v/1847)*100);
+            return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <div style="font-size:0.62rem;color:var(--text-dim);">${v.toLocaleString()}</div>
+              <div style="height:${h*0.7}px;width:100%;background:${i===7?'var(--teal)':'rgba(13,148,136,.35)'};border-radius:4px 4px 0 0;"></div>
+              <div style="font-size:0.62rem;color:var(--muted);">S${i+1}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="drill-section-title">Distribución por plan</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;">
+          ${[
+            { plan:'Fan Pro mensual',  cant:820,  precio:'$14.000/mes', total:'$11.48M/mes', col:'#60a5fa' },
+            { plan:'Fan Pro anual',    cant:384,  precio:'$120.000/año',total:'$46.08M/año', col:'#3b82f6' },
+            { plan:'Fan Elite mensual',cant:412,  precio:'$28.000/mes', total:'$11.54M/mes', col:'var(--gold)' },
+            { plan:'Fan Elite anual',  cant:231,  precio:'$240.000/año',total:'$55.44M/año', col:'#d97706' },
+          ].map(p=>`<div style="background:var(--surface2);border-radius:8px;padding:12px 14px;border-left:3px solid ${p.col};">
+            <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:4px;">${p.plan}</div>
+            <div style="font-size:1.1rem;font-weight:800;color:${p.col};">${p.cant.toLocaleString()}</div>
+            <div style="font-size:0.72rem;margin-top:2px;">${p.precio}</div>
+            <div style="font-size:0.7rem;color:var(--text-dim);">MRR: ${p.total}</div>
+          </div>`).join('')}
+        </div>`;
+      return html;
+    }
+  },
+
+  resolucion: {
+    title: '✅ Tasa de resolución — 98.3%',
+    sub: 'Disputas resueltas en los últimos 30 días — 52 casos',
+    kpis: [
+      { val:'51',    lbl:'Resueltas',            col:'var(--green)'    },
+      { val:'1',     lbl:'Sin resolver > 72hs',  col:'var(--red)'      },
+      { val:'4.2 hs',lbl:'Tiempo promedio',      col:'var(--teal-light)'},
+      { val:'60%',   lbl:'A favor del comprador',col:'var(--blue)'     },
+    ],
+    render: () => `
+      <div class="drill-section-title">Resolución por motivo de disputa</div>
+      ${[
+        { motivo:'QR / entrada inválida',        total:14, comp:11, vend:2, parc:1, tiempo:'3.8 hs' },
+        { motivo:'No recibí la entrada',         total:12, comp:9,  vend:2, parc:1, tiempo:'4.1 hs' },
+        { motivo:'Sector diferente al publicado',total:9,  comp:5,  vend:3, parc:1, tiempo:'5.2 hs' },
+        { motivo:'Precio incorrecto',            total:8,  comp:4,  vend:3, parc:1, tiempo:'2.9 hs' },
+        { motivo:'Demora en entrega',            total:6,  comp:2,  vend:3, parc:1, tiempo:'6.4 hs' },
+        { motivo:'Otros',                        total:3,  comp:2,  vend:1, parc:0, tiempo:'3.1 hs' },
+      ].map(r=>`<div style="display:grid;grid-template-columns:2fr 0.5fr 0.7fr 0.7fr 0.7fr 0.8fr;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:0.8rem;">
+        <div>${r.motivo}</div>
+        <div style="text-align:center;font-weight:700;">${r.total}</div>
+        <div style="text-align:center;"><span class="pill pill-green">${r.comp} comp.</span></div>
+        <div style="text-align:center;"><span class="pill pill-blue">${r.vend} vend.</span></div>
+        <div style="text-align:center;"><span class="pill pill-gold">${r.parc} parc.</span></div>
+        <div style="text-align:center;font-size:0.72rem;color:var(--text-dim);">${r.tiempo}</div>
+      </div>`).join('')}
+      <div style="display:grid;grid-template-columns:2fr 0.5fr 0.7fr 0.7fr 0.7fr 0.8fr;gap:10px;padding:6px 0;font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);">
+        ${['Motivo','Total','Comp.','Vend.','Parcial','T. prom.'].map(h=>`<div style="padding:4px 0;">${h}</div>`).join('')}
+      </div>`,
+  },
+
+  sistema: {
+    title: '🌡️ Estado del sistema — Normal',
+    sub: 'Métricas de infraestructura en tiempo real · Uptime: 99.98%',
+    kpis: [
+      { val:'38 ms',  lbl:'Latencia API promedio', col:'var(--green)'    },
+      { val:'99.98%', lbl:'Uptime últimos 30 días',col:'var(--teal-light)'},
+      { val:'2.841',  lbl:'Req / segundo',          col:'var(--blue)'     },
+      { val:'0',      lbl:'Errores críticos hoy',   col:'var(--green)'    },
+    ],
+    render: () => `
+      <div class="drill-section-title">Servicios</div>
+      ${[
+        { servicio:'API Principal',          estado:'normal', lat:'38 ms',   up:'99.98%', req:'2.841/s' },
+        { servicio:'Base de datos',          estado:'normal', lat:'4 ms',    up:'99.99%', req:'8.200/s' },
+        { servicio:'Servicio de escrow',     estado:'normal', lat:'12 ms',   up:'100%',   req:'347 act.' },
+        { servicio:'Motor de pujas',         estado:'normal', lat:'6 ms',    up:'99.97%', req:'1.204/s' },
+        { servicio:'Notificaciones push',    estado:'normal', lat:'110 ms',  up:'99.91%', req:'4.100/s' },
+        { servicio:'Verificación RENAPER',   estado:'normal', lat:'280 ms',  up:'99.85%', req:'84 hoy'  },
+        { servicio:'CDN / Assets',           estado:'normal', lat:'22 ms',   up:'100%',   req:'18.400/s'},
+        { servicio:'WebSocket (live updates)',estado:'normal',lat:'8 ms',    up:'99.96%', req:'24.109 cx'},
+      ].map(s=>{
+        const col = s.estado==='normal' ? 'var(--green)' : s.estado==='warning' ? 'var(--gold)' : 'var(--red)';
+        const dot = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${col};margin-right:6px;box-shadow:0 0 5px ${col};"></span>`;
+        return `<div style="display:grid;grid-template-columns:2fr 0.8fr 0.8fr 0.8fr 1fr;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:0.8rem;">
+          <div style="font-weight:600;">${dot}${s.servicio}</div>
+          <div style="color:${col};font-weight:700;">${s.estado}</div>
+          <div style="color:var(--teal-light);">${s.lat}</div>
+          <div style="color:var(--green);">${s.up}</div>
+          <div style="color:var(--text-dim);font-size:0.72rem;">${s.req}</div>
+        </div>`;
+      }).join('')}
+      <div style="display:grid;grid-template-columns:2fr 0.8fr 0.8fr 0.8fr 1fr;gap:10px;font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:6px 0;border-bottom:1px solid var(--border);">
+        ${['Servicio','Estado','Latencia','Uptime','Carga'].map(h=>`<div>${h}</div>`).join('')}
+      </div>
+      <div class="drill-section-title">Incidentes recientes</div>
+      <div style="background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.15);border-radius:8px;padding:12px 14px;font-size:0.8rem;color:var(--text-dim);">
+        ✅ <strong style="color:var(--green);">Sin incidentes en los últimos 7 días.</strong> El último incidente fue el 02/06/2026 — latencia elevada en RENAPER por 18 minutos. Resuelto sin pérdida de datos.
+      </div>`,
+  },
+};
+
+// ══════════════════════════════════════
+//  DRILL-DOWN OPEN / CLOSE
+// ══════════════════════════════════════
+
+function openDrillDown(key) {
+  const cfg = DRILL_CONFIGS[key];
+  if (!cfg) return;
+  document.getElementById('drill-title').textContent = cfg.title;
+  document.getElementById('drill-sub').textContent   = cfg.sub;
+
+  // KPI row
+  const kpiRow = document.getElementById('drill-kpi-row');
+  kpiRow.style.gridTemplateColumns = `repeat(${cfg.kpis.length},1fr)`;
+  kpiRow.innerHTML = cfg.kpis.map(k=>`
+    <div class="drill-kpi">
+      <div class="drill-kpi-val" style="color:${k.col};">${k.val}</div>
+      <div class="drill-kpi-lbl">${k.lbl}</div>
+    </div>`).join('');
+
+  document.getElementById('drill-content').innerHTML = cfg.render();
+  document.getElementById('drillModal').classList.add('open');
+}
+
+function closeDrill() {
+  document.getElementById('drillModal').classList.remove('open');
+}
+
+// Cerrar al hacer click fuera del box
+document.getElementById('drillModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDrill();
+});
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', renderAll);
+window.addEventListener('resize', () => {
+  const c = document.getElementById('revenueChart');
+  if (c) drawRevenueChart();
+});
+</script>
+</body>
+</html>
