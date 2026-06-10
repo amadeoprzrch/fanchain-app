@@ -1,0 +1,2485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FanChain — Flujo del Comprador</title>
+<style>
+  :root {
+    --teal: #0d9488;
+    --teal-light: #14b8a6;
+    --teal-dark: #0f766e;
+    --teal-muted: rgba(13,148,136,0.15);
+    --bg: #0b1120;
+    --surface: #131f35;
+    --surface2: #1a2a42;
+    --surface3: #1e3352;
+    --border: rgba(255,255,255,0.08);
+    --border-teal: rgba(13,148,136,0.3);
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --gold: #f59e0b;
+    --green: #22c55e;
+    --red: #ef4444;
+    --purple: #8b5cf6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-size: 20px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--teal-light), #60efdf);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 6px 14px 6px 8px;
+    cursor: pointer;
+  }
+  .user-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+  }
+  .user-info { font-size: 13px; }
+  .user-name { font-weight: 600; }
+  .user-level { color: var(--teal-light); font-size: 11px; }
+  .points-chip {
+    background: var(--teal-muted);
+    border: 1px solid var(--border-teal);
+    border-radius: 50px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--teal-light);
+    font-weight: 600;
+  }
+
+  /* ─── BREADCRUMB ─── */
+  .breadcrumb {
+    padding: 14px 24px;
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .breadcrumb span { color: var(--text-dim); }
+  .breadcrumb a { color: var(--text-muted); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--teal-light); }
+
+  /* ─── LAYOUT ─── */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 0;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 24px 60px;
+    gap: 24px;
+  }
+
+  /* ─── STEPS BAR ─── */
+  .steps-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 24px;
+    margin-bottom: 4px;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .step:not(:last-child)::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin: 0 8px;
+    min-width: 20px;
+  }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+  .step.active .step-num {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+  }
+  .step.done .step-num {
+    background: var(--teal-dark);
+    border-color: var(--teal-dark);
+    color: white;
+  }
+  .step.done .step-num::before { content: '✓'; }
+  .step.done .step-num span { display: none; }
+  .step-label { font-size: 12px; color: var(--text-muted); }
+  .step.active .step-label { color: var(--teal-light); font-weight: 600; }
+  .step.done .step-label { color: var(--text-muted); }
+
+  /* ─── LEFT PANEL ─── */
+  .left-panel { display: flex; flex-direction: column; gap: 20px; }
+
+  /* ─── EVENT CARD ─── */
+  .event-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .event-banner {
+    height: 140px;
+    background: linear-gradient(135deg, #0d1f3a 0%, #1a3a5c 50%, #0d2d4a 100%);
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 16px 20px;
+    overflow: hidden;
+  }
+  .event-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230d9488' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .event-badge {
+    background: var(--teal);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: absolute;
+    top: 14px;
+    left: 20px;
+  }
+  .event-title-wrap { position: relative; z-index: 1; }
+  .event-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .event-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .event-meta {
+    padding: 16px 20px;
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .meta-item { font-size: 13px; }
+  .meta-label { color: var(--text-dim); font-size: 11px; margin-bottom: 2px; }
+  .meta-value { font-weight: 600; }
+
+  /* ─── SECTOR SELECTOR ─── */
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+  }
+  .section-title .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--teal);
+  }
+
+  .sector-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .sector-card {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .sector-card:hover { border-color: var(--teal-dark); background: var(--surface3); }
+  .sector-card.selected {
+    border-color: var(--teal);
+    background: var(--teal-muted);
+  }
+  .sector-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px; right: 10px;
+    font-size: 11px;
+    color: var(--teal-light);
+    font-weight: 700;
+  }
+  .sector-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .sector-price { font-size: 18px; font-weight: 800; color: var(--teal-light); }
+  .sector-price span { font-size: 11px; color: var(--text-dim); font-weight: 400; }
+  .sector-available { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .sector-trend {
+    font-size: 11px;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .trend-up { color: var(--green); }
+  .trend-down { color: var(--red); }
+
+  /* ─── LISTINGS ─── */
+  .listings-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .listings-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .listings-filter {
+    display: flex;
+    gap: 6px;
+  }
+  .filter-btn {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-btn.active {
+    background: var(--teal-muted);
+    border-color: var(--border-teal);
+    color: var(--teal-light);
+  }
+
+  .listing-row {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 16px;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .listing-row:hover { background: rgba(255,255,255,0.02); }
+  .listing-row:last-child { border-bottom: none; }
+  .listing-row.selected-row { background: var(--teal-muted); }
+
+  .seller-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+  .seller-info .seller-name { font-size: 13px; font-weight: 600; }
+  .seller-info .seller-level { font-size: 11px; color: var(--text-dim); }
+  .seller-info .seller-rating { font-size: 11px; color: var(--gold); }
+  .listing-type {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-weight: 600;
+  }
+  .type-fixed { background: rgba(34,197,94,0.12); color: var(--green); }
+  .type-bid { background: rgba(139,92,246,0.12); color: var(--purple); }
+  .listing-price { text-align: right; }
+  .price-main { font-size: 18px; font-weight: 800; color: var(--teal-light); }
+  .price-min { font-size: 11px; color: var(--text-dim); }
+  .listing-actions { display: flex; flex-direction: column; gap: 6px; }
+  .btn-buy {
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-buy:hover { background: var(--teal-light); }
+  .btn-offer {
+    background: transparent;
+    color: var(--purple);
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-offer:hover { background: rgba(139,92,246,0.12); }
+
+  /* ─── RIGHT PANEL ─── */
+  .right-panel { display: flex; flex-direction: column; gap: 20px; }
+
+  .panel-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-header .icon { font-size: 16px; }
+  .panel-body { padding: 20px; }
+
+  /* ─── BID WIDGET ─── */
+  .selected-ticket-info {
+    background: var(--surface2);
+    border: 1px solid var(--border-teal);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .ticket-detail { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .ticket-label { font-size: 12px; color: var(--text-dim); }
+  .ticket-val { font-size: 13px; font-weight: 600; }
+  .ticket-price-row { display: flex; justify-content: space-between; align-items: baseline; }
+  .ticket-ask { font-size: 22px; font-weight: 800; color: var(--teal-light); }
+  .ticket-ask-label { font-size: 11px; color: var(--text-dim); }
+
+  .bid-mode-tabs {
+    display: flex;
+    gap: 0;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 16px;
+  }
+  .bid-tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .bid-tab.active {
+    background: var(--teal);
+    color: white;
+  }
+
+  .bid-input-wrap { margin-bottom: 14px; }
+  .bid-label { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+  .bid-input-row { position: relative; }
+  .bid-input-row .currency {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 15px;
+  }
+  .bid-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px 12px 36px;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    outline: none;
+    transition: border 0.2s;
+  }
+  .bid-input:focus { border-color: var(--teal); }
+  .bid-quick { display: flex; gap: 6px; margin-top: 8px; }
+  .quick-btn {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .quick-btn:hover { border-color: var(--teal-dark); color: var(--teal-light); }
+
+  .commission-breakdown {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .comm-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 4px 0;
+  }
+  .comm-row.total {
+    border-top: 1px solid var(--border);
+    margin-top: 6px;
+    padding-top: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .comm-row.total .val { color: var(--teal-light); }
+  .escrow-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+  }
+  .escrow-note .icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: -0.2px;
+  }
+  .btn-primary:hover { background: var(--teal-light); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-secondary {
+    width: 100%;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-secondary:hover { border-color: var(--teal-dark); color: var(--teal-light); }
+
+  /* ─── NEGOTIATION FEED ─── */
+  .nego-empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  .nego-empty .icon { font-size: 28px; margin-bottom: 8px; }
+  .nego-timeline { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .nego-event {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .nego-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+  }
+  .nego-dot.buyer { background: rgba(13,148,136,0.2); border: 1.5px solid var(--teal-dark); }
+  .nego-dot.seller { background: rgba(139,92,246,0.2); border: 1.5px solid rgba(139,92,246,0.5); }
+  .nego-dot.system { background: rgba(245,158,11,0.2); border: 1.5px solid rgba(245,158,11,0.4); }
+  .nego-content { flex: 1; }
+  .nego-label { font-size: 11px; color: var(--text-dim); margin-bottom: 2px; }
+  .nego-text { font-size: 13px; font-weight: 600; }
+  .nego-amount { color: var(--teal-light); font-size: 16px; font-weight: 800; }
+  .nego-time { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .nego-status-chip {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 50px;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 4px;
+  }
+  .chip-pending { background: rgba(245,158,11,0.15); color: var(--gold); }
+  .chip-accepted { background: rgba(34,197,94,0.15); color: var(--green); }
+  .chip-rejected { background: rgba(239,68,68,0.15); color: var(--red); }
+  .chip-counter { background: rgba(139,92,246,0.15); color: var(--purple); }
+
+  /* ─── PAYMENT PANEL ─── */
+  .payment-method {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .pay-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .pay-option.selected { border-color: var(--teal); background: var(--teal-muted); }
+  .pay-icon { font-size: 20px; }
+  .pay-info { flex: 1; }
+  .pay-name { font-size: 13px; font-weight: 600; }
+  .pay-desc { font-size: 11px; color: var(--text-dim); }
+  .pay-radio {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .pay-option.selected .pay-radio {
+    border-color: var(--teal);
+    background: var(--teal);
+  }
+  .pay-option.selected .pay-radio::after {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: white;
+  }
+
+  /* ─── ESCROW STATUS ─── */
+  .escrow-stages {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .escrow-stage {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    position: relative;
+    padding-bottom: 20px;
+  }
+  .escrow-stage:last-child { padding-bottom: 0; }
+  .escrow-stage-line {
+    position: absolute;
+    left: 13px;
+    top: 28px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .escrow-stage.done .escrow-stage-line { background: var(--teal-dark); }
+  .escrow-stage-icon {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    z-index: 1;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    color: var(--text-dim);
+  }
+  .escrow-stage.done .escrow-stage-icon {
+    background: var(--teal-dark);
+    border-color: var(--teal);
+    color: white;
+  }
+  .escrow-stage.active .escrow-stage-icon {
+    background: var(--teal-muted);
+    border-color: var(--teal);
+    color: var(--teal-light);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(13,148,136,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(13,148,136,0); }
+  }
+  .escrow-info { flex: 1; }
+  .escrow-stage-name { font-size: 13px; font-weight: 600; }
+  .escrow-stage-desc { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .escrow-stage.done .escrow-stage-name { color: var(--teal-light); }
+
+  /* ─── SUCCESS ─── */
+  .success-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(11,17,32,0.92);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+  }
+  .success-overlay.show { display: flex; }
+  .success-card {
+    background: var(--surface);
+    border: 1px solid var(--border-teal);
+    border-radius: 24px;
+    padding: 48px 40px;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    animation: slideUp 0.4s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .success-icon { font-size: 56px; margin-bottom: 16px; }
+  .success-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+  .success-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+  .success-ticket {
+    background: var(--surface2);
+    border: 1px solid var(--border-teal);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 24px;
+    text-align: left;
+  }
+  .success-ticket .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+  .success-ticket .row:last-child { margin-bottom: 0; }
+  .success-ticket .label { color: var(--text-dim); }
+  .success-ticket .val { font-weight: 600; }
+  .blockchain-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(13,148,136,0.1);
+    border: 1px solid var(--border-teal);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--teal-light);
+    margin-bottom: 24px;
+    font-family: monospace;
+  }
+  .points-earned {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 24px;
+  }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(11,17,32,0.85);
+    z-index: 150;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    max-width: 380px;
+    width: 90%;
+    animation: slideUp 0.3s ease;
+  }
+  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+  .modal-close {
+    float: right;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 20px;
+    cursor: pointer;
+    margin-top: -4px;
+  }
+
+  /* Misc */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .text-xs { font-size: 11px; color: var(--text-dim); }
+  .text-sm { font-size: 13px; }
+  .font-bold { font-weight: 700; }
+  .teal { color: var(--teal-light); }
+  .gold { color: var(--gold); }
+  .green { color: var(--green); }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+  /* ─── PRICE CHART ─── */
+  .chart-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+  .chart-header {
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .chart-header-left { flex: 1; }
+  .chart-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .chart-subtitle { font-size: 12px; color: var(--text-dim); }
+  .chart-legend {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--text-dim);
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px;
+  }
+  .chart-stats-row {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .chart-stat {
+    flex: 1;
+    padding: 10px 14px;
+    border-right: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .chart-stat:last-child { border-right: none; }
+  .cs-label { color: var(--text-dim); font-size: 10px; margin-bottom: 3px; }
+  .cs-value { font-weight: 700; font-size: 15px; }
+  .cs-value.up { color: var(--green); }
+  .cs-value.dn { color: var(--red); }
+  .tf-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .tf-tab {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tf-tab.active {
+    background: var(--teal-muted);
+    border-color: var(--border-teal);
+    color: var(--teal-light);
+    font-weight: 600;
+  }
+  .chart-canvas-wrap {
+    position: relative;
+    cursor: crosshair;
+    background: var(--bg);
+    height: 200px;
+  }
+  #sectorChartCanvas { display: block; }
+  .chart-tooltip {
+    position: absolute;
+    display: none;
+    background: var(--surface2);
+    border: 1px solid var(--border-teal);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 10;
+    min-width: 170px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  }
+  .ct-date { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; font-weight: 600; }
+  .ct-row { display: flex; justify-content: space-between; gap: 14px; padding: 2px 0; font-size: 12px; }
+  .ct-label { color: var(--text-dim); }
+  .ct-val { font-weight: 700; }
+  .chart-hint {
+    padding: 8px 14px;
+    font-size: 11px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Responsive */
+  @media (max-width: 800px) {
+    .main { grid-template-columns: 1fr; padding: 16px; }
+    .steps-bar { overflow-x: auto; }
+    .sector-grid { grid-template-columns: repeat(2, 1fr); }
+    .listing-row { grid-template-columns: auto 1fr auto; }
+    .listing-actions { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">⛓ FanChain</div>
+  <div style="display:flex; gap:10px; align-items:center;">
+    <div class="points-chip">⭐ 1.240 pts · Fan Plus</div>
+    <div class="user-badge" onclick="window.location.href='dashboard-usuario.html'" title="Ver mi cuenta">
+      <div class="user-avatar">MR</div>
+      <div class="user-info">
+        <div class="user-name">Matías R.</div>
+        <div class="user-level">🥈 Fan Plus</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="#">Inicio</a> <span>›</span>
+  <a href="#">Eventos</a> <span>›</span>
+  <a href="#">River Plate vs Boca Juniors</a> <span>›</span>
+  Comprar entrada
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- STEPS BAR -->
+  <div class="steps-bar" id="stepsBar">
+    <div class="step active" data-step="1">
+      <div class="step-num"><span>1</span></div>
+      <div class="step-label">Elegir entrada</div>
+    </div>
+    <div class="step" data-step="2">
+      <div class="step-num"><span>2</span></div>
+      <div class="step-label">Puja / Oferta</div>
+    </div>
+    <div class="step" data-step="3">
+      <div class="step-num"><span>3</span></div>
+      <div class="step-label">Pago</div>
+    </div>
+    <div class="step" data-step="4">
+      <div class="step-num"><span>4</span></div>
+      <div class="step-label">Escrow</div>
+    </div>
+    <div class="step" data-step="5">
+      <div class="step-num"><span>5</span></div>
+      <div class="step-label">Confirmado</div>
+    </div>
+  </div>
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+
+    <!-- EVENT CARD -->
+    <div class="event-card">
+      <div class="event-banner">
+        <div class="event-badge">🔥 ALTA DEMANDA</div>
+        <div class="event-title-wrap">
+          <div class="event-title">River Plate vs Boca Juniors</div>
+          <div class="event-subtitle">Superclásico · Liga Profesional</div>
+        </div>
+      </div>
+      <div class="event-meta">
+        <div class="meta-item">
+          <div class="meta-label">📅 Fecha</div>
+          <div class="meta-value">Sáb 14 Jun, 2026</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">🕘 Hora</div>
+          <div class="meta-value">21:00 hs</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">📍 Estadio</div>
+          <div class="meta-value">Monumental</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">💰 Techo precio</div>
+          <div class="meta-value teal">× 3.0 original</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 1: SECTOR SELECTOR -->
+    <div id="step1" class="step-content">
+      <div class="section-title"><div class="dot"></div> Elegí tu sector</div>
+      <div class="sector-grid">
+        <div class="sector-card" onclick="selectSector(this, 'Platea Baja', 85000)">
+          <div class="sector-name">Platea Baja</div>
+          <div class="sector-price">$85.000 <span>desde</span></div>
+          <div class="sector-available">12 entradas</div>
+          <div class="sector-trend trend-up">↑ +18% hoy</div>
+        </div>
+        <div class="sector-card" onclick="selectSector(this, 'Platea Alta', 62000)">
+          <div class="sector-name">Platea Alta</div>
+          <div class="sector-price">$62.000 <span>desde</span></div>
+          <div class="sector-available">7 entradas</div>
+          <div class="sector-trend trend-up">↑ +9% hoy</div>
+        </div>
+        <div class="sector-card" onclick="selectSector(this, 'Populares', 38000)">
+          <div class="sector-name">Populares</div>
+          <div class="sector-price">$38.000 <span>desde</span></div>
+          <div class="sector-available">3 entradas</div>
+          <div class="sector-trend trend-down">↓ -5% hoy</div>
+        </div>
+        <div class="sector-card" onclick="selectSector(this, 'Visitante', 45000)">
+          <div class="sector-name">Visitante</div>
+          <div class="sector-price">$45.000 <span>desde</span></div>
+          <div class="sector-available">5 entradas</div>
+          <div class="sector-trend trend-up">↑ +22% hoy</div>
+        </div>
+        <div class="sector-card" onclick="selectSector(this, 'Preferencial', 120000)">
+          <div class="sector-name">Preferencial</div>
+          <div class="sector-price">$120.000 <span>desde</span></div>
+          <div class="sector-available">2 entradas</div>
+          <div class="sector-trend trend-up">↑ +35% hoy</div>
+        </div>
+        <div class="sector-card" onclick="selectSector(this, 'Box Premium', 280000)">
+          <div class="sector-name">Box Premium</div>
+          <div class="sector-price">$280.000 <span>desde</span></div>
+          <div class="sector-available">1 entrada</div>
+          <div class="sector-trend trend-up">↑ +12% hoy</div>
+        </div>
+
+        <!-- SECTOR AGOTADO — muestra opción de alerta -->
+        <div class="sector-card" style="opacity:.65; cursor:default; position:relative;" onclick="openSectorAlert(event, 'Campo')">
+          <div style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,.15);color:#f87171;font-size:0.58rem;font-weight:800;padding:2px 7px;border-radius:8px;border:1px solid rgba(239,68,68,.3);">AGOTADO</div>
+          <div class="sector-name">Campo</div>
+          <div class="sector-price" style="color:var(--text-muted);">Sin stock</div>
+          <div class="sector-available" style="color:#f87171;">0 entradas</div>
+          <div class="sector-trend" style="color:#7c3aed;font-size:0.68rem;margin-top:4px;">🔔 Activar alerta</div>
+        </div>
+      </div>
+
+      <!-- BANNER ACTIVAR ALERTA (aparece al elegir sector agotado) -->
+      <div id="alertBanner" style="display:none; margin-top:14px; background:rgba(124,58,237,.08); border:1px solid rgba(124,58,237,.25); border-radius:12px; padding:14px 16px; display:none; align-items:center; gap:12px;">
+        <div style="font-size:1.5rem;">🔔</div>
+        <div style="flex:1;">
+          <div style="font-size:0.84rem; font-weight:700; margin-bottom:3px;">No hay entradas disponibles para <span id="alertSectorName">este sector</span></div>
+          <div style="font-size:0.74rem; color:var(--text-muted);">Anotate y te avisamos apenas alguien publique una entrada. <strong style="color:#a78bfa;">47 personas ya están esperando.</strong></div>
+        </div>
+        <button onclick="activateAlert()" style="background:#7c3aed;border:none;border-radius:9px;padding:9px 16px;color:#fff;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .15s;" onmouseover="this.style.background='#6d28d9'" onmouseout="this.style.background='#7c3aed'">
+          🔔 Quiero que me avisen
+        </button>
+      </div>
+
+      <!-- SECTOR SELECCIONADO — indicador de demanda (se muestra al seleccionar) -->
+      <div id="demandIndicator" style="display:none; margin-top:10px; background:rgba(249,115,22,.06); border:1px solid rgba(249,115,22,.2); border-radius:10px; padding:10px 14px; font-size:0.76rem; color:var(--text-muted); display:none; align-items:center; gap:8px;">
+        <span style="font-size:1rem;">🔥</span>
+        <span id="demandText">personas esperando entradas de este sector</span>
+        <a href="notificaciones.html" style="margin-left:auto; font-size:0.68rem; color:var(--teal-light); font-weight:700; text-decoration:none;">Ver notificaciones →</a>
+      </div>
+
+      <!-- PRICE CHART (appears after sector selection) -->
+      <div id="priceChartBox" class="chart-box" style="display:none;">
+        <div class="chart-header">
+          <div class="chart-header-left">
+            <div class="chart-title">📈 Evolución del precio — <span id="chartSectorLabel">—</span></div>
+            <div class="chart-subtitle">Cada barra muestra cómo varió el precio en ese período</div>
+          </div>
+          <div class="chart-legend">
+            <span><span class="legend-dot" style="background:#26a69a;"></span>Precio subió</span>
+            <span><span class="legend-dot" style="background:#ef5350;"></span>Precio bajó</span>
+          </div>
+        </div>
+        <div class="chart-stats-row" id="chartStatsRow">
+          <div class="chart-stat">
+            <div class="cs-label">Precio actual</div>
+            <div class="cs-value" id="csPrice">—</div>
+          </div>
+          <div class="chart-stat">
+            <div class="cs-label">Cambio hoy</div>
+            <div class="cs-value" id="csChange">—</div>
+          </div>
+          <div class="chart-stat">
+            <div class="cs-label">Más alto hoy</div>
+            <div class="cs-value" id="csHigh">—</div>
+          </div>
+          <div class="chart-stat">
+            <div class="cs-label">Más bajo hoy</div>
+            <div class="cs-value" id="csLow">—</div>
+          </div>
+        </div>
+        <div class="tf-tabs">
+          <button class="tf-tab" onclick="setSectorTF('15m',this)">Última hora</button>
+          <button class="tf-tab active" onclick="setSectorTF('1H',this)">Hoy</button>
+          <button class="tf-tab" onclick="setSectorTF('4H',this)">Esta semana</button>
+        </div>
+        <div class="chart-canvas-wrap" id="sectorCanvasWrap">
+          <canvas id="sectorChartCanvas"></canvas>
+          <div class="chart-tooltip" id="sectorTooltip">
+            <div class="ct-date" id="ctDate"></div>
+            <div class="ct-row"><span class="ct-label">Precio de apertura</span><span class="ct-val" id="ctO"></span></div>
+            <div class="ct-row"><span class="ct-label">Precio más alto</span><span class="ct-val" id="ctH"></span></div>
+            <div class="ct-row"><span class="ct-label">Precio más bajo</span><span class="ct-val" id="ctL"></span></div>
+            <div class="ct-row"><span class="ct-label">Precio de cierre</span><span class="ct-val" id="ctC"></span></div>
+            <div class="ct-row"><span class="ct-label">Entradas operadas</span><span class="ct-val" id="ctV"></span></div>
+          </div>
+        </div>
+        <div class="chart-hint">
+          💡 <span>Pasá el mouse por encima de las barras para ver el detalle de cada período</span>
+        </div>
+      </div>
+
+      <!-- VER VISTA DE BUTACA -->
+      <div id="viewFromSeatBtn" style="display:none; margin-top:16px; text-align:center;">
+        <button onclick="openSeatView()" style="
+          background: rgba(13,148,136,0.12);
+          border: 1.5px solid rgba(13,148,136,0.5);
+          color: var(--teal-light);
+          border-radius: 10px;
+          padding: 10px 22px;
+          font-size: 0.85rem;
+          font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          transition: all .2s;
+        " onmouseover="this.style.background='rgba(13,148,136,0.22)'" onmouseout="this.style.background='rgba(13,148,136,0.12)'">
+          🔭 Ver vista desde la butaca
+        </button>
+      </div>
+
+      <!-- MODAL VISTA DE BUTACA -->
+      <div id="seatViewModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+        <div style="background:var(--surface); border:1px solid rgba(255,255,255,0.1); border-radius:18px; width:min(560px,95vw); overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,0.6);">
+          <div style="padding:18px 20px 14px; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:800; font-size:1rem;">🔭 Vista desde tu butaca</div>
+              <div style="font-size:0.75rem; color:var(--text-dim); margin-top:2px;" id="seatViewSubtitle">Sector seleccionado</div>
+            </div>
+            <button onclick="closeSeatView()" style="background:rgba(255,255,255,0.07); border:none; color:var(--text); border-radius:8px; width:32px; height:32px; cursor:pointer; font-size:1rem;">✕</button>
+          </div>
+
+          <!-- Imagen de vista simulada -->
+          <div style="position:relative; background:#0a1628; overflow:hidden;">
+            <canvas id="seatViewCanvas" width="560" height="320" style="width:100%; display:block;"></canvas>
+            <div id="seatViewLabel" style="position:absolute; bottom:12px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:#fff; padding:6px 14px; border-radius:20px; font-size:0.75rem; font-weight:700; white-space:nowrap;"></div>
+          </div>
+
+          <!-- Info debajo -->
+          <div style="padding:16px 20px 20px; display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
+            <div style="text-align:center;">
+              <div style="font-size:0.7rem; color:var(--text-dim); margin-bottom:3px;">Distancia al campo</div>
+              <div style="font-weight:800; color:var(--teal-light); font-size:1rem;" id="svDist">—</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:0.7rem; color:var(--text-dim); margin-bottom:3px;">Ángulo de visión</div>
+              <div style="font-weight:800; color:var(--teal-light); font-size:1rem;" id="svAngle">—</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:0.7rem; color:var(--text-dim); margin-bottom:3px;">Calidad de vista</div>
+              <div style="font-weight:800; font-size:1rem;" id="svQuality">—</div>
+            </div>
+          </div>
+          <div style="padding:0 20px 20px;">
+            <button onclick="closeSeatView()" class="btn-primary" style="width:100%;">Perfecto, seguir con la compra →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LISTINGS (appears after sector selection) -->
+      <div id="listingsBox" style="display:none; margin-top:20px;">
+        <div class="listings-box">
+          <div class="listings-header">
+            <div class="section-title" style="margin-bottom:0;"><div class="dot"></div> <span id="listingsSectorName">Entradas disponibles</span></div>
+            <div class="listings-filter">
+              <button class="filter-btn active" onclick="filterListings('all',this)">Todas</button>
+              <button class="filter-btn" onclick="filterListings('fixed',this)">Precio fijo</button>
+              <button class="filter-btn" onclick="filterListings('bid',this)">Con puja</button>
+            </div>
+          </div>
+
+          <div id="listingsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: NEGOTIATION (hidden initially) -->
+    <div id="step2content" style="display:none;">
+      <div class="section-title"><div class="dot"></div> Historial de negociación</div>
+      <div class="listings-box">
+        <div id="negoEmpty" class="nego-empty">
+          <div class="icon">💬</div>
+          Hacé tu primera oferta para iniciar la negociación
+        </div>
+        <div id="negoTimeline" class="nego-timeline" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- STEP 3: PAYMENT (hidden initially) -->
+    <div id="step3content" style="display:none;">
+      <div class="section-title"><div class="dot"></div> Método de pago</div>
+      <div class="listings-box">
+        <div style="padding:20px;">
+          <div class="payment-method">
+            <div class="pay-option selected" onclick="selectPayment(this)">
+              <div class="pay-icon">💳</div>
+              <div class="pay-info">
+                <div class="pay-name">Tarjeta de crédito/débito</div>
+                <div class="pay-desc">Visa •••• 4821 · Sin cargo extra</div>
+              </div>
+              <div class="pay-radio"></div>
+            </div>
+            <div class="pay-option" onclick="selectPayment(this)">
+              <div class="pay-icon">₮</div>
+              <div class="pay-info">
+                <div class="pay-name">USDT (Tether)</div>
+                <div class="pay-desc">Pago en stablecoin · Balance: $320</div>
+              </div>
+              <div class="pay-radio"></div>
+            </div>
+          </div>
+
+          <div class="section-title" style="margin-top:4px;"><div class="dot"></div> Resumen de la compra</div>
+          <div class="commission-breakdown" id="paymentSummary">
+            <div class="comm-row"><span>Precio acordado</span><span class="val" id="payAgreed">$83.000</span></div>
+            <div class="comm-row"><span>Cargo de servicio (+10%)</span><span class="val" id="payFee">$8.300</span></div>
+            <div class="comm-row total"><span>Total a pagar</span><span class="val" id="payTotal">$91.300</span></div>
+          </div>
+
+          <div class="escrow-note">
+            <span class="icon">🔒</span>
+            <span>El pago queda <strong>retenido en escrow</strong> hasta que la ticketera confirme la validez de la entrada. Si la validación falla, el 100% se reintegra automáticamente.</span>
+          </div>
+
+          <button class="btn-primary" onclick="confirmPayment()">🔒 Confirmar y pagar</button>
+          <button class="btn-secondary" onclick="goToStep(2)">← Volver a la oferta</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: ESCROW (hidden initially) -->
+    <div id="step4content" style="display:none;">
+      <div class="section-title"><div class="dot"></div> Estado del escrow</div>
+      <div class="listings-box">
+        <div style="padding:20px;">
+          <div class="escrow-stages">
+            <div class="escrow-stage done" id="es1">
+              <div class="escrow-stage-line"></div>
+              <div class="escrow-stage-icon">✓</div>
+              <div class="escrow-info">
+                <div class="escrow-stage-name">Pago recibido</div>
+                <div class="escrow-stage-desc">Fondos retenidos en escrow seguro</div>
+              </div>
+            </div>
+            <div class="escrow-stage active" id="es2">
+              <div class="escrow-stage-line"></div>
+              <div class="escrow-stage-icon">⚡</div>
+              <div class="escrow-info">
+                <div class="escrow-stage-name">Entrada congelada</div>
+                <div class="escrow-stage-desc">El código original fue bloqueado en la ticketera</div>
+              </div>
+            </div>
+            <div class="escrow-stage" id="es3">
+              <div class="escrow-stage-line"></div>
+              <div class="escrow-stage-icon">🔍</div>
+              <div class="escrow-info">
+                <div class="escrow-stage-name">Validación de ticketera</div>
+                <div class="escrow-stage-desc">Verificación de autenticidad y transferencia</div>
+              </div>
+            </div>
+            <div class="escrow-stage" id="es4">
+              <div class="escrow-stage-line"></div>
+              <div class="escrow-stage-icon">🎟</div>
+              <div class="escrow-info">
+                <div class="escrow-stage-name">Nuevo ticket generado</div>
+                <div class="escrow-stage-desc">Entrada válida transferida a tu nombre</div>
+              </div>
+            </div>
+            <div class="escrow-stage" id="es5">
+              <div class="escrow-stage-icon">💸</div>
+              <div class="escrow-info">
+                <div class="escrow-stage-name">Fondos liberados al vendedor</div>
+                <div class="escrow-stage-desc">Transacción completada en blockchain</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div style="background: var(--surface2); border-radius:10px; padding:14px; font-size:12px; color:var(--text-dim);">
+            <div class="flex-between" style="margin-bottom:6px;">
+              <span>Hash blockchain</span>
+              <span class="teal" style="font-family:monospace; font-size:11px;">0x4f2a...e831</span>
+            </div>
+            <div class="flex-between">
+              <span>Tiempo estimado</span>
+              <span style="color:var(--text-muted);">~10 minutos</span>
+            </div>
+          </div>
+
+          <button class="btn-primary" style="margin-top:16px;" onclick="completeEscrow()" id="btnCompleteEscrow">⚡ Simular confirmación de ticketera</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /left-panel -->
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+
+    <!-- BID WIDGET (Step 1/2) -->
+    <div class="panel-box" id="bidWidget">
+      <div class="panel-header">
+        <span class="icon">🏷</span> Tu oferta
+      </div>
+      <div class="panel-body" id="bidWidgetBody">
+        <div style="text-align:center; padding:20px 0; color:var(--text-dim); font-size:13px;">
+          Seleccioná un sector y una entrada para continuar
+        </div>
+      </div>
+    </div>
+
+    <!-- PROTECTION BOX -->
+    <div class="panel-box">
+      <div class="panel-header"><span class="icon">🛡</span> Protección FanChain</div>
+      <div class="panel-body" style="display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="font-size:18px;">🔒</span>
+          <div><div class="text-sm font-bold">Escrow garantizado</div><div class="text-xs" style="margin-top:2px;">Pagás solo cuando la entrada es validada</div></div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="font-size:18px;">🆔</span>
+          <div><div class="text-sm font-bold">Identidad verificada</div><div class="text-xs" style="margin-top:2px;">Todos los vendedores pasaron verificación RENAPER</div></div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="font-size:18px;">⛓</span>
+          <div><div class="text-sm font-bold">Registro en blockchain</div><div class="text-xs" style="margin-top:2px;">Trazabilidad inmutable de cada transacción</div></div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="font-size:18px;">↩️</span>
+          <div><div class="text-sm font-bold">Reintegro automático</div><div class="text-xs" style="margin-top:2px;">Si la entrada falla, tu plata vuelve al instante</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEVEL BENEFIT -->
+    <div class="panel-box">
+      <div class="panel-header"><span class="icon">🥈</span> Beneficio Fan Plus</div>
+      <div class="panel-body">
+        <div style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Como Fan Plus, pagás comisión reducida:</div>
+        <div class="commission-breakdown">
+          <div class="comm-row"><span>Comisión estándar (Rookie)</span><span>+10%</span></div>
+          <div class="comm-row teal"><span>Tu comisión (Fan Plus)</span><span style="color:var(--teal-light); font-weight:700;">+10%</span></div>
+        </div>
+        <div class="text-xs" style="margin-top:8px; color:var(--text-dim);">Subí a Fan Pro para bajar al 8% 🚀</div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /main -->
+
+<!-- OFFER MODAL -->
+<div class="modal-overlay" id="offerModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('offerModal')">✕</button>
+    <div class="modal-title">Hacer una oferta</div>
+    <div class="modal-sub" id="offerModalSub">Vendedor: FanáticoRivera · Precio pedido: $90.000</div>
+
+    <div class="bid-mode-tabs">
+      <div class="bid-tab active" onclick="switchBidTab(this,'buy')">Compra directa</div>
+      <div class="bid-tab" onclick="switchBidTab(this,'bid')">Puja libre</div>
+    </div>
+
+    <div class="bid-input-wrap">
+      <div class="bid-label" id="bidModalLabel">Tu oferta</div>
+      <div class="bid-input-row">
+        <span class="currency">$</span>
+        <input class="bid-input" type="number" id="bidAmountInput" placeholder="0" oninput="updateBidCalc()">
+      </div>
+      <div class="bid-quick">
+        <div class="quick-btn" id="qb1" onclick="setQuick('qb1')">Mín. <span id="qb1val">$75.000</span></div>
+        <div class="quick-btn" id="qb2" onclick="setQuick('qb2')">-10%</div>
+        <div class="quick-btn" id="qb3" onclick="setQuick('qb3')">Ask <span id="qb3val">$90.000</span></div>
+      </div>
+    </div>
+
+    <div class="commission-breakdown">
+      <div class="comm-row"><span>Precio de entrada</span><span id="calcBase">$—</span></div>
+      <div class="comm-row"><span>Cargo de servicio (10%)</span><span id="calcFee">$—</span></div>
+      <div class="comm-row total"><span>Total a pagar</span><span class="val" id="calcTotal">$—</span></div>
+    </div>
+
+    <button class="btn-primary" id="btnSendOffer" onclick="sendOffer()">Enviar oferta</button>
+    <button class="btn-secondary" onclick="closeModal('offerModal')">Cancelar</button>
+  </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-card">
+    <div class="success-icon">🎟✅</div>
+    <div class="success-title">¡Entrada confirmada!</div>
+    <div class="success-subtitle">Tu entrada fue transferida a tu nombre y está lista para usar el día del evento.</div>
+
+    <div class="success-ticket">
+      <div class="row"><span class="label">Evento</span><span class="val">River vs Boca — Superclásico</span></div>
+      <div class="row"><span class="label">Sector</span><span class="val" id="sucSector">Platea Baja</span></div>
+      <div class="row"><span class="label">Fecha</span><span class="val">Sáb 14 Jun, 21:00 hs</span></div>
+      <div class="row"><span class="label">Titular</span><span class="val">Matías R. · DNI ✓</span></div>
+      <div class="row"><span class="label">Precio pagado</span><span class="val teal" id="sucPrice">—</span></div>
+    </div>
+
+    <div class="blockchain-chip">
+      ⛓ Hash: 0x7d3f...a921 · Bloque #8.421.337
+    </div>
+
+    <div class="points-earned">
+      ⭐ +50 puntos ganados · Total: 1.290 pts
+    </div>
+
+    <button class="btn-primary" onclick="location.reload()">Ver mis entradas</button>
+    <button class="btn-secondary" onclick="closeModal('successOverlay'); location.reload()">Volver al inicio</button>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───
+let state = {
+  currentStep: 1,
+  selectedSector: null,
+  sectorBasePrice: 0,
+  selectedListing: null,
+  agreedPrice: 0,
+  sellerName: '',
+  listingType: '',
+  paymentMethod: 'card',
+  offerAskPrice: 0,
+  offerMinPrice: 0,
+  negoEvents: []
+};
+
+// ─── STEPS ───
+function goToStep(n) {
+  state.currentStep = n;
+  // Update step bar
+  document.querySelectorAll('.step').forEach(s => {
+    const sn = parseInt(s.dataset.step);
+    s.classList.remove('active','done');
+    if (sn < n) s.classList.add('done');
+    else if (sn === n) s.classList.add('active');
+  });
+  // Show/hide content
+  showStepContent(n);
+}
+
+function showStepContent(n) {
+  document.getElementById('step1').style.display = n === 1 ? 'block' : 'none';
+  document.getElementById('step2content').style.display = n === 2 ? 'block' : 'none';
+  document.getElementById('step3content').style.display = n === 3 ? 'block' : 'none';
+  document.getElementById('step4content').style.display = n === 4 ? 'block' : 'none';
+
+  // Update right panel based on step
+  if (n === 1) renderBidWidgetStep1();
+  if (n === 2) renderBidWidgetStep2();
+  if (n === 3) renderBidWidgetStep3();
+  if (n === 4) renderBidWidgetStep4();
+}
+
+// ─── DATOS POR SECTOR ───
+// qty = cantidad de entradas que tiene ese vendedor
+// La suma de qty debe coincidir con el número del sector card
+const SECTOR_LISTINGS = {
+  'Platea Baja': [  // total: 12
+    { initials:'JP', color:'#0d9488,#0f766e', name:'JuanP92',           level:'🥈 Fan Plus', rating:4.9, ask:85000, min:85000, type:'fixed', qty:3 },
+    { initials:'FR', color:'#7c3aed,#5b21b6', name:'FanáticoRivera',    level:'🥇 Fan Pro',  rating:4.7, ask:90000, min:75000, type:'bid',   qty:2 },
+    { initials:'MS', color:'#b45309,#92400e', name:'MillonarioxSiempre', level:'🥉 Fan',      rating:5.0, ask:88000, min:70000, type:'bid',   qty:4 },
+    { initials:'CB', color:'#475569,#334155', name:'CarpaBrava',         level:'🪨 Rookie',   rating:4.5, ask:87500, min:87500, type:'fixed', qty:1 },
+    { initials:'RF', color:'#0891b2,#0e7490', name:'RiojaFanatic',       level:'🥉 Fan',      rating:4.6, ask:86000, min:78000, type:'bid',   qty:2 },
+  ],
+  'Platea Alta': [  // total: 7
+    { initials:'LG', color:'#0891b2,#0e7490', name:'LaGoleadora',        level:'🥈 Fan Plus', rating:4.8, ask:65000, min:65000, type:'fixed', qty:2 },
+    { initials:'NR', color:'#7c3aed,#5b21b6', name:'NachoRiver22',       level:'🥇 Fan Pro',  rating:4.6, ask:68000, min:58000, type:'bid',   qty:3 },
+    { initials:'PP', color:'#be185d,#9d174d', name:'PlataBaja_Pablo',    level:'🥉 Fan',      rating:4.3, ask:62000, min:55000, type:'bid',   qty:1 },
+    { initials:'DM', color:'#475569,#334155', name:'DiegoM_hincha',      level:'🪨 Rookie',   rating:4.2, ask:63000, min:63000, type:'fixed', qty:1 },
+  ],
+  'Populares': [    // total: 3
+    { initials:'TK', color:'#0d9488,#0f766e', name:'Tuki_hincha',        level:'🥉 Fan',      rating:4.6, ask:40000, min:40000, type:'fixed', qty:1 },
+    { initials:'GH', color:'#475569,#334155', name:'GrupoH_123',         level:'🪨 Rookie',   rating:4.1, ask:38000, min:38000, type:'fixed', qty:1 },
+    { initials:'VR', color:'#7c3aed,#5b21b6', name:'VamoRiver08',        level:'🥈 Fan Plus', rating:4.9, ask:42000, min:35000, type:'bid',   qty:1 },
+  ],
+  'Visitante': [    // total: 5
+    { initials:'BX', color:'#be185d,#9d174d', name:'BocaXsiempre',       level:'🥇 Fan Pro',  rating:4.8, ask:48000, min:48000, type:'fixed', qty:2 },
+    { initials:'XE', color:'#7c3aed,#5b21b6', name:'XeneizExclusive',    level:'💎 Fan Elite',rating:5.0, ask:50000, min:42000, type:'bid',   qty:1 },
+    { initials:'12', color:'#0891b2,#0e7490', name:'ElDoce_Oficial',     level:'🥈 Fan Plus', rating:4.5, ask:45000, min:40000, type:'bid',   qty:2 },
+  ],
+  'Preferencial': [ // total: 2
+    { initials:'VP', color:'#f59e0b,#b45309', name:'VIPlatino',          level:'💎 Fan Elite',rating:5.0, ask:125000,min:125000,type:'fixed', qty:1 },
+    { initials:'AR', color:'#7c3aed,#5b21b6', name:'ArielaRivero',       level:'🥇 Fan Pro',  rating:4.9, ask:130000,min:110000,type:'bid',   qty:1 },
+  ],
+  'Box Premium': [  // total: 1
+    { initials:'EX', color:'#f59e0b,#b45309', name:'EliteXperience',     level:'💎 Fan Elite',rating:5.0, ask:285000,min:285000,type:'fixed', qty:1 },
+  ],
+};
+
+// ─── CHART STATE ───
+let chartCandles = [];
+let chartTF = '1H';
+let chartHoveredIdx = -1;
+let chartSectorName = '';
+let chartSectorBase = 0;
+
+const SECTOR_META = {
+  'Platea Baja':  { change: +18.3 },
+  'Platea Alta':  { change:  +9.1 },
+  'Populares':    { change:  -4.8 },
+  'Visitante':    { change: +22.4 },
+  'Preferencial': { change: +35.0 },
+  'Box Premium':  { change: +11.7 },
+};
+const TF_CANDLES = { '15m': 48, '1H': 36, '4H': 30 };
+const TF_MS      = { '15m': 15*60000, '1H': 60*60000, '4H': 4*60*60000 };
+const TF_LABEL   = { '15m': 'HH:mm', '1H': 'HH:mm', '4H': 'dd/MM' };
+
+function generateSectorCandles(basePx, tf) {
+  const n = TF_CANDLES[tf];
+  const vol = basePx * (tf === '15m' ? 0.014 : tf === '1H' ? 0.025 : 0.05);
+  const now = Date.now();
+  const intv = TF_MS[tf];
+  let px = basePx * (0.80 + Math.random() * 0.10);
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const open = px;
+    const move = (Math.random() - 0.47) * vol;
+    const close = Math.max(open + move, basePx * 0.4);
+    const wick = vol * (0.3 + Math.random() * 0.6);
+    out.push({
+      o: open, h: Math.max(open, close) + wick * Math.random(),
+      l: Math.min(open, close) - wick * Math.random(),
+      c: close, v: Math.max(1, Math.round(Math.random() * 3)),
+      ts: now - (n - i) * intv,
+    });
+    px = close;
+  }
+  return out;
+}
+
+function fmtPx(p) { return '$' + Math.round(p).toLocaleString('es-AR'); }
+function fmtTs(ts, tf) {
+  const d = new Date(ts);
+  if (tf === '4H') return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+  return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderSectorChart() {
+  const wrap = document.getElementById('sectorCanvasWrap');
+  const canvas = document.getElementById('sectorChartCanvas');
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  const data = chartCandles;
+  if (!data.length) return;
+
+  const PAD_L = 10, PAD_R = 70, PAD_T = 16, PAD_B = 24;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+  const n = data.length;
+  const gap = chartW / n;
+  const cw = Math.max(2, gap - 2);
+
+  let minP = Infinity, maxP = -Infinity;
+  data.forEach(c => { if (c.l < minP) minP = c.l; if (c.h > maxP) maxP = c.h; });
+  const pad = (maxP - minP) * 0.10;
+  minP -= pad; maxP += pad;
+  const range = maxP - minP;
+
+  const toY = p => PAD_T + chartH - ((p - minP) / range) * chartH;
+  const toX = i => PAD_L + i * gap + gap / 2;
+
+  // Grid lines + price labels
+  ctx.font = '10px system-ui';
+  for (let i = 0; i <= 4; i++) {
+    const p = minP + (range / 4) * i;
+    const y = toY(p);
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(100,116,139,0.8)';
+    ctx.textAlign = 'left';
+    ctx.fillText(fmtPx(p), W - PAD_R + 4, y + 4);
+  }
+
+  // Time labels
+  const every = Math.max(1, Math.floor(n / 6));
+  ctx.fillStyle = 'rgba(100,116,139,0.7)';
+  ctx.textAlign = 'center';
+  data.forEach((c, i) => {
+    if (i % every === 0)
+      ctx.fillText(fmtTs(c.ts, chartTF), toX(i), H - 6);
+  });
+
+  // Candles
+  data.forEach((c, i) => {
+    const x = toX(i);
+    const isGreen = c.c >= c.o;
+    const isHov = i === chartHoveredIdx;
+    const color = isGreen ? '#26a69a' : '#ef5350';
+
+    if (isHov) {
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      ctx.fillRect(x - gap / 2, PAD_T, gap, chartH);
+    }
+
+    // Wick
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = isHov ? 1 : 0.85;
+    ctx.beginPath();
+    ctx.moveTo(x, toY(c.h)); ctx.lineTo(x, toY(c.l));
+    ctx.stroke();
+
+    // Body
+    const bTop = Math.min(toY(c.o), toY(c.c));
+    const bH = Math.max(1.5, Math.abs(toY(c.o) - toY(c.c)));
+    ctx.fillStyle = color;
+    ctx.fillRect(x - cw / 2, bTop, cw, bH);
+    ctx.globalAlpha = 1;
+  });
+
+  // Last price line
+  const lastY = toY(data[data.length - 1].c);
+  ctx.strokeStyle = 'rgba(20,184,166,0.55)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(PAD_L, lastY); ctx.lineTo(W - PAD_R, lastY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Last price tag
+  ctx.fillStyle = '#0d9488';
+  ctx.fillRect(W - PAD_R + 2, lastY - 9, PAD_R - 2, 18);
+  ctx.fillStyle = 'white'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+  ctx.fillText(fmtPx(data[data.length - 1].c), W - PAD_R + 5, lastY + 4);
+}
+
+function updateSectorChartStats() {
+  const data = chartCandles;
+  if (!data.length) return;
+  const last = data[data.length - 1].c;
+  const first = data[0].o;
+  const high = Math.max(...data.map(c => c.h));
+  const low  = Math.min(...data.map(c => c.l));
+  const chg  = ((last - first) / first * 100);
+  const isUp = chg >= 0;
+
+  document.getElementById('csPrice').textContent  = fmtPx(last);
+  document.getElementById('csPrice').className    = 'cs-value';
+  document.getElementById('csChange').textContent = (isUp ? '+' : '') + chg.toFixed(1) + '%';
+  document.getElementById('csChange').className   = 'cs-value ' + (isUp ? 'up' : 'dn');
+  document.getElementById('csHigh').textContent   = fmtPx(high);
+  document.getElementById('csLow').textContent    = fmtPx(low);
+}
+
+function setSectorTF(tf, btn) {
+  chartTF = tf;
+  document.querySelectorAll('.tf-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  chartCandles = generateSectorCandles(chartSectorBase, chartTF);
+  chartHoveredIdx = -1;
+  updateSectorChartStats();
+  renderSectorChart();
+}
+
+function initSectorChart(sectorName, basePx) {
+  chartSectorName = sectorName;
+  chartSectorBase = basePx;
+  chartTF = '1H';
+  chartCandles = generateSectorCandles(basePx, chartTF);
+  chartHoveredIdx = -1;
+
+  // Reset timeframe buttons
+  document.querySelectorAll('.tf-tab').forEach((b, i) => b.classList.toggle('active', i === 1));
+
+  document.getElementById('chartSectorLabel').textContent = sectorName;
+  document.getElementById('priceChartBox').style.display = 'block';
+
+  updateSectorChartStats();
+  requestAnimationFrame(() => renderSectorChart());
+
+  // Attach mouse events (only once)
+  const wrap = document.getElementById('sectorCanvasWrap');
+  wrap.onmousemove = (e) => {
+    const rect = wrap.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const W = wrap.clientWidth;
+    const PAD_L = 10, PAD_R = 70;
+    const gap = (W - PAD_L - PAD_R) / chartCandles.length;
+    const idx = Math.floor((mx - PAD_L) / gap);
+
+    if (idx >= 0 && idx < chartCandles.length) {
+      chartHoveredIdx = idx;
+      const c = chartCandles[idx];
+      const tt = document.getElementById('sectorTooltip');
+      document.getElementById('ctDate').textContent = fmtTs(c.ts, chartTF);
+      document.getElementById('ctO').textContent = fmtPx(c.o);
+      document.getElementById('ctH').textContent = fmtPx(c.h);
+      document.getElementById('ctL').textContent = fmtPx(c.l);
+      document.getElementById('ctC').textContent = fmtPx(c.c);
+      document.getElementById('ctC').style.color = c.c >= c.o ? '#26a69a' : '#ef5350';
+      document.getElementById('ctV').textContent = c.v + (c.v === 1 ? ' entrada' : ' entradas');
+
+      let tx = mx + 14, ty = my - 10;
+      if (tx + 185 > W) tx = mx - 195;
+      if (ty < 0) ty = 0;
+      tt.style.left = tx + 'px'; tt.style.top = ty + 'px';
+      tt.style.display = 'block';
+    } else {
+      chartHoveredIdx = -1;
+      document.getElementById('sectorTooltip').style.display = 'none';
+    }
+    renderSectorChart();
+  };
+  wrap.onmouseleave = () => {
+    chartHoveredIdx = -1;
+    document.getElementById('sectorTooltip').style.display = 'none';
+    renderSectorChart();
+  };
+}
+
+// ─── SECTOR ───
+// Demanda activa por sector (mock)
+const SECTOR_DEMAND = {
+  'Platea Baja': 47, 'Platea Alta': 23, 'Populares': 15,
+  'Visitante': 19, 'Preferencial': 8, 'Box Premium': 4, 'Campo': 31
+};
+
+function selectSector(el, name, price) {
+  document.querySelectorAll('.sector-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedSector = name;
+  state.sectorBasePrice = price;
+  state.selectedListing = null;
+
+  // Ocultar banner de alerta si estaba visible
+  document.getElementById('alertBanner').style.display = 'none';
+
+  // Mostrar indicador de demanda
+  const demand = SECTOR_DEMAND[name] || 0;
+  const demandEl = document.getElementById('demandIndicator');
+  if (demand > 0) {
+    document.getElementById('demandText').innerHTML =
+      `<strong style="color:#f97316;">${demand} personas</strong> también están buscando entradas de <strong>${name}</strong> ahora mismo`;
+    demandEl.style.display = 'flex';
+  } else {
+    demandEl.style.display = 'none';
+  }
+
+  initSectorChart(name, price);
+
+  document.getElementById('listingsBox').style.display = 'block';
+  document.getElementById('listingsSectorName').textContent = name + ' — Entradas disponibles';
+  document.getElementById('viewFromSeatBtn').style.display = 'block';
+
+  renderListings(name);
+  renderBidWidgetSectorSelected();
+}
+
+function openSectorAlert(event, sectorName) {
+  event.stopPropagation();
+  // Ocultar demanda indicator
+  document.getElementById('demandIndicator').style.display = 'none';
+  document.getElementById('alertSectorName').textContent = sectorName;
+  const banner = document.getElementById('alertBanner');
+  banner.style.display = 'flex';
+  banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function activateAlert() {
+  const sector = document.getElementById('alertSectorName').textContent;
+  document.getElementById('alertBanner').style.display = 'none';
+  showToast('🔔 ¡Alerta activada! Te avisamos cuando haya entradas para ' + sector);
+  setTimeout(() => window.location.href = 'notificaciones.html', 1800);
+}
+
+// ─── VISTA DE BUTACA ───
+const SEAT_VIEW_DATA = {
+  'Platea Baja':   { dist:'18-28 m', angle:'Frontal', quality:'Excelente', stars:'⭐⭐⭐⭐⭐', color:'#26a69a',
+    perspective: { sky:'#1a3a5c', grass:'#1a4a1a', grassH:0.42, standH:0.18, aisleH:0.12, zoom:1.0 } },
+  'Platea Alta':   { dist:'35-55 m', angle:'Lateral-alto', quality:'Muy buena', stars:'⭐⭐⭐⭐',  color:'#42a5f5',
+    perspective: { sky:'#0d2540', grass:'#1a4a1a', grassH:0.3, standH:0.26, aisleH:0.14, zoom:0.75 } },
+  'Populares':     { dist:'60-80 m', angle:'Central', quality:'Buena', stars:'⭐⭐⭐', color:'#ffb74d',
+    perspective: { sky:'#0d2540', grass:'#1a4a1a', grassH:0.22, standH:0.3, aisleH:0.16, zoom:0.6 } },
+  'Visitante':     { dist:'55-70 m', angle:'Lateral', quality:'Buena', stars:'⭐⭐⭐', color:'#ef5350',
+    perspective: { sky:'#0d2540', grass:'#1a4a1a', grassH:0.25, standH:0.28, aisleH:0.15, zoom:0.65 } },
+  'Preferencial':  { dist:'22-35 m', angle:'Frontal-central', quality:'Excelente', stars:'⭐⭐⭐⭐⭐', color:'#ce93d8',
+    perspective: { sky:'#1a3a5c', grass:'#1a4a1a', grassH:0.4, standH:0.2, aisleH:0.12, zoom:0.95 } },
+  'Box Premium':   { dist:'10-18 m', angle:'Palco superior', quality:'Premium', stars:'🌟🌟🌟🌟🌟', color:'#ffd700',
+    perspective: { sky:'#0d2540', grass:'#1a4a1a', grassH:0.28, standH:0.08, aisleH:0.1, zoom:1.1 } },
+};
+
+function openSeatView() {
+  const name = state.selectedSector || 'Platea Baja';
+  const data = SEAT_VIEW_DATA[name] || SEAT_VIEW_DATA['Platea Baja'];
+  document.getElementById('seatViewSubtitle').textContent = 'Sector: ' + name;
+  document.getElementById('svDist').textContent    = data.dist;
+  document.getElementById('svAngle').textContent   = data.angle;
+  document.getElementById('svQuality').innerHTML   = '<span style="color:' + data.color + '">' + data.quality + '</span><br><span style="font-size:0.8rem;">' + data.stars + '</span>';
+  document.getElementById('seatViewLabel').textContent = '📍 ' + name;
+  document.getElementById('seatViewModal').style.display = 'flex';
+  requestAnimationFrame(() => drawSeatView(name, data));
+}
+
+function closeSeatView() {
+  document.getElementById('seatViewModal').style.display = 'none';
+}
+
+function drawSeatView(name, data) {
+  const canvas = document.getElementById('seatViewCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const p = data.perspective;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Sky gradient
+  const sky = ctx.createLinearGradient(0, 0, 0, H * 0.6);
+  sky.addColorStop(0, '#0a1628');
+  sky.addColorStop(1, p.sky);
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  // Opposite stands (far side of stadium)
+  ctx.fillStyle = '#1e2d47';
+  ctx.beginPath();
+  ctx.moveTo(-20, H * 0.55);
+  ctx.lineTo(W + 20, H * 0.55);
+  ctx.lineTo(W + 20, H * 0.55 - H * p.standH);
+  ctx.lineTo(-20, H * 0.55 - H * p.standH);
+  ctx.fill();
+
+  // Stands detail lines (rows)
+  for (let i = 0; i < 8; i++) {
+    const y = H * 0.55 - H * p.standH * (i / 8);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Far stands color blocks (fans)
+  const fanColors = ['#ef5350','#42a5f5','#ffffff','#ef5350','#42a5f5'];
+  for (let i = 0; i < 5; i++) {
+    const segW = W / 5;
+    const grd = ctx.createLinearGradient(segW * i, 0, segW * (i + 1), 0);
+    grd.addColorStop(0, fanColors[i] + '22');
+    grd.addColorStop(0.5, fanColors[i] + '44');
+    grd.addColorStop(1, fanColors[i] + '22');
+    ctx.fillStyle = grd;
+    ctx.fillRect(segW * i, H * 0.55 - H * p.standH, segW, H * p.standH);
+  }
+
+  // Pitch (grass) — perspective trapezoid
+  const grassTop = H * (1 - p.grassH - p.aisleH - p.standH * 0.05);
+  const gr = ctx.createLinearGradient(0, grassTop, 0, H);
+  gr.addColorStop(0, '#1a5c1a');
+  gr.addColorStop(0.3, '#1e6b1e');
+  gr.addColorStop(1, '#145214');
+  ctx.fillStyle = gr;
+  const shrink = W * (1 - p.zoom) * 0.5;
+  ctx.beginPath();
+  ctx.moveTo(shrink, grassTop);
+  ctx.lineTo(W - shrink, grassTop);
+  ctx.lineTo(W + 60, H + 20);
+  ctx.lineTo(-60, H + 20);
+  ctx.fill();
+
+  // Pitch lines (simplified)
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 2;
+  // Center circle (perspective ellipse)
+  ctx.beginPath();
+  ctx.ellipse(W / 2, grassTop + (H - grassTop) * 0.4, W * p.zoom * 0.12, (H - grassTop) * 0.1, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  // Center line
+  ctx.beginPath();
+  ctx.moveTo(shrink + 10, grassTop + (H - grassTop) * 0.38);
+  ctx.lineTo(W - shrink - 10, grassTop + (H - grassTop) * 0.38);
+  ctx.stroke();
+  // Goal area near side
+  const ga = W * 0.15;
+  ctx.strokeRect(W / 2 - ga, H - 60, ga * 2, 42);
+
+  // Aisle / walkway in front
+  ctx.fillStyle = '#111d30';
+  ctx.fillRect(0, H * (1 - p.aisleH), W, H * p.aisleH);
+
+  // Seat backs in foreground
+  const rowH = 14, seats = 18;
+  const seatW = W / (seats + 1);
+  const rowColors = [data.color + 'cc', data.color + '99', data.color + '66'];
+  for (let r = 0; r < 3; r++) {
+    for (let s = 0; s < seats; s++) {
+      const x = seatW * (s + 0.8) + r * 6;
+      const y = H * (1 - p.aisleH) - (r + 1) * (rowH + 4);
+      const w = seatW * 0.82;
+      ctx.fillStyle = r === 0 ? '#e0e0e0' : rowColors[r];
+      ctx.beginPath();
+      if (ctx.roundRect) { ctx.roundRect(x, y, w, rowH, 3); } else { ctx.rect(x, y, w, rowH); }
+      ctx.fill();
+      // Seat headrest
+      ctx.fillStyle = r === 0 ? '#bdbdbd' : data.color + '88';
+      ctx.fillRect(x + 2, y, w - 4, 4);
+    }
+  }
+
+  // Atmospheric haze
+  const haze = ctx.createLinearGradient(0, grassTop, 0, grassTop + (H - grassTop) * 0.3);
+  haze.addColorStop(0, 'rgba(100,150,200,0.15)');
+  haze.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = haze;
+  ctx.fillRect(0, grassTop, W, (H - grassTop) * 0.3);
+
+  // Floodlights glow
+  const positions = [W * 0.15, W * 0.85];
+  positions.forEach(lx => {
+    const glow = ctx.createRadialGradient(lx, H * 0.3, 0, lx, H * 0.3, 80);
+    glow.addColorStop(0, 'rgba(255,255,200,0.18)');
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H * 0.6);
+  });
+
+  // Sector watermark
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  ctx.font = 'bold 64px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(name.toUpperCase(), W / 2, H / 2 + 20);
+}
+
+function renderListings(sectorName) {
+  const listings = SECTOR_LISTINGS[sectorName] || [];
+  const container = document.getElementById('listingsList');
+  const totalEntradas = listings.reduce((sum, l) => sum + l.qty, 0);
+
+  // Actualizar el título del header con el total real
+  document.getElementById('listingsSectorName').textContent =
+    sectorName + ' — ' + totalEntradas + (totalEntradas === 1 ? ' entrada disponible' : ' entradas disponibles');
+
+  container.innerHTML = listings.map(l => {
+    const isBid = l.type === 'bid';
+    const qtyLabel = l.qty === 1 ? '×1' : '×' + l.qty;
+    const qtyColor = l.qty >= 3 ? 'var(--teal-light)' : l.qty === 2 ? 'var(--gold)' : 'var(--text-muted)';
+    const c1 = l.color.split(',')[0].replace('#','');
+    const c2 = l.color.split(',')[1].replace('#','');
+    return `
+      <div class="listing-row" data-type="${l.type}" onclick="selectListing(this, ${l.ask}, ${l.min}, '${l.type}', '${l.name}', '${l.level}', ${l.rating})">
+        <div class="seller-avatar" style="background: linear-gradient(135deg, #${c1}, #${c2});">${l.initials}</div>
+        <div class="seller-info">
+          <div class="seller-name">${l.name}</div>
+          <div class="seller-level">${l.level} · <span class="seller-rating">★ ${l.rating.toFixed(1)}</span></div>
+          <div style="margin-top:5px; display:flex; gap:6px; align-items:center;">
+            <span class="listing-type ${isBid ? 'type-bid' : 'type-fixed'}">${isBid ? 'Acepta puja' : 'Precio fijo'}</span>
+            <span style="font-size:11px; font-weight:700; color:${qtyColor}; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:50px; padding:1px 8px;">${qtyLabel}</span>
+          </div>
+        </div>
+        <div class="listing-price">
+          <div class="price-main">$${l.ask.toLocaleString('es-AR')}</div>
+          <div class="price-min">${isBid ? 'Desde $' + l.min.toLocaleString('es-AR') : '—'}</div>
+        </div>
+        <div class="listing-actions">
+          <button class="btn-buy" onclick="event.stopPropagation(); buyNow(${l.ask}, ${l.min}, '${l.name}', '${l.type}')">Comprar</button>
+          ${isBid ? `<button class="btn-offer" onclick="event.stopPropagation(); openOffer(${l.ask}, ${l.min}, '${l.name}')">Ofertar</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Reset filtros
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.filter-btn').classList.add('active');
+}
+
+function renderBidWidgetSectorSelected() {
+  document.getElementById('bidWidgetBody').innerHTML = `
+    <div style="text-align:center; padding:10px 0 20px; color:var(--text-muted); font-size:13px;">
+      <div style="font-size:22px; margin-bottom:8px;">👆</div>
+      Ahora elegí una entrada de la lista
+    </div>
+  `;
+}
+
+// ─── FILTER ───
+function filterListings(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.listing-row').forEach(row => {
+    row.style.display = (type === 'all' || row.dataset.type === type) ? 'grid' : 'none';
+  });
+}
+
+// ─── SELECT LISTING ───
+function selectListing(el, askPrice, minPrice, type, seller, level, rating) {
+  document.querySelectorAll('.listing-row').forEach(r => r.classList.remove('selected-row'));
+  el.classList.add('selected-row');
+  state.selectedListing = { askPrice, minPrice, type, seller, level, rating };
+
+  renderBidWidgetMain(askPrice, minPrice, type, seller, level);
+}
+
+function renderBidWidgetMain(askPrice, minPrice, type, seller, level) {
+  const isBid = type === 'bid';
+  const comm = Math.round(askPrice * 0.10);
+  const total = askPrice + comm;
+
+  document.getElementById('bidWidgetBody').innerHTML = `
+    <div class="selected-ticket-info">
+      <div class="ticket-detail">
+        <span class="ticket-label">Vendedor</span>
+        <span class="ticket-val">${seller} · ${level}</span>
+      </div>
+      <div class="ticket-detail" style="margin-bottom:0">
+        <span class="ticket-ask-label">Precio pedido</span>
+        <span class="ticket-ask">$${askPrice.toLocaleString('es-AR')}</span>
+      </div>
+      ${isBid ? `<div style="margin-top:4px; font-size:11px; color:var(--text-dim);">Precio mínimo: $${minPrice.toLocaleString('es-AR')}</div>` : ''}
+    </div>
+
+    ${isBid ? `
+    <div class="bid-mode-tabs">
+      <div class="bid-tab active" id="tabBuy" onclick="switchTab('buy',${askPrice},${minPrice},'${seller}')">Compra directa</div>
+      <div class="bid-tab" id="tabOffer" onclick="switchTab('offer',${askPrice},${minPrice},'${seller}')">Puja libre</div>
+    </div>` : ''}
+
+    <div id="buyModeContent">
+      <div class="commission-breakdown">
+        <div class="comm-row"><span>Precio de entrada</span><span>$${askPrice.toLocaleString('es-AR')}</span></div>
+        <div class="comm-row"><span>Cargo de servicio (10%)</span><span>$${comm.toLocaleString('es-AR')}</span></div>
+        <div class="comm-row total"><span>Total a pagar</span><span class="val">$${total.toLocaleString('es-AR')}</span></div>
+      </div>
+
+      <div class="escrow-note">
+        <span class="icon">🔒</span>
+        <span>El pago queda en escrow hasta validación de la ticketera</span>
+      </div>
+
+      <button class="btn-primary" onclick="buyNow(${askPrice}, ${minPrice}, '${seller}', '${type}')">🎟 Comprar ahora — $${total.toLocaleString('es-AR')}</button>
+    </div>
+
+    ${isBid ? `
+    <div id="offerModeContent" style="display:none;">
+      <div class="bid-input-wrap">
+        <div class="bid-label">Tu oferta</div>
+        <div class="bid-input-row">
+          <span class="currency">$</span>
+          <input class="bid-input" type="number" id="inlineOfferInput" placeholder="${minPrice}" oninput="updateInlineCalc(${minPrice}, ${askPrice})" style="font-size:20px; padding:10px 14px 10px 34px;">
+        </div>
+        <div class="bid-quick">
+          <div class="quick-btn" onclick="setInlineQuick(${minPrice})">Mín $${(minPrice/1000).toFixed(0)}k</div>
+          <div class="quick-btn" onclick="setInlineQuick(Math.round(${askPrice}*0.9))">-10%</div>
+          <div class="quick-btn" onclick="setInlineQuick(${askPrice})">Ask $${(askPrice/1000).toFixed(0)}k</div>
+        </div>
+      </div>
+      <div class="commission-breakdown" id="inlineCalcBox">
+        <div class="comm-row"><span>Precio ofertado</span><span id="ic-base">—</span></div>
+        <div class="comm-row"><span>Cargo de servicio (10%)</span><span id="ic-fee">—</span></div>
+        <div class="comm-row total"><span>Total estimado</span><span class="val" id="ic-total">—</span></div>
+      </div>
+      <button class="btn-primary" id="btnSendInlineOffer" onclick="sendInlineOffer('${seller}', ${askPrice}, ${minPrice})">Enviar oferta</button>
+    </div>` : ''}
+  `;
+}
+
+function switchTab(mode, askPrice, minPrice, seller) {
+  const isBuy = mode === 'buy';
+  document.getElementById('tabBuy').classList.toggle('active', isBuy);
+  document.getElementById('tabOffer').classList.toggle('active', !isBuy);
+  document.getElementById('buyModeContent').style.display = isBuy ? 'block' : 'none';
+  document.getElementById('offerModeContent').style.display = !isBuy ? 'block' : 'none';
+}
+
+function updateInlineCalc(minPrice, askPrice) {
+  const val = parseInt(document.getElementById('inlineOfferInput').value) || 0;
+  const fee = Math.round(val * 0.10);
+  const total = val + fee;
+  document.getElementById('ic-base').textContent = val ? `$${val.toLocaleString('es-AR')}` : '—';
+  document.getElementById('ic-fee').textContent = val ? `$${fee.toLocaleString('es-AR')}` : '—';
+  document.getElementById('ic-total').textContent = val ? `$${total.toLocaleString('es-AR')}` : '—';
+}
+
+function setInlineQuick(val) {
+  document.getElementById('inlineOfferInput').value = val;
+  updateInlineCalc(0, 0);
+}
+
+function sendInlineOffer(seller, askPrice, minPrice) {
+  const val = parseInt(document.getElementById('inlineOfferInput').value);
+  if (!val || val < minPrice) {
+    alert(`La oferta mínima es $${minPrice.toLocaleString('es-AR')}`);
+    return;
+  }
+  state.agreedPrice = val;
+  state.sellerName = seller;
+  state.offerAskPrice = askPrice;
+  state.offerMinPrice = minPrice;
+
+  // Start negotiation flow
+  state.negoEvents = [];
+  addNegoEvent('buyer', `Oferta enviada: $${val.toLocaleString('es-AR')}`, val, 'pending');
+  goToStep(2);
+
+  // Simulate seller response after delay
+  setTimeout(() => {
+    const diff = (askPrice - val) / askPrice;
+    if (diff < 0.05) {
+      // Accept
+      addNegoEvent('seller', `${seller} aceptó tu oferta`, val, 'accepted');
+      state.agreedPrice = val;
+      updateNegoDisplay();
+      showAcceptBanner(val);
+    } else if (diff < 0.15) {
+      // Counter
+      const counter = Math.round((askPrice + val) / 2 / 1000) * 1000;
+      addNegoEvent('seller', `${seller} contraofertó`, counter, 'counter');
+      state.pendingCounter = counter;
+      updateNegoDisplay();
+      showCounterBanner(counter, askPrice);
+    } else {
+      // Reject
+      addNegoEvent('seller', `${seller} rechazó la oferta`, val, 'rejected');
+      updateNegoDisplay();
+      showRejectedBanner(askPrice, minPrice, seller);
+    }
+  }, 2500);
+}
+
+// ─── BUY NOW ───
+function buyNow(askPrice, minPrice, seller, type) {
+  state.agreedPrice = askPrice;
+  state.sellerName = seller;
+  state.listingType = type;
+
+  if (type === 'bid') {
+    // Direct buy on bid listing — go straight to payment
+    state.negoEvents = [];
+    addNegoEvent('buyer', `Compra directa aceptada: $${askPrice.toLocaleString('es-AR')}`, askPrice, 'accepted');
+    addNegoEvent('system', 'Precio acordado — procedé al pago', askPrice, 'accepted');
+    goToStep(3);
+    updatePaymentSummary(askPrice);
+  } else {
+    goToStep(3);
+    updatePaymentSummary(askPrice);
+  }
+}
+
+// ─── NEGO ───
+function addNegoEvent(who, text, amount, status) {
+  state.negoEvents.push({ who, text, amount, status, time: new Date() });
+}
+
+function updateNegoDisplay() {
+  const tl = document.getElementById('negoTimeline');
+  const empty = document.getElementById('negoEmpty');
+  if (!tl) return;
+  if (state.negoEvents.length > 0) {
+    empty.style.display = 'none';
+    tl.style.display = 'flex';
+    tl.innerHTML = state.negoEvents.map(ev => {
+      const chipClass = {pending:'chip-pending', accepted:'chip-accepted', rejected:'chip-rejected', counter:'chip-counter'}[ev.status] || '';
+      const chipLabel = {pending:'Esperando respuesta', accepted:'Aceptado ✓', rejected:'Rechazado', counter:'Contraoferta'}[ev.status] || '';
+      const timeStr = ev.time.toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+      return `
+        <div class="nego-event">
+          <div class="nego-dot ${ev.who}">${ev.who === 'buyer' ? '👤' : ev.who === 'seller' ? '🧑‍💼' : '🔔'}</div>
+          <div class="nego-content">
+            <div class="nego-label">${ev.who === 'buyer' ? 'Vos' : ev.who === 'seller' ? ev.text.split(' ')[0] : 'Sistema'}</div>
+            <div class="nego-text">${ev.text}</div>
+            ${ev.amount ? `<div class="nego-amount">$${ev.amount.toLocaleString('es-AR')}</div>` : ''}
+            <div class="nego-time">${timeStr}</div>
+            <span class="nego-status-chip ${chipClass}">${chipLabel}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function showAcceptBanner(price) {
+  const body = document.getElementById('step2content');
+  const existing = document.getElementById('acceptBanner');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'acceptBanner';
+  div.style.cssText = 'background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:12px; padding:16px 20px; margin-top:16px; display:flex; justify-content:space-between; align-items:center;';
+  div.innerHTML = `
+    <div>
+      <div style="font-size:14px; font-weight:700; color:var(--green);">🎉 ¡Oferta aceptada!</div>
+      <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Precio acordado: <strong style="color:var(--teal-light)">$${price.toLocaleString('es-AR')}</strong></div>
+    </div>
+    <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="goToStep(3); updatePaymentSummary(${price})">Pagar ahora →</button>
+  `;
+  body.appendChild(div);
+}
+
+function showCounterBanner(counter, askPrice, seller) {
+  const body = document.getElementById('step2content');
+  const existing = document.getElementById('counterBanner');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'counterBanner';
+  div.style.cssText = 'background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.3); border-radius:12px; padding:16px 20px; margin-top:16px;';
+  div.innerHTML = `
+    <div style="font-size:14px; font-weight:700; color:var(--purple); margin-bottom:8px;">💬 El vendedor contrao ferta</div>
+    <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Precio propuesto: <strong style="color:var(--purple);">$${counter.toLocaleString('es-AR')}</strong></div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-primary" style="flex:1; padding:10px;" onclick="acceptCounter(${counter})">✓ Aceptar $${counter.toLocaleString('es-AR')}</button>
+      <button class="btn-secondary" style="flex:1; margin-top:0; padding:10px; font-size:12px;" onclick="rejectCounter(${askPrice})">× Rechazar</button>
+    </div>
+  `;
+  body.appendChild(div);
+}
+
+function showRejectedBanner(askPrice, minPrice, seller) {
+  const body = document.getElementById('step2content');
+  const existing = document.getElementById('rejBanner');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'rejBanner';
+  div.style.cssText = 'background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:12px; padding:16px 20px; margin-top:16px;';
+  div.innerHTML = `
+    <div style="font-size:14px; font-weight:700; color:var(--red); margin-bottom:6px;">❌ Oferta rechazada</div>
+    <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">El vendedor no aceptó tu oferta. Podés intentar con un precio más alto o comprarlo al precio pedido.</div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-primary" style="flex:1; padding:10px; font-size:13px;" onclick="buyNow(${askPrice}, ${minPrice}, '${seller}', 'bid')">Comprar a $${askPrice.toLocaleString('es-AR')}</button>
+    </div>
+  `;
+  body.appendChild(div);
+}
+
+function acceptCounter(price) {
+  state.agreedPrice = price;
+  addNegoEvent('buyer', 'Contraoferta aceptada', price, 'accepted');
+  addNegoEvent('system', 'Precio acordado — procedé al pago', price, 'accepted');
+  updateNegoDisplay();
+  document.getElementById('counterBanner').remove();
+  showAcceptBanner(price);
+}
+
+function rejectCounter(askPrice) {
+  addNegoEvent('buyer', 'Contraoferta rechazada', null, 'rejected');
+  updateNegoDisplay();
+  document.getElementById('counterBanner').remove();
+}
+
+// ─── STEP 2 RIGHT PANEL ───
+function renderBidWidgetStep2() {
+  const l = state.selectedListing || {};
+  document.getElementById('bidWidgetBody').innerHTML = `
+    <div class="selected-ticket-info">
+      <div class="ticket-detail">
+        <span class="ticket-label">Sector</span>
+        <span class="ticket-val">${state.selectedSector || '—'}</span>
+      </div>
+      <div class="ticket-detail">
+        <span class="ticket-label">Vendedor</span>
+        <span class="ticket-val">${state.sellerName || '—'}</span>
+      </div>
+      <div class="ticket-detail" style="margin-bottom:0;">
+        <span class="ticket-ask-label">Precio acordado</span>
+        <span class="ticket-ask">${state.agreedPrice ? '$' + state.agreedPrice.toLocaleString('es-AR') : 'Pendiente'}</span>
+      </div>
+    </div>
+    <div style="font-size:12px; color:var(--text-dim); text-align:center; padding:8px 0;">
+      Esperando respuesta del vendedor…<br>
+      <span style="font-size:11px;">(Tenés 1 hora para llegar a un acuerdo)</span>
+    </div>
+  `;
+}
+
+// ─── STEP 3 ───
+function updatePaymentSummary(price) {
+  const fee = Math.round(price * 0.10);
+  const total = price + fee;
+  const el1 = document.getElementById('payAgreed');
+  const el2 = document.getElementById('payFee');
+  const el3 = document.getElementById('payTotal');
+  if (el1) el1.textContent = `$${price.toLocaleString('es-AR')}`;
+  if (el2) el2.textContent = `$${fee.toLocaleString('es-AR')}`;
+  if (el3) el3.textContent = `$${total.toLocaleString('es-AR')}`;
+}
+
+function renderBidWidgetStep3() {
+  const fee = Math.round(state.agreedPrice * 0.10);
+  const total = state.agreedPrice + fee;
+  document.getElementById('bidWidgetBody').innerHTML = `
+    <div style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Resumen de compra</div>
+    <div class="commission-breakdown">
+      <div class="comm-row"><span>Precio entrada</span><span>$${state.agreedPrice.toLocaleString('es-AR')}</span></div>
+      <div class="comm-row"><span>Cargo servicio</span><span>$${fee.toLocaleString('es-AR')}</span></div>
+      <div class="comm-row total"><span>Total</span><span class="val">$${total.toLocaleString('es-AR')}</span></div>
+    </div>
+    <div class="escrow-note">
+      <span class="icon">🔒</span>
+      <span>Fondos retenidos en escrow hasta validación</span>
+    </div>
+  `;
+}
+
+function selectPayment(el) {
+  document.querySelectorAll('.pay-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function confirmPayment() {
+  goToStep(4);
+  updatePaymentSummary(state.agreedPrice);
+  // Mostrar botón de escrow visual luego de un momento
+  setTimeout(() => {
+    const box = document.getElementById('step4content');
+    if (box && !document.getElementById('btnVerEscrow')) {
+      const btn = document.createElement('a');
+      btn.id = 'btnVerEscrow';
+      btn.href = 'escrow-visual.html';
+      btn.innerHTML = '🔐 Ver estado completo del escrow →';
+      btn.style.cssText = 'display:block;margin-top:14px;background:rgba(13,148,136,.12);border:1.5px solid rgba(13,148,136,.4);color:var(--teal-light);border-radius:10px;padding:12px 16px;font-size:0.86rem;font-weight:700;text-align:center;text-decoration:none;transition:background .2s;';
+      btn.onmouseover = () => btn.style.background = 'rgba(13,148,136,.22)';
+      btn.onmouseout  = () => btn.style.background = 'rgba(13,148,136,.12)';
+      const inner = box.querySelector('div > div');
+      if (inner) inner.appendChild(btn);
+    }
+  }, 600);
+}
+
+// ─── STEP 4 ───
+function renderBidWidgetStep4() {
+  document.getElementById('bidWidgetBody').innerHTML = `
+    <div style="text-align:center; padding:10px 0;">
+      <div style="font-size:32px; margin-bottom:8px;">🔒</div>
+      <div style="font-size:14px; font-weight:700; color:var(--teal-light); margin-bottom:6px;">Fondos en escrow</div>
+      <div style="font-size:22px; font-weight:800; margin-bottom:4px;">$${(state.agreedPrice + Math.round(state.agreedPrice*0.10)).toLocaleString('es-AR')}</div>
+      <div style="font-size:12px; color:var(--text-dim);">Retenidos de forma segura</div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:12px; color:var(--text-dim); text-align:center; line-height:1.6;">
+      La ticketera está validando la entrada.<br>
+      Podés cerrar esta ventana — te notificaremos cuando esté lista.
+    </div>
+  `;
+}
+
+let escrowStep = 2;
+function completeEscrow() {
+  escrowStep++;
+  if (escrowStep > 5) {
+    showSuccess();
+    return;
+  }
+  const stage = document.getElementById('es' + escrowStep);
+  const prevStage = document.getElementById('es' + (escrowStep - 1));
+  if (prevStage) {
+    prevStage.classList.remove('active');
+    prevStage.classList.add('done');
+    prevStage.querySelector('.escrow-stage-icon').textContent = '✓';
+  }
+  if (stage) {
+    stage.classList.add('active');
+  }
+  const labels = ['','','Entrada congelada','Validando ticketera...','Generando nuevo ticket...','Liberando fondos...'];
+  const btn = document.getElementById('btnCompleteEscrow');
+  if (btn) btn.textContent = '⚡ ' + (labels[escrowStep] || 'Continuar');
+
+  if (escrowStep === 5) {
+    setTimeout(showSuccess, 800);
+  }
+}
+
+// ─── SUCCESS ───
+function showSuccess() {
+  const fee = Math.round(state.agreedPrice * 0.10);
+  document.getElementById('sucSector').textContent = state.selectedSector || 'Platea Baja';
+  document.getElementById('sucPrice').textContent = `$${(state.agreedPrice + fee).toLocaleString('es-AR')}`;
+  document.getElementById('successOverlay').classList.add('show');
+}
+
+// ─── MODAL ───
+function openOffer(askPrice, minPrice, seller) {
+  state.offerAskPrice = askPrice;
+  state.offerMinPrice = minPrice;
+  state.sellerName = seller;
+  document.getElementById('offerModalSub').textContent = `Vendedor: ${seller} · Precio pedido: $${askPrice.toLocaleString('es-AR')}`;
+  document.getElementById('qb1val').textContent = `$${minPrice.toLocaleString('es-AR')}`;
+  document.getElementById('qb3val').textContent = `$${askPrice.toLocaleString('es-AR')}`;
+  document.getElementById('bidAmountInput').value = '';
+  document.getElementById('calcBase').textContent = '—';
+  document.getElementById('calcFee').textContent = '—';
+  document.getElementById('calcTotal').textContent = '—';
+  document.getElementById('offerModal').classList.add('show');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+function switchBidTab(el, mode) {
+  document.querySelectorAll('.bid-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('bidModalLabel').textContent = mode === 'buy' ? 'Precio de compra' : 'Tu oferta';
+}
+
+function setQuick(id) {
+  const min = state.offerMinPrice;
+  const ask = state.offerAskPrice;
+  if (id === 'qb1') document.getElementById('bidAmountInput').value = min;
+  if (id === 'qb2') document.getElementById('bidAmountInput').value = Math.round(ask * 0.9);
+  if (id === 'qb3') document.getElementById('bidAmountInput').value = ask;
+  updateBidCalc();
+}
+
+function updateBidCalc() {
+  const val = parseInt(document.getElementById('bidAmountInput').value) || 0;
+  const fee = Math.round(val * 0.10);
+  const total = val + fee;
+  document.getElementById('calcBase').textContent = val ? `$${val.toLocaleString('es-AR')}` : '—';
+  document.getElementById('calcFee').textContent = val ? `$${fee.toLocaleString('es-AR')}` : '—';
+  document.getElementById('calcTotal').textContent = val ? `$${total.toLocaleString('es-AR')}` : '—';
+}
+
+function sendOffer() {
+  const val = parseInt(document.getElementById('bidAmountInput').value);
+  if (!val || val < state.offerMinPrice) {
+    alert(`La oferta mínima es $${state.offerMinPrice.toLocaleString('es-AR')}`);
+    return;
+  }
+  closeModal('offerModal');
+  // Proceed as inline offer
+  state.agreedPrice = val;
+  state.negoEvents = [];
+  addNegoEvent('buyer', `Oferta enviada: $${val.toLocaleString('es-AR')}`, val, 'pending');
+  goToStep(2);
+
+  setTimeout(() => {
+    const diff = (state.offerAskPrice - val) / state.offerAskPrice;
+    if (diff < 0.05) {
+      addNegoEvent('seller', `${state.sellerName} aceptó tu oferta`, val, 'accepted');
+      state.agreedPrice = val;
+      updateNegoDisplay();
+      showAcceptBanner(val);
+    } else if (diff < 0.15) {
+      const counter = Math.round((state.offerAskPrice + val) / 2 / 1000) * 1000;
+      addNegoEvent('seller', `${state.sellerName} contrao ferta`, counter, 'counter');
+      state.pendingCounter = counter;
+      updateNegoDisplay();
+      showCounterBanner(counter, state.offerAskPrice);
+    } else {
+      addNegoEvent('seller', `${state.sellerName} rechazó la oferta`, val, 'rejected');
+      updateNegoDisplay();
+      showRejectedBanner(state.offerAskPrice, state.offerMinPrice, state.sellerName);
+    }
+  }, 2500);
+}
+
+// ─── RIGHT PANEL STEP 1 ───
+function renderBidWidgetStep1() {
+  if (!state.selectedListing) {
+    if (state.selectedSector) renderBidWidgetSectorSelected();
+    // else keep default
+  }
+}
+
+// Close modals on overlay click
+document.getElementById('offerModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal('offerModal');
+});
+</script>
+
+</body>
+</html>
