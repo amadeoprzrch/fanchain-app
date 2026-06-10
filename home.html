@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FanChain — Inicio</title>
+<style>
+  :root {
+    --bg: #0b1120;
+    --surface: #131f35;
+    --surface2: #1a2a45;
+    --surface3: #1e3254;
+    --border: #1e3254;
+    --teal: #0d9488;
+    --teal2: #0f766e;
+    --teal-light: #14b8a6;
+    --teal-glow: rgba(13,148,136,0.15);
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+    --gold: #f59e0b;
+    --green: #22c55e;
+    --red: #ef4444;
+    --purple: #7c3aed;
+    --orange: #f97316;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; padding-bottom:100px; }
+
+  /* ── TOPNAV ── */
+  .topnav {
+    background:var(--surface); border-bottom:1px solid var(--border);
+    padding:0 20px; height:58px; display:flex; align-items:center;
+    gap:12px; position:sticky; top:0; z-index:100;
+  }
+  .logo { font-size:1.2rem; font-weight:800; color:var(--teal-light); white-space:nowrap; margin-right:4px; }
+  .logo span { color:var(--text); }
+  .search-bar {
+    flex:1; display:flex; align-items:center; gap:8px;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; padding:0 14px; height:36px; transition:border-color .2s;
+  }
+  .search-bar:focus-within { border-color:var(--teal); }
+  .search-bar input {
+    flex:1; background:none; border:none; outline:none;
+    color:var(--text); font-size:0.84rem;
+  }
+  .search-bar input::placeholder { color:var(--muted); }
+  .nav-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .nav-icon {
+    width:36px; height:36px; border-radius:8px; background:var(--surface2);
+    border:1px solid var(--border); display:flex; align-items:center;
+    justify-content:center; cursor:pointer; font-size:1rem; text-decoration:none;
+    color:var(--text); transition:all .2s; position:relative;
+  }
+  .nav-icon:hover { border-color:var(--teal); background:var(--teal-glow); }
+  .nav-badge {
+    position:absolute; top:-4px; right:-4px;
+    background:var(--red); color:#fff; font-size:0.55rem;
+    font-weight:800; padding:1px 4px; border-radius:8px; min-width:16px; text-align:center;
+  }
+  .avatar {
+    width:34px; height:34px; border-radius:50%;
+    background:linear-gradient(135deg,var(--teal),#0891b2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.72rem; font-weight:800; color:#fff; cursor:pointer;
+    border:2px solid var(--teal); text-decoration:none;
+  }
+
+  /* ── HERO BANNER ── */
+  .hero-banner {
+    margin:16px 20px; border-radius:var(--radius);
+    background:linear-gradient(120deg, #0c1a35 0%, #0c3a30 50%, #0d1f3a 100%);
+    border:1px solid rgba(20,184,166,.2); overflow:hidden;
+    padding:28px 28px 24px; position:relative; cursor:pointer;
+    transition:border-color .2s;
+  }
+  .hero-banner:hover { border-color:var(--teal); }
+  .hero-banner::after {
+    content:''; position:absolute; right:0; top:0; bottom:0; width:45%;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='80' fill='none' stroke='rgba(20,184,166,0.06)' stroke-width='40'/%3E%3Ccircle cx='100' cy='100' r='50' fill='none' stroke='rgba(20,184,166,0.04)' stroke-width='20'/%3E%3C/svg%3E") center/cover;
+    pointer-events:none;
+  }
+  .hero-tag {
+    display:inline-flex; align-items:center; gap:5px;
+    background:rgba(20,184,166,.12); border:1px solid rgba(20,184,166,.25);
+    border-radius:20px; padding:3px 10px; font-size:0.65rem;
+    color:var(--teal-light); font-weight:700; text-transform:uppercase;
+    letter-spacing:.5px; margin-bottom:10px;
+  }
+  .hero-title { font-size:1.4rem; font-weight:800; line-height:1.2; margin-bottom:6px; }
+  .hero-sub { font-size:0.8rem; color:var(--muted2); margin-bottom:16px; }
+  .hero-stats { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+  .hero-stat { font-size:0.72rem; color:var(--muted2); display:flex; align-items:center; gap:4px; }
+  .hero-stat strong { color:var(--text); }
+  .hero-cta {
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--teal); color:#fff; border:none; border-radius:9px;
+    padding:10px 20px; font-size:0.84rem; font-weight:700; cursor:pointer;
+    text-decoration:none; transition:background .2s;
+  }
+  .hero-cta:hover { background:var(--teal2); }
+
+  /* ── FILTERS ── */
+  .section { padding:0 20px; margin-top:22px; }
+  .section-title {
+    font-size:0.68rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.8px; color:var(--teal-light); margin-bottom:12px;
+  }
+  .filters {
+    display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;
+    scrollbar-width:none;
+  }
+  .filters::-webkit-scrollbar { display:none; }
+  .filter-pill {
+    padding:6px 16px; border-radius:20px; border:1px solid var(--border);
+    background:none; color:var(--muted2); font-size:0.8rem; cursor:pointer;
+    white-space:nowrap; transition:all .2s; flex-shrink:0;
+  }
+  .filter-pill.active, .filter-pill:hover {
+    border-color:var(--teal); color:var(--teal-light);
+    background:var(--teal-glow); font-weight:600;
+  }
+
+  /* ── EVENTS GRID ── */
+  .events-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr));
+    gap:14px; margin-top:14px;
+  }
+  .ev-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); overflow:hidden; cursor:pointer;
+    text-decoration:none; color:var(--text);
+    transition:all .2s; display:flex; flex-direction:column;
+  }
+  .ev-card:hover { border-color:rgba(20,184,166,.4); transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,0,0,.3); }
+  .ev-cover {
+    height:120px; display:flex; align-items:flex-end;
+    padding:12px 14px; position:relative; overflow:hidden;
+  }
+  .ev-cover-icon {
+    position:absolute; right:14px; top:14px;
+    font-size:2.4rem; opacity:.25;
+  }
+  .ev-tipo-badge {
+    font-size:0.62rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.5px; padding:3px 8px; border-radius:8px;
+    background:rgba(0,0,0,.35); color:rgba(255,255,255,.85); backdrop-filter:blur(4px);
+  }
+  .ev-hot {
+    position:absolute; top:12px; left:12px;
+    background:rgba(239,68,68,.85); color:#fff; font-size:0.6rem;
+    font-weight:800; padding:3px 8px; border-radius:8px;
+    text-transform:uppercase; letter-spacing:.3px;
+    display:flex; align-items:center; gap:3px;
+  }
+  .ev-body { padding:14px; display:flex; flex-direction:column; gap:8px; flex:1; }
+  .ev-name { font-size:0.92rem; font-weight:800; line-height:1.25; }
+  .ev-meta { font-size:0.72rem; color:var(--muted2); display:flex; flex-direction:column; gap:3px; }
+  .ev-meta span { display:flex; align-items:center; gap:5px; }
+  .ev-prices {
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--surface2); border-radius:8px; padding:8px 12px;
+    margin-top:2px;
+  }
+  .ev-price-from { font-size:0.65rem; color:var(--muted); }
+  .ev-price-val { font-size:1rem; font-weight:800; color:var(--teal-light); }
+  .ev-tickets { font-size:0.68rem; color:var(--muted2); text-align:right; }
+  .ev-tickets strong { color:var(--green); }
+  .ev-demand {
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:0.7rem;
+  }
+  .demand-bar { flex:1; height:4px; background:var(--surface3); border-radius:2px; margin:0 8px; overflow:hidden; }
+  .demand-fill { height:100%; border-radius:2px; background:var(--teal); transition:width .4s; }
+  .demand-fill.high { background:var(--gold); }
+  .demand-fill.hot  { background:var(--red); }
+  .ev-btn {
+    width:100%; background:var(--teal); color:#fff; border:none;
+    border-radius:8px; padding:9px; font-size:0.82rem; font-weight:700;
+    cursor:pointer; transition:background .2s; margin-top:4px;
+    text-align:center; text-decoration:none; display:block;
+  }
+  .ev-btn:hover { background:var(--teal2); }
+
+  /* ── SELL FAB ── */
+  .fab {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:linear-gradient(135deg, var(--teal), #0891b2);
+    color:#fff; border:none; border-radius:28px;
+    padding:14px 28px; font-size:0.9rem; font-weight:700;
+    cursor:pointer; box-shadow:0 8px 30px rgba(13,148,136,.4);
+    display:flex; align-items:center; gap:8px;
+    text-decoration:none; white-space:nowrap;
+    transition:all .2s; z-index:90;
+  }
+  .fab:hover { transform:translateX(-50%) translateY(-2px); box-shadow:0 12px 40px rgba(13,148,136,.5); }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align:center; padding:40px; color:var(--muted); font-size:0.84rem; }
+
+  /* ── TOAST ── */
+  .toast {
+    position:fixed; bottom:90px; right:24px; background:var(--surface);
+    border:1px solid var(--teal); border-radius:10px; padding:12px 18px;
+    display:flex; align-items:center; gap:10px; font-size:0.84rem;
+    z-index:999; transform:translateY(80px); opacity:0;
+    transition:all .3s; pointer-events:none;
+  }
+  .toast.show { transform:translateY(0); opacity:1; }
+</style>
+</head>
+<body>
+
+<!-- TOPNAV -->
+<nav class="topnav">
+  <a href="index.html" style="text-decoration:none;">
+    <div class="logo">Fan<span>Chain</span></div>
+  </a>
+  <div class="search-bar">
+    <span style="color:var(--muted);">🔍</span>
+    <input type="text" placeholder="Buscá artista, evento o venue..." oninput="filterEvents(this.value)">
+  </div>
+  <div class="nav-actions">
+    <a href="notificaciones.html" class="nav-icon">
+      🔔
+      <span class="nav-badge">5</span>
+    </a>
+    <a href="dashboard-usuario.html" class="avatar">AP</a>
+  </div>
+</nav>
+
+<!-- HERO BANNER -->
+<a href="flujo-comprador.html" class="hero-banner" style="display:block; text-decoration:none;">
+  <div class="hero-tag">🔥 Más buscado ahora</div>
+  <div class="hero-title">Coldplay — Music Of The Spheres</div>
+  <div class="hero-sub">Estadio Más Monumental · 14, 15 y 16 de junio</div>
+  <div class="hero-stats">
+    <div class="hero-stat">🎫 <strong>462</strong> entradas disponibles</div>
+    <div class="hero-stat">👥 <strong>2.400+</strong> personas buscando</div>
+    <div class="hero-stat">📈 Desde <strong style="color:var(--teal-light);">$145.000</strong></div>
+  </div>
+  <div class="hero-cta">Ver entradas disponibles →</div>
+</a>
+
+<!-- FILTERS -->
+<div class="section">
+  <div class="filters" id="filters">
+    <button class="filter-pill active" onclick="setFilter('todos',this)">🎯 Todos</button>
+    <button class="filter-pill" onclick="setFilter('musica',this)">🎸 Música</button>
+    <button class="filter-pill" onclick="setFilter('deporte',this)">⚽ Deportes</button>
+    <button class="filter-pill" onclick="setFilter('teatro',this)">🎭 Teatro</button>
+    <button class="filter-pill" onclick="setFilter('festival',this)">🎪 Festivales</button>
+  </div>
+</div>
+
+<!-- EVENTS -->
+<div class="section" style="margin-top:20px;">
+  <div class="section-title">Eventos disponibles</div>
+  <div class="events-grid" id="events-grid"></div>
+  <div class="empty" id="empty-state" style="display:none;">No encontramos eventos para tu búsqueda.</div>
+</div>
+
+<!-- FAB: VENDER -->
+<a href="flujo-vendedor.html" class="fab">
+  💰 Quiero vender mi entrada
+</a>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-icon">✅</span>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+const EVENTS = [
+  {
+    id: 1,
+    name: 'Coldplay — Music Of The Spheres',
+    tipo: 'musica',
+    date: '14–16 jun 2026',
+    venue: 'Estadio Más Monumental, Núñez',
+    icon: '🎸',
+    gradient: 'linear-gradient(135deg, #0c1a35, #0c3a30)',
+    desde: '$145.000',
+    hasta: '$320.000',
+    tickets: 462,
+    demand: 97,
+    hot: true,
+    sellout: false,
+  },
+  {
+    id: 2,
+    name: 'Taylor Swift — Eras Tour',
+    tipo: 'musica',
+    date: '9–11 ago 2026',
+    venue: 'Estadio Más Monumental, Núñez',
+    icon: '✨',
+    gradient: 'linear-gradient(135deg, #1a0a2e, #4a1a2e)',
+    desde: '$190.000',
+    hasta: '$580.000',
+    tickets: 238,
+    demand: 99,
+    hot: true,
+    sellout: false,
+  },
+  {
+    id: 3,
+    name: 'River Plate vs. Boca Juniors',
+    tipo: 'deporte',
+    date: '22 jun 2026',
+    venue: 'Estadio Más Monumental, Núñez',
+    icon: '⚽',
+    gradient: 'linear-gradient(135deg, #0f1f10, #1a0505)',
+    desde: '$85.000',
+    hasta: '$210.000',
+    tickets: 87,
+    demand: 91,
+    hot: true,
+    sellout: false,
+  },
+  {
+    id: 4,
+    name: 'Lollapalooza Argentina 2026',
+    tipo: 'festival',
+    date: '20–22 mar 2026',
+    venue: 'Hipódromo de Palermo, CABA',
+    icon: '🎪',
+    gradient: 'linear-gradient(135deg, #1a0a2e, #0a1a2e)',
+    desde: '$95.000',
+    hasta: '$280.000',
+    tickets: 1240,
+    demand: 72,
+    hot: false,
+    sellout: false,
+  },
+  {
+    id: 5,
+    name: 'Duki — Antes de que salga el sol',
+    tipo: 'musica',
+    date: '5 jul 2026',
+    venue: 'Movistar Arena, Villa Crespo',
+    icon: '🎤',
+    gradient: 'linear-gradient(135deg, #0a0a1a, #1a1a0a)',
+    desde: '$62.000',
+    hasta: '$145.000',
+    tickets: 320,
+    demand: 58,
+    hot: false,
+    sellout: false,
+  },
+  {
+    id: 6,
+    name: 'Lali Espósito — Disciplina Tour',
+    tipo: 'musica',
+    date: '18 jul 2026',
+    venue: 'Luna Park, CABA',
+    icon: '💃',
+    gradient: 'linear-gradient(135deg, #1a0515, #0a0a2e)',
+    desde: '$55.000',
+    hasta: '$120.000',
+    tickets: 410,
+    demand: 65,
+    hot: false,
+    sellout: false,
+  },
+  {
+    id: 7,
+    name: 'Boca Juniors vs. Flamengo — Libertadores',
+    tipo: 'deporte',
+    date: '30 jul 2026',
+    venue: 'Estadio La Bombonera, CABA',
+    icon: '🏆',
+    gradient: 'linear-gradient(135deg, #0a0a05, #1a1a05)',
+    desde: '$120.000',
+    hasta: '$350.000',
+    tickets: 54,
+    demand: 88,
+    hot: true,
+    sellout: false,
+  },
+  {
+    id: 8,
+    name: 'Bizarrap — Bzrp Music Sessions Live',
+    tipo: 'musica',
+    date: '2 ago 2026',
+    venue: 'Estadio Único de La Plata',
+    icon: '🎧',
+    gradient: 'linear-gradient(135deg, #050510, #101010)',
+    desde: '$78.000',
+    hasta: '$190.000',
+    tickets: 680,
+    demand: 45,
+    hot: false,
+    sellout: false,
+  },
+];
+
+let currentFilter = 'todos';
+let currentSearch = '';
+
+function demandColor(d) {
+  if (d >= 90) return 'hot';
+  if (d >= 70) return 'high';
+  return '';
+}
+
+function demandLabel(d) {
+  if (d >= 90) return '🔴 Demanda altísima';
+  if (d >= 70) return '🟠 Alta demanda';
+  if (d >= 50) return '🟡 Demanda media';
+  return '🟢 Disponible';
+}
+
+function renderEvents() {
+  const q = currentSearch.toLowerCase();
+  let evs = EVENTS.filter(e => {
+    const matchFilter = currentFilter === 'todos' || e.tipo === currentFilter;
+    const matchSearch = !q || e.name.toLowerCase().includes(q) || e.venue.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+
+  const grid = document.getElementById('events-grid');
+  const empty = document.getElementById('empty-state');
+
+  if (!evs.length) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  grid.innerHTML = evs.map(e => `
+    <a class="ev-card" href="flujo-comprador.html" style="text-decoration:none; color:inherit;">
+      <div class="ev-cover" style="background:${e.gradient};">
+        ${e.hot ? `<div class="ev-hot">🔥 Alta demanda</div>` : ''}
+        <div class="ev-cover-icon">${e.icon}</div>
+        <span class="ev-tipo-badge">${e.tipo === 'musica' ? 'Música' : e.tipo === 'deporte' ? 'Deporte' : e.tipo === 'festival' ? 'Festival' : 'Teatro'}</span>
+      </div>
+      <div class="ev-body">
+        <div class="ev-name">${e.name}</div>
+        <div class="ev-meta">
+          <span>📅 ${e.date}</span>
+          <span>📍 ${e.venue}</span>
+        </div>
+        <div class="ev-prices">
+          <div>
+            <div class="ev-price-from">Desde</div>
+            <div class="ev-price-val">${e.desde}</div>
+          </div>
+          <div class="ev-tickets">
+            <strong>${e.tickets}</strong> entradas<br>disponibles
+          </div>
+        </div>
+        <div class="ev-demand">
+          <span style="color:var(--muted); font-size:0.66rem;">${demandLabel(e.demand)}</span>
+          <div class="demand-bar"><div class="demand-fill ${demandColor(e.demand)}" style="width:${e.demand}%;"></div></div>
+          <span style="color:var(--muted); font-size:0.66rem;">${e.demand}%</span>
+        </div>
+        <div class="ev-btn">Ver entradas →</div>
+      </div>
+    </a>`).join('');
+}
+
+function setFilter(tipo, btn) {
+  currentFilter = tipo;
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEvents();
+}
+
+function filterEvents(val) {
+  currentSearch = val;
+  renderEvents();
+}
+
+function showToast(msg, icon='✅') {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast-icon').textContent = icon;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Init
+renderEvents();
+</script>
+</body>
+</html>
