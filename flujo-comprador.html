@@ -2320,23 +2320,16 @@ function selectPayment(el) {
 }
 
 function confirmPayment() {
-  goToStep(4);
-  updatePaymentSummary(state.agreedPrice);
-  // Mostrar botón de escrow visual luego de un momento
+  // Mostrar loading breve y redirigir a escrow-visual
+  const btn = document.querySelector('#step3content .btn-primary');
+  if (btn) {
+    btn.textContent = '🔒 Procesando pago...';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+  }
   setTimeout(() => {
-    const box = document.getElementById('step4content');
-    if (box && !document.getElementById('btnVerEscrow')) {
-      const btn = document.createElement('a');
-      btn.id = 'btnVerEscrow';
-      btn.href = 'escrow-visual.html';
-      btn.innerHTML = '🔐 Ver estado completo del escrow →';
-      btn.style.cssText = 'display:block;margin-top:14px;background:rgba(13,148,136,.12);border:1.5px solid rgba(13,148,136,.4);color:var(--teal-light);border-radius:10px;padding:12px 16px;font-size:0.86rem;font-weight:700;text-align:center;text-decoration:none;transition:background .2s;';
-      btn.onmouseover = () => btn.style.background = 'rgba(13,148,136,.22)';
-      btn.onmouseout  = () => btn.style.background = 'rgba(13,148,136,.12)';
-      const inner = box.querySelector('div > div');
-      if (inner) inner.appendChild(btn);
-    }
-  }, 600);
+    window.location.href = 'escrow-visual.html';
+  }, 1200);
 }
 
 // ─── STEP 4 ───
