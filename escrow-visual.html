@@ -178,19 +178,17 @@
   .funds-arrow-icon { font-size:1.8rem; color:var(--gold); transition:all .4s; }
   .funds-arrow-lbl { font-size:0.62rem; color:var(--text-dim); margin-top:4px; white-space:nowrap; }
 
-  /* ── SELLER NOTIFICATION ── */
-  .seller-notif { position:fixed; top:70px; right:24px; z-index:8000; max-width:340px; background:var(--surface); border:1.5px solid rgba(34,197,94,.45); border-radius:16px; padding:0; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,.6), 0 0 0 1px rgba(34,197,94,.1); transform:translateX(380px); opacity:0; transition:transform .5s cubic-bezier(.34,1.56,.64,1), opacity .4s; pointer-events:none; }
-  .seller-notif.open { transform:translateX(0); opacity:1; pointer-events:auto; }
-  .sn-header { background:linear-gradient(135deg, rgba(34,197,94,.15), rgba(34,197,94,.07)); padding:12px 16px 10px; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(34,197,94,.2); }
-  .sn-icon { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#22c55e,#16a34a); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
-  .sn-title { font-weight:800; font-size:0.88rem; color:var(--green); }
-  .sn-sub { font-size:0.68rem; color:var(--text-dim); margin-top:1px; }
-  .sn-body { padding:12px 16px 14px; }
-  .sn-amount { font-size:1.6rem; font-weight:800; color:var(--green); margin-bottom:4px; }
-  .sn-detail { font-size:0.74rem; color:var(--text-dim); line-height:1.5; }
-  .sn-close { position:absolute; top:10px; right:12px; background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:1rem; padding:2px 6px; }
-  .sn-pulse { animation:snPulse 1.5s ease-out; }
-  @keyframes snPulse { 0%,100%{box-shadow:0 12px 40px rgba(0,0,0,.6)} 40%{box-shadow:0 12px 40px rgba(0,0,0,.6), 0 0 0 8px rgba(34,197,94,.15), 0 0 0 16px rgba(34,197,94,.06)} }
+  /* ── SELLER NOTIFICATION (dentro del panel vendedor) ── */
+  .seller-notif-inline { display:none; background:linear-gradient(135deg,rgba(34,197,94,.1),rgba(34,197,94,.05)); border:1.5px solid rgba(34,197,94,.4); border-radius:12px; overflow:hidden; animation:snSlideIn .5s cubic-bezier(.34,1.56,.64,1); }
+  .seller-notif-inline.open { display:block; }
+  @keyframes snSlideIn { from{transform:translateY(-12px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .sn-header { background:rgba(34,197,94,.08); padding:11px 14px 9px; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(34,197,94,.2); }
+  .sn-icon { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#22c55e,#16a34a); display:flex; align-items:center; justify-content:center; font-size:0.9rem; flex-shrink:0; }
+  .sn-title { font-weight:800; font-size:0.85rem; color:var(--green); }
+  .sn-sub { font-size:0.67rem; color:var(--text-dim); margin-top:1px; }
+  .sn-body { padding:11px 14px 13px; }
+  .sn-amount { font-size:1.5rem; font-weight:800; color:var(--green); margin-bottom:4px; }
+  .sn-detail { font-size:0.73rem; color:var(--text-dim); line-height:1.5; }
 
   /* responsive */
   @media(max-width:800px) {
@@ -354,6 +352,33 @@
           <button class="btn-dispute" onclick="openDispute()">
             ⚠️ Reportar problema
           </button>
+        </div>
+
+        <!-- Notificación fondos liberados (aparece al confirmar) -->
+        <div class="seller-notif-inline" id="sellerNotif">
+          <div class="sn-header">
+            <div class="sn-icon">🔔</div>
+            <div>
+              <div class="sn-title">¡Tus fondos fueron liberados!</div>
+              <div class="sn-sub">Notificación para @lucas_g</div>
+            </div>
+          </div>
+          <div class="sn-body">
+            <div class="sn-amount">$80.750</div>
+            <div class="sn-detail">Acreditación en proceso hacia tu <strong style="color:var(--text);">CBU ████████ 9021</strong> · Dentro de 48hs hábiles</div>
+            <div style="margin-top:10px;display:flex;gap:6px;">
+              <div style="flex:1;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:8px 10px;text-align:center;">
+                <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:2px;">VENDISTE</div>
+                <div style="font-size:0.8rem;font-weight:700;">Coldplay</div>
+                <div style="font-size:0.63rem;color:var(--text-dim);">Platea · F12 B44</div>
+              </div>
+              <div style="flex:1;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:8px 10px;text-align:center;">
+                <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:2px;">COMISIÓN</div>
+                <div style="font-size:0.8rem;font-weight:700;color:var(--muted);">−$4.250</div>
+                <div style="font-size:0.63rem;color:var(--text-dim);">FanChain 5%</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Timeline vendedor -->
@@ -537,35 +562,6 @@
       <button onclick="closeRelease()" style="flex:1;background:var(--teal);color:#fff;border:none;border-radius:10px;padding:12px;font-size:0.88rem;font-weight:700;cursor:pointer;">Ver mi entrada 🎫</button>
       <button onclick="closeRelease()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px;font-size:0.88rem;cursor:pointer;">Volver al inicio</button>
     </div>
-  </div>
-</div>
-
-<!-- ══ NOTIFICACIÓN VENDEDOR ══ -->
-<div class="seller-notif" id="sellerNotif">
-  <button class="sn-close" onclick="document.getElementById('sellerNotif').classList.remove('open')">✕</button>
-  <div class="sn-header">
-    <div class="sn-icon">🔔</div>
-    <div>
-      <div class="sn-title">¡Tus fondos fueron liberados!</div>
-      <div class="sn-sub">@lucas_g · Fan Pro</div>
-    </div>
-  </div>
-  <div class="sn-body">
-    <div class="sn-amount">$80.750</div>
-    <div class="sn-detail">Acreditación en proceso hacia tu<br><strong style="color:var(--text);">CBU ████████ 9021</strong><br><span style="color:var(--text-dim);">Tiempo estimado: dentro de 48hs hábiles</span></div>
-    <div style="margin-top:12px;display:flex;gap:6px;">
-      <div style="flex:1;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:8px 10px;text-align:center;">
-        <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:2px;">VENDISTE</div>
-        <div style="font-size:0.82rem;font-weight:700;">Coldplay</div>
-        <div style="font-size:0.65rem;color:var(--text-dim);">Platea · F12 B44</div>
-      </div>
-      <div style="flex:1;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:8px 10px;text-align:center;">
-        <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:2px;">COMISIÓN</div>
-        <div style="font-size:0.82rem;font-weight:700;color:var(--muted);">−$4.250</div>
-        <div style="font-size:0.65rem;color:var(--text-dim);">FanChain 5%</div>
-      </div>
-    </div>
-    <button onclick="document.getElementById('sellerNotif').classList.remove('open')" style="margin-top:10px;width:100%;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:var(--green);border-radius:8px;padding:8px;font-size:0.8rem;font-weight:700;cursor:pointer;">Ver mis cobros →</button>
   </div>
 </div>
 
@@ -802,14 +798,53 @@ function confirmReceipt() {
   document.getElementById('sellerQr').textContent = '✅';
   document.getElementById('sellerTicketStatus').textContent = '✅ Venta confirmada — fondos en proceso de acreditación';
 
-  // Update buyer actions
+  // Update buyer actions — confirmación estilo boarding pass
   document.getElementById('buyerActions').innerHTML = `
-    <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px;text-align:center;">
-      <div style="font-size:1.6rem;margin-bottom:6px;">🎉</div>
-      <div style="font-weight:700;color:var(--green);margin-bottom:4px;">¡Entrada confirmada!</div>
-      <div style="font-size:0.75rem;color:var(--text-dim);">El QR de tu entrada ya está disponible en tu dashboard</div>
+    <div style="background:linear-gradient(160deg,rgba(13,148,136,.13),rgba(34,197,94,.08));border:1.5px solid rgba(34,197,94,.35);border-radius:14px;overflow:hidden;animation:confAppear .5s cubic-bezier(.34,1.56,.64,1);">
+      <style>@keyframes confAppear{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}</style>
+
+      <!-- Header celebratorio -->
+      <div style="padding:16px 16px 12px;text-align:center;border-bottom:1px dashed rgba(34,197,94,.25);">
+        <div style="font-size:2.2rem;margin-bottom:6px;">🎫</div>
+        <div style="font-size:1.05rem;font-weight:800;color:var(--green);margin-bottom:3px;">¡Tu entrada para Coldplay — Music of the Spheres es tuya!</div>
+        <div style="font-size:0.78rem;color:var(--text-dim);line-height:1.5;">Compra verificada por FanChain · Escrow liberado exitosamente</div>
+      </div>
+
+      <!-- Detalle de la entrada -->
+      <div style="padding:12px 16px;border-bottom:1px dashed rgba(34,197,94,.25);">
+        <div style="font-size:1rem;font-weight:800;margin-bottom:4px;">Coldplay — Music of the Spheres</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;color:var(--text-dim);">
+            <span>🏟</span><span>Estadio River Plate, Buenos Aires</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;color:var(--text-dim);">
+            <span>📅</span><span>Miércoles 12 de junio de 2026 · 21:00 hs</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;color:var(--text-dim);">
+            <span>💺</span><span>Platea Baja · Fila 12 · Butaca 44</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;color:var(--text-dim);">
+            <span>👤</span><span>@marinaR92 · DNI verificado por RENAPER</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR disponible -->
+      <div style="padding:12px 16px;display:flex;align-items:center;gap:14px;border-bottom:1px dashed rgba(34,197,94,.25);">
+        <div style="width:56px;height:56px;background:white;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;">▦</div>
+        <div>
+          <div style="font-size:0.8rem;font-weight:700;color:var(--green);margin-bottom:2px;">QR disponible en tu wallet</div>
+          <div style="font-size:0.71rem;color:var(--text-dim);line-height:1.5;">Guardalo offline o mostralo directamente desde la app el día del evento. No hace falta imprimirlo.</div>
+        </div>
+      </div>
+
+      <!-- Precio pagado -->
+      <div style="padding:10px 16px 14px;display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:0.72rem;color:var(--text-dim);">Total pagado · ESC-2301</div>
+        <div style="font-size:1.1rem;font-weight:800;color:var(--teal-light);">$85.000</div>
+      </div>
     </div>
-    <button class="btn-ghost" onclick="showToast('Abriendo dashboard…','👤')">Ver mi entrada en el dashboard →</button>
+    <button class="btn-ghost" onclick="showToast('Abriendo tu wallet de entradas…','🎫')" style="margin-top:2px;">Ver mi entrada en el dashboard →</button>
   `;
   document.getElementById('sellerActions').innerHTML = `
     <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px;text-align:center;">
@@ -935,11 +970,8 @@ function animateFundsRelease() {
 function showSellerNotification() {
   const notif = document.getElementById('sellerNotif');
   notif.classList.add('open');
-  // Pulso de atención
-  setTimeout(() => notif.classList.add('sn-pulse'), 100);
-  setTimeout(() => notif.classList.remove('sn-pulse'), 1700);
-  // Auto-cierre después de 12 segundos
-  setTimeout(() => notif.classList.remove('open'), 12000);
+  // Scroll suave al panel del vendedor
+  notif.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
 
 // ── DISPUTA ──
