@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FanChain — Para Martín</title>
+<style>
+  :root {
+    --teal: #0d9488;
+    --teal-light: #14b8a6;
+    --teal-dark: #0f766e;
+    --bg: #0b1120;
+    --surface: #131f35;
+    --surface2: #1a2a42;
+    --border: rgba(255,255,255,0.07);
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --green: #22c55e;
+    --gold: #f59e0b;
+    --purple: #8b5cf6;
+    --red: #ef4444;
+    --orange: #f97316;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── SLIDES ── */
+  .deck { width: 100%; height: 100vh; position: relative; }
+  .slide { position: absolute; inset: 0; display: none; flex-direction: column; overflow: hidden; }
+  .slide.active { display: flex; }
+
+  /* ── NAV ── */
+  .nav {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(19,31,53,0.95); border: 1px solid var(--border);
+    border-radius: 50px; padding: 8px 16px;
+    backdrop-filter: blur(12px); z-index: 100;
+  }
+  .nav-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-muted); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { background: var(--teal); color: white; border-color: var(--teal); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .nav-dots { display: flex; gap: 6px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim); cursor: pointer; transition: all 0.2s; }
+  .dot.active { background: var(--teal-light); width: 20px; border-radius: 4px; }
+  .slide-counter { font-size: 12px; color: var(--text-dim); min-width: 40px; text-align: center; }
+  .kb-hint { position: fixed; top: 16px; right: 20px; font-size: 11px; color: var(--text-dim); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; }
+
+  /* ── SHARED ── */
+  .slide-content { padding: 44px 64px; justify-content: center; }
+  .tag-label { font-size: 11px; color: var(--teal-light); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .slide-title { font-size: 38px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 8px; line-height: 1.1; }
+  .slide-sub { font-size: 16px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.65; max-width: 820px; }
+  .divider { height: 1px; background: var(--border); margin: 22px 0; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+  .card.teal { border-color: rgba(13,148,136,0.35); background: rgba(13,148,136,0.07); }
+  .card.purple { border-color: rgba(139,92,246,0.35); background: rgba(139,92,246,0.07); }
+  .card.gold { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.07); }
+  .card.red { border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.06); }
+  .card.green { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.06); }
+  .card-icon { font-size: 28px; margin-bottom: 10px; }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .card-text { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  .feat-list { display: flex; flex-direction: column; gap: 14px; }
+  .feat-item { display: flex; gap: 13px; align-items: flex-start; }
+  .feat-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; background: var(--surface2); }
+  .feat-info .feat-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  .feat-info .feat-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
+  .tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 50px; }
+  .tag-teal { background: rgba(13,148,136,0.15); color: var(--teal-light); }
+  .tag-green { background: rgba(34,197,94,0.12); color: #4ade80; }
+  .tag-red { background: rgba(239,68,68,0.12); color: #f87171; }
+  .tag-gold { background: rgba(245,158,11,0.15); color: var(--gold); }
+  .tag-purple { background: rgba(139,92,246,0.15); color: #a78bfa; }
+
+  /* ── DEMO SLIDE ── */
+  .slide-demo { padding: 0; }
+  .demo-top { padding: 18px 32px 0; flex-shrink: 0; }
+  .demo-top .slide-title { font-size: 24px; margin-bottom: 4px; }
+  .demo-top .slide-sub { font-size: 13.5px; margin-bottom: 10px; }
+  .demo-frame-wrap {
+    flex: 1; margin: 0 32px 24px;
+    border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; min-height: 0; position: relative;
+  }
+  .demo-frame-wrap iframe { width: 100%; height: 100%; border: none; transform-origin: top left; }
+  .demo-badge { position: absolute; top: 10px; right: 10px; background: rgba(13,148,136,0.9); color: white; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 50px; z-index: 5; }
+
+  /* ── COVER ── */
+  .slide-cover {
+    background: radial-gradient(ellipse at 25% 35%, rgba(13,148,136,0.14) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 75%, rgba(139,92,246,0.07) 0%, transparent 50%),
+                var(--bg);
+    align-items: center; justify-content: center; text-align: center;
+  }
+  .cover-greeting { font-size: 15px; color: var(--teal-light); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; }
+  .cover-title { font-size: 68px; font-weight: 800; letter-spacing: -3px; background: linear-gradient(135deg, var(--teal-light), #60efdf, white); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 14px; }
+  .cover-sub { font-size: 19px; color: var(--text-muted); margin-bottom: 36px; font-weight: 300; max-width: 560px; line-height: 1.6; }
+  .cover-chips { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .chip { background: var(--surface); border: 1px solid var(--border); border-radius: 50px; padding: 7px 16px; font-size: 13px; color: var(--text-muted); }
+  .chip.teal { border-color: rgba(13,148,136,0.3); color: var(--teal-light); background: rgba(13,148,136,0.08); }
+
+  /* ── COMPARISON BLOCK ── */
+  .comp-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 2px; }
+  .comp-head { background: var(--surface2); border-radius: 8px 8px 0 0; padding: 10px 14px; font-size: 12px; font-weight: 700; text-align: center; }
+  .comp-head.fanchain { color: var(--teal-light); }
+  .comp-head:first-child { text-align: left; }
+  .comp-cell { background: var(--surface); padding: 9px 14px; font-size: 12.5px; color: var(--text-muted); text-align: center; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .comp-cell:first-child { text-align: left; color: var(--text); font-weight: 500; }
+  .comp-cell.yes { color: var(--green); font-weight: 700; }
+  .comp-cell.no { color: var(--red); }
+  .comp-cell.partial { color: var(--gold); }
+  .comp-wrap { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+
+  /* ── DECISION BOX ── */
+  .decision-box {
+    background: var(--surface2);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 10px 10px 0;
+    padding: 14px 18px;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    line-height: 1.65;
+    margin-top: 14px;
+  }
+  .decision-box strong { color: var(--teal-light); }
+  .decision-box.gold { border-color: var(--gold); }
+  .decision-box.gold strong { color: var(--gold); }
+  .decision-box.purple { border-color: var(--purple); }
+  .decision-box.purple strong { color: #a78bfa; }
+  .decision-box.red { border-color: var(--red); }
+  .decision-box.red strong { color: #f87171; }
+
+  /* ── ROADMAP ── */
+  .roadmap { display: flex; flex-direction: column; gap: 10px; }
+  .roadmap-item { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
+  .roadmap-item.done { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.04); }
+  .roadmap-item.next { border-color: rgba(13,148,136,0.35); background: rgba(13,148,136,0.06); }
+  .roadmap-num { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; flex-shrink: 0; }
+  .roadmap-num.done { background: rgba(34,197,94,0.15); color: var(--green); }
+  .roadmap-num.next { background: rgba(13,148,136,0.15); color: var(--teal-light); }
+  .roadmap-num.pending { background: var(--surface2); color: var(--text-dim); }
+  .roadmap-info .r-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .roadmap-info .r-desc { font-size: 12px; color: var(--text-muted); }
+  .roadmap-status { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
+  .s-done { background: rgba(34,197,94,0.12); color: #4ade80; }
+  .s-next { background: rgba(13,148,136,0.12); color: var(--teal-light); }
+  .s-pending { background: rgba(100,116,139,0.12); color: var(--text-dim); }
+
+  /* ── CLOSING ── */
+  .slide-closing {
+    align-items: center; justify-content: center; text-align: center;
+    background: radial-gradient(ellipse at 50% 30%, rgba(13,148,136,0.18) 0%, transparent 60%), var(--bg);
+  }
+
+  /* ── PROGRESS BAR ── */
+  .prog-bar { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--teal), var(--teal-light)); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 1 — COVER
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-cover active">
+    <div class="cover-greeting">👋 Para Martín</div>
+    <div class="cover-title">FanChain</div>
+    <div class="cover-sub">Todo lo que venimos construyendo, por qué cada cosa se hizo así, y qué viene después.</div>
+    <div class="cover-chips">
+      <div class="chip teal">4 pantallas terminadas</div>
+      <div class="chip teal">4 demos interactivas</div>
+      <div class="chip teal">Comparativa vs competencia</div>
+      <div class="chip">Roadmap completo</div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 2 — PUNTO DE PARTIDA
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-content">
+    <div class="tag-label">📍 De dónde partimos</div>
+    <div class="slide-title">El diagnóstico del mercado</div>
+    <div class="slide-sub">Antes de arrancar a construir miramos qué existía y qué le faltaba a cada uno. Eso definió todas las decisiones de diseño.</div>
+
+    <div class="three-col" style="margin-bottom: 20px;">
+      <div class="card">
+        <div class="card-icon">🇪🇺</div>
+        <div class="card-title">TicketSwap (Europa)</div>
+        <div class="card-text">El más completo: escrow, identidad verificada, SecureSwap. Pero no tiene pujas, el precio tiene un techo fijo del 120% y no le paga nada al organizador. Además, no opera en Argentina.</div>
+        <div style="margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap;">
+          <span class="tag tag-green">✅ Escrow</span>
+          <span class="tag tag-red">❌ Sin pujas</span>
+          <span class="tag tag-red">❌ Sin organizador</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🇦🇷</div>
+        <div class="card-title">Reventick (Argentina)</div>
+        <div class="card-text">Existe localmente, tiene pago protegido y algo de verificación. Pero es muy básico: sin gráficos, sin pujas, sin sistema de fidelización. Le falta todo lo diferencial.</div>
+        <div style="margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap;">
+          <span class="tag tag-green">✅ Local</span>
+          <span class="tag tag-red">❌ Sin pujas</span>
+          <span class="tag tag-red">❌ Sin retención</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🌐</div>
+        <div class="card-title">Ticketmaster</div>
+        <div class="card-text">Es el gigante, pero con comisiones altísimas (hasta 21% al comprador), interfaz anticuada, y cero enfoque en la reventa peer-to-peer. El usuario lo usa porque no tiene otra opción.</div>
+        <div style="margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap;">
+          <span class="tag tag-red">❌ 21% fees</span>
+          <span class="tag tag-red">❌ Sin comunidad</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="decision-box">
+      <strong>La conclusión que nos llevó a construir FanChain:</strong> Nadie en Argentina tiene escrow + pujas + gráfico de precios + sistema de lealtad + ingresos para el organizador, todo junto. Cada uno tiene una pieza. Nosotros queremos el tablero completo.
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 3 — FLUJO COMPRADOR: DECISIONES
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-content">
+    <div class="tag-label">🛒 Pantalla 1 — Flujo del comprador</div>
+    <div class="slide-title">Por qué lo armamos así</div>
+    <div class="slide-sub">Empezamos por el flujo del comprador porque es el corazón de la plataforma. Si esto funciona bien, todo lo demás tiene sentido.</div>
+
+    <div class="two-col">
+      <div class="feat-list">
+        <div class="feat-item">
+          <div class="feat-icon">🎯</div>
+          <div class="feat-info">
+            <div class="feat-title">Selección de sector con precio por sector</div>
+            <div class="feat-desc">TicketSwap y Reventick muestran todas las entradas juntas. Nosotros las separamos por sector porque el precio cambia mucho entre Platea Baja y Populares — el comprador necesita comparar sectores, no entradas al azar.</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">👥</div>
+          <div class="feat-info">
+            <div class="feat-title">Listado de vendedores con perfil visible</div>
+            <div class="feat-desc">En Reventick ves el precio y ya. Nosotros mostramos el nivel del vendedor, su reputación, cuántas entradas tiene y qué tipo de operación ofrece. Eso genera confianza antes de poner un peso.</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">💬</div>
+          <div class="feat-info">
+            <div class="feat-title">Sistema de pujas con negociación</div>
+            <div class="feat-desc">Ninguno de los competidores tiene esto. TicketSwap es precio fijo + techo 120%. Nosotros dejamos que el comprador oferte, el vendedor contraoferte, y lleguen a un acuerdo real. Más parecido a como funciona la reventa hoy en WhatsApp, pero seguro.</div>
+          </div>
+        </div>
+      </div>
+      <div class="feat-list">
+        <div class="feat-item">
+          <div class="feat-icon">🔐</div>
+          <div class="feat-info">
+            <div class="feat-title">Escrow integrado al flujo</div>
+            <div class="feat-desc">Cuando el comprador acepta un precio, el dinero va al escrow automáticamente. El vendedor no ve los fondos hasta que la ticketera valida la entrada. Copiamos lo mejor de TicketSwap y lo llevamos más lejos.</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">⛓</div>
+          <div class="feat-info">
+            <div class="feat-title">Registro en blockchain</div>
+            <div class="feat-desc">Cada cambio de titularidad queda registrado. Hoy es visual (para el prototipo), en producción va a ser real (Polygon o similar). Ni TicketSwap ni Reventick tienen esto.</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">💳</div>
+          <div class="feat-info">
+            <div class="feat-title">Pago con tarjeta y USDT</div>
+            <div class="feat-desc">USDT es un diferencial enorme en Argentina por la volatilidad del peso. Ninguno de los competidores locales lo tiene. También te suma puntos por mantener saldo en la plataforma.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 4 — DEMO COMPRADOR
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-demo">
+    <div class="demo-top">
+      <div class="tag-label" style="margin-bottom:4px;">🛒 Demo interactiva</div>
+      <div class="slide-title">Flujo del comprador — probalo vos mismo</div>
+      <div class="slide-sub">Seleccioná un sector, mirá el gráfico de precios, elegí un vendedor y hacé una oferta. Todo el flujo hasta el escrow funciona.</div>
+    </div>
+    <div class="demo-frame-wrap">
+      <div class="demo-badge">Demo interactiva</div>
+      <iframe src="flujo-comprador.html" scrolling="yes"></iframe>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 5 — GRÁFICO: DECISIONES
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-content">
+    <div class="tag-label">📈 El gráfico de precios</div>
+    <div class="slide-title">Por qué pusimos un gráfico de velas</div>
+    <div class="slide-sub">Esta fue una de las decisiones más discutidas. Te cuento la lógica.</div>
+
+    <div class="two-col" style="margin-bottom: 18px;">
+      <div>
+        <div style="font-size:13px; font-weight:700; color:var(--text-muted); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px;">Lo que hacen los competidores</div>
+        <div class="feat-list">
+          <div class="feat-item">
+            <div class="feat-icon" style="background:rgba(239,68,68,0.1);">❌</div>
+            <div class="feat-info">
+              <div class="feat-title">TicketSwap: precio fijo con techo</div>
+              <div class="feat-desc">No tenés manera de saber si el precio que ves es razonable o si mañana baja. El techo del 120% te da un límite, pero no contexto.</div>
+            </div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-icon" style="background:rgba(239,68,68,0.1);">❌</div>
+            <div class="feat-info">
+              <div class="feat-title">Reventick: precio y ya</div>
+              <div class="feat-desc">Ves el precio publicado y nada más. ¿Es caro? ¿Es barato? No hay manera de saberlo desde la plataforma.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:13px; font-weight:700; color:var(--teal-light); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px;">Lo que hace FanChain</div>
+        <div class="feat-list">
+          <div class="feat-item">
+            <div class="feat-icon" style="background:rgba(13,148,136,0.12);">✅</div>
+            <div class="feat-info">
+              <div class="feat-title">Evolución del precio por sector</div>
+              <div class="feat-desc">El comprador puede ver cómo varió el precio en Platea Baja durante la última hora, el día o la semana. Eso es poder de decisión real.</div>
+            </div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-icon" style="background:rgba(13,148,136,0.12);">✅</div>
+            <div class="feat-info">
+              <div class="feat-title">Simplificado para todo público</div>
+              <div class="feat-desc">Arrancamos con un gráfico tipo Binance full crypto. Después lo simplificamos: sin indicadores técnicos, etiquetas en español llano, tooltip amigable. Tiene que servirle a alguien de 50 años también.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="decision-box gold">
+      <strong>La decisión clave:</strong> El gráfico no está en una pantalla aparte — aparece en el momento justo, cuando el comprador eligió un sector y está por elegir un vendedor. Así el dato es relevante en contexto, no ruido decorativo. Eso no lo hace nadie.
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 6 — DEMO GRÁFICO
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-demo">
+    <div class="demo-top">
+      <div class="tag-label" style="margin-bottom:4px;">📈 Demo interactiva</div>
+      <div class="slide-title">Gráfico de velas avanzado — versión standalone</div>
+      <div class="slide-sub">Esta es la versión completa del gráfico, con timeframes, volumen y estadísticas. La versión integrada al flujo es la simplificada.</div>
+    </div>
+    <div class="demo-frame-wrap">
+      <div class="demo-badge">Demo interactiva</div>
+      <iframe src="grafico-velas.html" scrolling="yes"></iframe>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 7 — REGISTRO: DECISIONES
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-content">
+    <div class="tag-label">🪪 Pantalla 2 — Registro y verificación</div>
+    <div class="slide-title">Por qué hicimos el onboarding en pasos</div>
+    <div class="slide-sub">La verificación de identidad era el riesgo más grande del diseño. Si asustás al usuario en el primer paso, nunca vuelve.</div>
+
+    <div class="two-col">
+      <div class="feat-list">
+        <div class="feat-item">
+          <div class="feat-icon">🪜</div>
+          <div class="feat-info">
+            <div class="feat-title">Centro de Verificación en 3 pasos opcionales</div>
+            <div class="feat-desc">En lugar de pedir todo en el registro, el usuario puede crearse la cuenta, explorar la plataforma, y verificar cuando esté listo. Cada paso que completa desbloquea más funcionalidades — no es una pared, es una rampa.</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">🪪</div>
+          <div class="feat-info">
+            <div class="feat-title">RENAPER en vez de "subí una foto del DNI"</div>
+            <div class="feat-desc">Reventick te pide una foto del documento y ya. Nosotros cruzamos con RENAPER — la base de datos del Estado argentino. Eso es lo que hace la diferencia en términos de confianza real y prevención de fraude.</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">🔐</div>
+          <div class="feat-info">
+            <div class="feat-title">2FA con teléfono</div>
+            <div class="feat-desc">TicketSwap tiene verificación de identidad pero no 2FA estándar. Nosotros lo pusimos porque cada transacción mueve plata real — queremos dos capas antes de cualquier operación.</div>
+          </div>
+        </div>
+      </div>
+      <div class="feat-list">
+        <div class="feat-item">
+          <div class="feat-icon">💳</div>
+          <div class="feat-info">
+            <div class="feat-title">La tarjeta como doble garantía</div>
+            <div class="feat-desc">No es solo un método de pago — es una garantía ante incumplimiento. Si un vendedor cancela en las últimas 48 horas, la tarjeta registrada es el respaldo para aplicar el descuento de puntos y eventualmente cargos.</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">📊</div>
+          <div class="feat-info">
+            <div class="feat-title">Niveles de acceso dinámicos</div>
+            <div class="feat-desc">El Centro de Verificación muestra qué puede hacer el usuario hoy y qué se desbloquea con cada paso. La interfaz cambia en tiempo real — si completás identidad, 2FA y tarjeta se habilitan en el momento.</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">💡</div>
+          <div class="feat-info">
+            <div class="feat-title">Opción B: pantallas separadas</div>
+            <div class="feat-desc">Teníamos dos opciones de diseño: todo en un wizard o pantallas separadas. Elegimos pantallas separadas porque cada módulo (RENAPER, 2FA, tarjeta) tiene lógica propia y puede actualizarse de forma independiente.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 8 — DEMO REGISTRO
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-demo">
+    <div class="demo-top">
+      <div class="tag-label" style="margin-bottom:4px;">🪪 Demo interactiva</div>
+      <div class="slide-title">Registro, login y centro de verificación</div>
+      <div class="slide-sub">Podés crear cuenta, completar la verificación RENAPER (simulada), activar 2FA y agregar tarjeta. El Centro de Verificación se actualiza solo.</div>
+    </div>
+    <div class="demo-frame-wrap">
+      <div class="demo-badge">Demo interactiva</div>
+      <iframe src="registro-login.html" scrolling="yes"></iframe>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 9 — DASHBOARD: DECISIONES
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-content">
+    <div class="tag-label">👤 Pantalla 3 — Dashboard del usuario</div>
+    <div class="slide-title">Por qué el dashboard se parece más a una fintech que a una ticketera</div>
+    <div class="slide-sub">El dashboard fue la pantalla donde más nos alejamos de los competidores — intencionalmente.</div>
+
+    <div class="two-col">
+      <div>
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 10px;">Lo que hace la competencia</div>
+        <div class="card red" style="margin-bottom: 10px;">
+          <div class="card-title" style="font-size:13px;">TicketSwap "Mi perfil"</div>
+          <div class="card-text" style="font-size: 12px;">Nombre, foto, historial de transacciones y nada más. Sin nivel, sin puntos, sin beneficios, sin reputación detallada. No hay razón para volver a esa pantalla.</div>
+        </div>
+        <div class="card red">
+          <div class="card-title" style="font-size:13px;">Reventick</div>
+          <div class="card-text" style="font-size: 12px;">Ni siquiera tiene un área de usuario elaborada. Es básicamente "Mis compras" y chau.</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 13px; font-weight: 700; color: var(--teal-light); margin-bottom: 10px;">Lo que hace FanChain</div>
+        <div class="feat-list">
+          <div class="feat-item">
+            <div class="feat-icon" style="background:rgba(13,148,136,0.12); font-size:14px;">🏆</div>
+            <div class="feat-info">
+              <div class="feat-title">Nivel y barra de progreso siempre visibles</div>
+              <div class="feat-desc">Sabés cuántos puntos tenés, cuántos te faltan para el próximo nivel y qué beneficios se desbloquean. Es el mismo mecanismo que usan Duolingo, Mercado Puntos o las apps de fitness para crear hábito.</div>
+            </div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-icon" style="background:rgba(245,158,11,0.12); font-size:14px;">⭐</div>
+            <div class="feat-info">
+              <div class="feat-title">Reputación detallada con reseñas</div>
+              <div class="feat-desc">Score con barras por estrella, estadísticas de comportamiento (tiempo de respuesta, racha sin cancelaciones) y reseñas textuales. eBay y Airbnb lo hacen — en ticketing no lo hace nadie.</div>
+            </div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-icon" style="background:rgba(139,92,246,0.12); font-size:14px;">⛓</div>
+            <div class="feat-info">
+              <div class="feat-title">Historial con hash de blockchain</div>
+              <div class="feat-desc">Cada transacción tiene su hash registrado. El usuario puede verificar que la operación existió. Eso es transparencia que ningún competidor ofrece.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="decision-box purple">
+      <strong>La lógica detrás:</strong> Si el usuario solo entra cuando quiere comprar o vender, perdemos. Queremos que entre a ver sus puntos, su reputación, su progreso. Eso es retención gratuita — sin notificaciones agresivas ni trucos oscuros.
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 10 — DEMO DASHBOARD
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-demo">
+    <div class="demo-top">
+      <div class="tag-label" style="margin-bottom:4px;">👤 Demo interactiva</div>
+      <div class="slide-title">Dashboard del usuario — navegá las secciones</div>
+      <div class="slide-sub">Perfil, mis entradas, historial (con filtros por compras/ventas), notificaciones y reputación. Hacé click en las stat cards del perfil.</div>
+    </div>
+    <div class="demo-frame-wrap">
+      <div class="demo-badge">Demo interactiva</div>
+      <iframe src="dashboard-usuario.html" scrolling="yes"></iframe>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 11 — PUNTOS Y COMISIONES
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-content">
+    <div class="tag-label">🎯 La lógica del negocio</div>
+    <div class="slide-title">Puntos, niveles y comisiones: las decisiones clave</div>
+    <div class="slide-sub">Acá hay varias decisiones que parecen pequeñas pero tienen un impacto grande en la economía de la plataforma.</div>
+
+    <div class="two-col">
+      <div class="feat-list">
+        <div class="feat-item">
+          <div class="feat-icon">🧠</div>
+          <div class="feat-info">
+            <div class="feat-title">Niveles gratuitos vs. niveles de suscripción</div>
+            <div class="feat-desc">Rookie, Fan y Fan Plus se ganan con uso. Fan Pro y Fan Elite se pagan mensualmente. Eso nos da dos modelos: uno de engagement (puntos) y otro de MRR (suscripción). Los dos se retroalimentan.</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">🏟</div>
+          <div class="feat-info">
+            <div class="feat-title">El organizador siempre gana, pero no se muestra</div>
+            <div class="feat-desc">En la UI el usuario ve un único "cargo de servicio". Por dentro, parte va a FanChain y parte al organizador. A partir de Fan Pro, el organizador gana más que FanChain por operación — eso los convierte en promotores nuestros.</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">📉</div>
+          <div class="feat-info">
+            <div class="feat-title">Las comisiones bajan con el nivel</div>
+            <div class="feat-desc">TicketSwap cobra 5% al vendedor y 10% al comprador, fijo para todos. Nosotros bajamos las comisiones a medida que el usuario sube de nivel. Es un incentivo real para quedarse — y para pagar la suscripción.</div>
+          </div>
+        </div>
+      </div>
+      <div class="feat-list">
+        <div class="feat-item">
+          <div class="feat-icon">⚖️</div>
+          <div class="feat-info">
+            <div class="feat-title">El sistema de castigos también tiene niveles</div>
+            <div class="feat-desc">No es "te bloqueamos y chau". Hay advertencia, restricción parcial y suspensión total — con posibilidad de apelar. Copiamos la lógica de plataformas como Airbnb o Uber: el castigo es proporcional y transparente.</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">💎</div>
+          <div class="feat-info">
+            <div class="feat-title">USDT como herramienta de fidelización</div>
+            <div class="feat-desc">Mantener saldo en USDT te suma puntos proporcionales al monto. En Argentina eso es enorme: la gente ya tiene USDT y cualquier plataforma que lo monetice tiene ventaja.</div>
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">🤝</div>
+          <div class="feat-info">
+            <div class="feat-title">Referidos con doble incentivo</div>
+            <div class="feat-desc">+100 pts si el referido se registra, +150 pts más si hace su primera operación. El segundo incentivo asegura que los usuarios traigan gente que realmente va a usar la plataforma, no solo crear cuentas vacías.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 12 — COMPARATIVA COMPLETA
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-content">
+    <div class="tag-label">⚖️ El cuadro completo</div>
+    <div class="slide-title">FanChain vs todos, feature por feature</div>
+    <div class="slide-sub">Acá podés ver exactamente dónde estamos parados respecto a los tres competidores que miramos.</div>
+
+    <div class="comp-wrap">
+      <div class="comp-row">
+        <div class="comp-head" style="text-align:left; border-radius:8px 0 0 0;">Feature</div>
+        <div class="comp-head fanchain">⛓ FanChain</div>
+        <div class="comp-head">TicketSwap</div>
+        <div class="comp-head">Reventick</div>
+        <div class="comp-head" style="border-radius:0 8px 0 0;">WhatsApp</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell">Escrow / pago protegido</div>
+        <div class="comp-cell yes">✅ Sí</div>
+        <div class="comp-cell yes">✅ Sí</div>
+        <div class="comp-cell yes">✅ Sí</div>
+        <div class="comp-cell no">❌</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell">Verificación de identidad</div>
+        <div class="comp-cell yes">✅ RENAPER</div>
+        <div class="comp-cell partial">⚠️ Parcial</div>
+        <div class="comp-cell yes">✅ Sí</div>
+        <div class="comp-cell no">❌</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell">Sistema de pujas y negociación</div>
+        <div class="comp-cell yes">✅ Completo</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell no">❌</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell">Gráfico de precios por sector</div>
+        <div class="comp-cell yes">✅ Tiempo real</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell no">❌</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell">Organizador recibe % de cada reventa</div>
+        <div class="comp-cell yes">✅ Siempre</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell no">❌</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell">Sistema de puntos y niveles</div>
+        <div class="comp-cell yes">✅ 5 niveles</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell no">❌</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell">Blockchain / trazabilidad</div>
+        <div class="comp-cell yes">✅ Sí</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell no">❌</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell">Pago en USDT</div>
+        <div class="comp-cell yes">✅ Sí</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell no">❌</div>
+      </div>
+      <div class="comp-row">
+        <div class="comp-cell">Disponible en Argentina</div>
+        <div class="comp-cell yes">✅ Nativo</div>
+        <div class="comp-cell no">❌</div>
+        <div class="comp-cell yes">✅ Sí</div>
+        <div class="comp-cell yes">✅ Sí</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 13 — ROADMAP
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-content">
+    <div class="tag-label">🗺 Estado y lo que viene</div>
+    <div class="slide-title">Qué está hecho y qué falta</div>
+    <div class="slide-sub">Completamos los 4 flujos del usuario. Ahora arrancamos los flujos del vendedor, organizador y admin.</div>
+
+    <div class="two-col">
+      <div class="roadmap">
+<!-- FC:ROADMAP_DONE:START -->
+        <div class="roadmap-item done">
+          <div class="roadmap-num done">✅</div>
+          <div class="roadmap-info">
+            <div class="r-title">Flujo del comprador completo</div>
+            <div class="r-desc">Sector, gráfico, pujas, negociación, pago, alerta de disponibilidad, vista desde butaca</div>
+          </div>
+          <div class="roadmap-status s-done">Listo</div>
+        </div>
+        <div class="roadmap-item done">
+          <div class="roadmap-num done">✅</div>
+          <div class="roadmap-info">
+            <div class="r-title">Gráfico de velas por sector</div>
+            <div class="r-desc">Versión standalone completa + versión simplificada integrada al flujo</div>
+          </div>
+          <div class="roadmap-status s-done">Listo</div>
+        </div>
+        <div class="roadmap-item done">
+          <div class="roadmap-num done">✅</div>
+          <div class="roadmap-info">
+            <div class="r-title">Registro, login y verificación</div>
+            <div class="r-desc">RENAPER, 2FA, tarjeta de crédito, CBU/CVU para cobros como vendedor</div>
+          </div>
+          <div class="roadmap-status s-done">Listo</div>
+        </div>
+        <div class="roadmap-item done">
+          <div class="roadmap-num done">✅</div>
+          <div class="roadmap-info">
+            <div class="r-title">Dashboard del usuario</div>
+            <div class="r-desc">Perfil, puntos, nivel, historial, entradas activas, reputación</div>
+          </div>
+          <div class="roadmap-status s-done">Listo</div>
+        </div>
+        <div class="roadmap-item done">
+          <div class="roadmap-num done">✅</div>
+          <div class="roadmap-info">
+            <div class="r-title">Flujo del vendedor</div>
+            <div class="r-desc">Publicar con carga de QR a bóveda, ofertas, cobros, reputación y disputas</div>
+          </div>
+          <div class="roadmap-status s-done">Listo</div>
+        </div>
+        <div class="roadmap-item done">
+          <div class="roadmap-num done">✅</div>
+          <div class="roadmap-info">
+            <div class="r-title">Panel del organizador</div>
+            <div class="r-desc">Heatmap con butacas numeradas, ingresos, alertas, límites de reventa y alta de eventos</div>
+          </div>
+          <div class="roadmap-status s-done">Listo</div>
+        </div>
+        <div class="roadmap-item done">
+          <div class="roadmap-num done">✅</div>
+          <div class="roadmap-info">
+            <div class="r-title">Panel admin FanChain</div>
+            <div class="r-desc">Monitor global con drill-down, usuarios, sanciones, disputas, escrow, analytics y audit log</div>
+          </div>
+          <div class="roadmap-status s-done">Listo</div>
+        </div>
+        <div class="roadmap-item done">
+          <div class="roadmap-num done">✅</div>
+          <div class="roadmap-info">
+            <div class="r-title">Escrow visual + bóveda digital QR</div>
+            <div class="r-desc">Vista dual comprador/vendedor, blockchain bloque a bloque, transferencia automática del QR</div>
+          </div>
+          <div class="roadmap-status s-done">Listo</div>
+        </div>
+        <div class="roadmap-item done">
+          <div class="roadmap-num done">✅</div>
+          <div class="roadmap-info">
+            <div class="r-title">Centro de notificaciones & alertas</div>
+            <div class="r-desc">Alertas de disponibilidad para compradores, demanda activa para vendedores, notificaciones de escrow y QR</div>
+          </div>
+          <div class="roadmap-status s-done">Listo</div>
+        </div>
+<!-- FC:ROADMAP_DONE:END -->
+      </div>
+      <div class="roadmap">
+<!-- FC:ROADMAP_NEXT:START -->
+        <div class="roadmap-item next">
+          <div class="roadmap-num next">▶</div>
+          <div class="roadmap-info">
+            <div class="r-title">Validación con usuarios reales</div>
+            <div class="r-desc">15–20 entrevistas a compradores y vendedores habituales de entradas</div>
+          </div>
+          <div class="roadmap-status s-next">Siguiente</div>
+        </div>
+        <div class="roadmap-item next">
+          <div class="roadmap-num next">▶</div>
+          <div class="roadmap-info">
+            <div class="r-title">Definir modelo de escrow real</div>
+            <div class="r-desc">Elegir fintech intermediaria (Mercado Pago, Bind, Lemon) para custodia de fondos regulada</div>
+          </div>
+          <div class="roadmap-status s-next">Siguiente</div>
+        </div>
+        <div class="roadmap-item next">
+          <div class="roadmap-num next">▶</div>
+          <div class="roadmap-info">
+            <div class="r-title">MVP técnico</div>
+            <div class="r-desc">Primera transacción real de punta a punta con dinero real y usuarios reales</div>
+          </div>
+          <div class="roadmap-status s-next">Siguiente</div>
+        </div>
+<!-- FC:ROADMAP_NEXT:END -->
+      </div>
+    </div>
+
+    <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
+<!-- FC:STATS:START -->
+      <span class="tag tag-teal">9 pantallas completadas — prototipo 100% funcional</span>
+      <span class="tag tag-gold">Próximo paso: validación con usuarios reales</span>
+      <span class="tag tag-purple">Sin backend todavía — todo es frontend</span>
+<!-- FC:STATS:END -->
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 14 — PENDIENTES Y DECISIONES
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-content">
+    <div class="tag-label">⏳ Lo que todavía hay que definir</div>
+    <div class="slide-title">Decisiones pendientes entre los dos</div>
+    <div class="slide-sub">Estas son las cosas que tenemos que resolver juntos — algunas son de negocio, otras de producto.</div>
+
+    <div class="three-col">
+      <div class="card gold">
+        <div class="card-icon">💸</div>
+        <div class="card-title">Pricing de suscripciones</div>
+        <div class="card-text">¿Cuánto va a costar Fan Pro y Fan Elite por mes? Hay que calibrarlo con el beneficio de comisión reducida para que tenga sentido económico tanto para el usuario como para la plataforma.</div>
+      </div>
+      <div class="card gold">
+        <div class="card-icon">🏷</div>
+        <div class="card-title">El nombre del "cargo del organizador"</div>
+        <div class="card-text">En la UI no podemos decir "porcentaje del organizador". Las opciones son: "cargo de servicio", "fee de evento" o "arancel de plataforma". Hay que elegir uno.</div>
+      </div>
+      <div class="card gold">
+        <div class="card-icon">🔤</div>
+        <div class="card-title">El nombre definitivo</div>
+        <div class="card-text">FanChain es provisorio. Opciones evaluadas: FanGate, EntradaX, LivePass, Reentrada, Entradero, Butaca. Hay que cerrar esto antes de ir al mercado.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">⛓</div>
+        <div class="card-title">Qué red blockchain</div>
+        <div class="card-text">Para producción necesitamos decidir: Polygon, Base, Stellar u otra. Tiene que ser barata en gas, rápida y compatible con pagos en USDT.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏟</div>
+        <div class="card-title">Primera ticketera aliada</div>
+        <div class="card-text">Deportick, PassLine, TicketPortal... necesitamos uno para el modelo SecureSwap (invalidar entrada original + generar nueva). Sin esto el escrow es incompleto.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📱</div>
+        <div class="card-title">Web vs app nativa primero</div>
+        <div class="card-text">El prototipo es web. Para producción: ¿arrancamos con web responsive o vamos directo a app nativa? Impacta en tiempos y costos de desarrollo.</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 15 — CIERRE
+  ══════════════════════════════════════════ -->
+  <div class="slide slide-closing">
+    <div style="font-size:52px; margin-bottom: 14px;">⛓</div>
+    <div style="font-size:54px; font-weight:800; letter-spacing:-2px; background:linear-gradient(135deg,var(--teal-light),#60efdf,white); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:14px;">FanChain</div>
+    <div style="font-size:18px; color:var(--text-muted); margin-bottom:36px; max-width:520px; line-height:1.65;">
+      Tenemos el prototipo más completo de reventa de entradas que existe en Argentina hoy. Nadie más tiene pujas + gráfico + escrow + organizador + blockchain + puntos, todo junto.
+    </div>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:40px;">
+<!-- FC:CHIP:START -->
+      <span class="chip teal">✅ 6 pantallas terminadas</span>
+      <span class="chip teal">📈 Diferencial claro vs competencia</span>
+      <span class="chip teal">🗺 Roadmap definido</span>
+      <span class="chip">Próximo: panel admin fanchain</span>
+<!-- FC:CHIP:END -->
+    </div>
+    <div style="font-size:13px; color:var(--text-dim);">Prototipo funcional · 2026 · Para Martín y el equipo</div>
+  </div>
+
+
+</div><!-- /deck -->
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)" disabled>←</button>
+  <div class="nav-dots" id="navDots"></div>
+  <div class="slide-counter" id="slideCounter">1 / 15</div>
+  <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">→</button>
+</div>
+
+<div class="kb-hint">← → para navegar</div>
+
+<script>
+  const slides  = document.querySelectorAll('.slide');
+  const total   = slides.length;
+  let current   = 0;
+
+  const dotsWrap = document.getElementById('navDots');
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsWrap.appendChild(d);
+  });
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    dotsWrap.children[current].classList.remove('active');
+    current = Math.max(0, Math.min(n, total - 1));
+    slides[current].classList.add('active');
+    dotsWrap.children[current].classList.add('active');
+    document.getElementById('slideCounter').textContent = (current + 1) + ' / ' + total;
+    document.getElementById('prevBtn').disabled = current === 0;
+    document.getElementById('nextBtn').disabled = current === total - 1;
+    const iframe = slides[current].querySelector('iframe');
+    if (iframe) resizeIframe(iframe);
+  }
+
+  function changeSlide(dir) { goTo(current + dir); }
+
+  function resizeIframe(iframe) {
+    const wrap  = iframe.parentElement;
+    const scale = Math.min(wrap.clientWidth / 1280, wrap.clientHeight / 800);
+    iframe.style.width  = (wrap.clientWidth  / scale) + 'px';
+    iframe.style.height = (wrap.clientHeight / scale) + 'px';
+    iframe.style.transform = `scale(${scale})`;
+    iframe.style.transformOrigin = 'top left';
+  }
+
+  window.addEventListener('resize', () => {
+    const iframe = slides[current].querySelector('iframe');
+    if (iframe) resizeIframe(iframe);
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); changeSlide(-1); }
+  });
+
+  requestAnimationFrame(() => {
+    const iframe = slides[current].querySelector('iframe');
+    if (iframe) resizeIframe(iframe);
+  });
+</script>
+</body>
+</html>
