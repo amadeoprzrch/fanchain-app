@@ -3,268 +3,218 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FanChain — Marketplace de Entradas</title>
+<title>FanChain — Ingresá</title>
 <style>
   :root {
-    --bg: #0b1120;
-    --surface: #131f35;
-    --surface2: #1a2a45;
-    --border: #1e3254;
-    --teal: #0d9488;
-    --teal2: #0f766e;
-    --teal-light: #14b8a6;
-    --teal-glow: rgba(13,148,136,0.15);
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --muted2: #94a3b8;
-    --gold: #f59e0b;
-    --green: #22c55e;
-    --purple: #7c3aed;
-    --orange: #f97316;
+    --bg: #0b1120; --surface: #131f35; --surface2: #1a2a45; --border: #1e3254;
+    --teal: #0d9488; --teal2: #0f766e; --teal-light: #14b8a6;
+    --teal-glow: rgba(13,148,136,0.15); --text: #e2e8f0;
+    --muted: #64748b; --muted2: #94a3b8; --green: #22c55e; --red: #ef4444;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    min-height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:24px;
+  }
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(13,148,136,.12), transparent);
   }
 
-  /* ── HEADER ── */
-  header {
-    padding: 28px 40px 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  .card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:18px; padding:36px 32px; width:100%; max-width:400px;
+    position:relative; z-index:1;
   }
-  .logo { font-size: 1.5rem; font-weight: 800; color: var(--teal-light); letter-spacing: -0.5px; }
-  .logo span { color: var(--text); }
-  .logo-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; font-weight: 400; letter-spacing: .3px; }
-  .live-badge {
-    display: flex; align-items: center; gap: 7px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 20px; padding: 6px 14px; font-size: 0.75rem; color: var(--muted2);
-  }
-  .live-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--green); box-shadow: 0 0 6px var(--green);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-  /* ── HERO ── */
-  .hero { text-align: center; padding: 52px 24px 36px; }
-  .hero-tag {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--teal-glow); border: 1px solid rgba(20,184,166,.25);
-    border-radius: 20px; padding: 5px 14px; font-size: 0.72rem;
-    color: var(--teal-light); font-weight: 700; letter-spacing: .4px;
-    margin-bottom: 20px; text-transform: uppercase;
-  }
-  .hero h1 {
-    font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800;
-    line-height: 1.15; color: var(--text); margin-bottom: 14px; letter-spacing: -1px;
-  }
-  .hero h1 em {
-    font-style: normal;
-    background: linear-gradient(90deg, var(--teal-light), #34d399);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  }
-  .hero p { font-size: 1rem; color: var(--muted2); max-width: 480px; margin: 0 auto; line-height: 1.6; }
+  /* Logo */
+  .logo { font-size:1.6rem; font-weight:800; color:var(--teal-light); text-align:center; margin-bottom:4px; }
+  .logo span { color:var(--text); }
+  .tagline { text-align:center; font-size:0.78rem; color:var(--muted); margin-bottom:28px; }
 
-  /* ── ROLE GRID ── */
-  .roles-label {
-    text-align: center; font-size: 0.68rem; color: var(--muted);
-    font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;
+  /* Welcome (hidden initially) */
+  .welcome { display:none; flex-direction:column; align-items:center; gap:10px; padding:20px 0; text-align:center; }
+  .welcome-avatar {
+    width:72px; height:72px; border-radius:50%;
+    background:linear-gradient(135deg, var(--teal), #0891b2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.6rem; font-weight:800; color:#fff;
+    border:3px solid var(--teal-light);
+    animation: popIn .4s cubic-bezier(.175,.885,.32,1.275);
   }
-  .roles-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr);
-    gap: 16px; max-width: 740px; margin: 0 auto; padding: 0 24px 48px;
+  @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+  .welcome-name { font-size:1.2rem; font-weight:800; }
+  .welcome-sub { font-size:0.8rem; color:var(--muted2); }
+
+  /* Form */
+  .form-group { margin-bottom:14px; }
+  label { display:block; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--muted2); margin-bottom:6px; }
+  input[type=email], input[type=password] {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:9px; padding:11px 14px; color:var(--text); font-size:0.9rem;
+    outline:none; transition:border-color .2s;
   }
-  .role-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 16px; padding: 28px 24px; cursor: pointer;
-    text-decoration: none; color: var(--text);
-    display: flex; flex-direction: column; gap: 12px;
-    transition: all .22s; position: relative; overflow: hidden;
+  input[type=email]:focus, input[type=password]:focus { border-color:var(--teal); }
+  .error-msg { font-size:0.72rem; color:var(--red); margin-top:6px; display:none; }
+
+  /* Botón principal */
+  .btn-login {
+    width:100%; background:var(--teal); color:#fff; border:none;
+    border-radius:10px; padding:13px; font-size:0.9rem; font-weight:700;
+    cursor:pointer; transition:all .2s; margin-top:4px; position:relative; overflow:hidden;
   }
-  .role-card::before {
-    content: ''; position: absolute; inset: 0; opacity: 0;
-    transition: opacity .22s; border-radius: 16px;
+  .btn-login:hover { background:var(--teal2); }
+  .btn-login:disabled { opacity:.6; cursor:not-allowed; }
+
+  /* Demo accounts */
+  .demo-label {
+    text-align:center; font-size:0.65rem; color:var(--muted);
+    font-weight:700; text-transform:uppercase; letter-spacing:.6px;
+    margin:20px 0 10px; display:flex; align-items:center; gap:8px;
   }
-  .role-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,.4); }
-  .role-card:hover::before { opacity: 1; }
-
-  .role-comprador { border-color: rgba(20,184,166,.3); }
-  .role-comprador::before { background: linear-gradient(135deg, rgba(13,148,136,.08), transparent); }
-  .role-comprador:hover { border-color: var(--teal); }
-
-  .role-vendedor { border-color: rgba(245,158,11,.25); }
-  .role-vendedor::before { background: linear-gradient(135deg, rgba(245,158,11,.07), transparent); }
-  .role-vendedor:hover { border-color: var(--gold); box-shadow: 0 12px 40px rgba(245,158,11,.1); }
-
-  .role-organizador { border-color: rgba(124,58,237,.25); }
-  .role-organizador::before { background: linear-gradient(135deg, rgba(124,58,237,.08), transparent); }
-  .role-organizador:hover { border-color: #7c3aed; box-shadow: 0 12px 40px rgba(124,58,237,.12); }
-
-  .role-admin { border-color: rgba(249,115,22,.25); }
-  .role-admin::before { background: linear-gradient(135deg, rgba(249,115,22,.07), transparent); }
-  .role-admin:hover { border-color: var(--orange); box-shadow: 0 12px 40px rgba(249,115,22,.1); }
-
-  .role-icon {
-    width: 52px; height: 52px; border-radius: 14px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.6rem; flex-shrink: 0;
+  .demo-label::before, .demo-label::after { content:''; flex:1; height:1px; background:var(--border); }
+  .demo-accounts { display:flex; flex-direction:column; gap:7px; }
+  .demo-btn {
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:9px; padding:9px 12px; cursor:pointer; transition:all .15s;
   }
-  .role-comprador .role-icon   { background: rgba(13,148,136,.15); }
-  .role-vendedor .role-icon    { background: rgba(245,158,11,.12); }
-  .role-organizador .role-icon { background: rgba(124,58,237,.12); }
-  .role-admin .role-icon       { background: rgba(249,115,22,.12); }
-
-  .role-name { font-size: 1.05rem; font-weight: 800; margin-bottom: 3px; }
-  .role-comprador .role-name   { color: var(--teal-light); }
-  .role-vendedor .role-name    { color: var(--gold); }
-  .role-organizador .role-name { color: #a78bfa; }
-  .role-admin .role-name       { color: var(--orange); }
-
-  .role-desc { font-size: 0.8rem; color: var(--muted2); line-height: 1.5; }
-  .role-features { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-  .role-feat {
-    font-size: 0.65rem; padding: 3px 8px; border-radius: 10px; font-weight: 600;
-    background: var(--surface2); color: var(--muted2); border: 1px solid var(--border);
+  .demo-btn:hover { border-color:var(--teal); background:var(--teal-glow); }
+  .demo-avatar {
+    width:30px; height:30px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.7rem; font-weight:800; color:#fff;
   }
-  .role-arrow {
-    position: absolute; right: 20px; bottom: 24px;
-    font-size: 1rem; color: var(--muted); transition: all .2s;
-  }
-  .role-card:hover .role-arrow { color: var(--text); transform: translateX(4px); }
+  .demo-info { flex:1; text-align:left; }
+  .demo-name { font-size:0.78rem; font-weight:700; color:var(--text); }
+  .demo-role { font-size:0.65rem; color:var(--muted2); }
+  .demo-arrow { color:var(--muted); font-size:0.8rem; }
 
-  /* ── FOOTER ── */
-  footer {
-    margin-top: auto; padding: 20px 40px;
-    border-top: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 10px;
-  }
-  .footer-stats { display: flex; gap: 20px; flex-wrap: wrap; }
-  .footer-stat { font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
-  .footer-stat strong { color: var(--muted2); }
-  .footer-note { font-size: 0.68rem; color: var(--muted); }
-
-  .demo-banner {
-    background: linear-gradient(90deg, rgba(13,148,136,.08), rgba(124,58,237,.06));
-    border: 1px solid rgba(20,184,166,.15); border-radius: 10px;
-    font-size: 0.76rem; color: var(--muted2); text-align: center;
-    max-width: 740px; margin: 0 auto 28px; padding: 10px 24px; line-height: 1.5;
-  }
-  .demo-banner strong { color: var(--teal-light); }
-
-  @media (max-width: 520px) {
-    .roles-grid { grid-template-columns: 1fr; }
-    .hero { padding: 36px 20px 28px; }
-    header { padding: 20px 20px 0; }
-    footer { padding: 16px 20px; }
-  }
+  /* Spinner */
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .spinner { width:18px; height:18px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; display:inline-block; vertical-align:middle; margin-right:6px; }
 </style>
 </head>
 <body>
 
-<header>
-  <div>
-    <div class="logo">Fan<span>Chain</span></div>
-    <div class="logo-sub">Marketplace de reventa de entradas</div>
-  </div>
-  <div class="live-badge">
-    <div class="live-dot"></div>
-    Prototipo funcional
-  </div>
-</header>
+<div class="card" id="login-card">
+  <div class="logo">Fan<span>Chain</span></div>
+  <div class="tagline">Marketplace de reventa de entradas</div>
 
-<div class="hero">
-  <div class="hero-tag">✦ Demo interactivo</div>
-  <h1>Comprá y vendé entradas<br>de forma <em>segura y transparente</em></h1>
-  <p>Escrow automático, verificación de identidad, sistema de pujas en tiempo real y blockchain visual.</p>
+  <!-- Welcome state (shown after login) -->
+  <div class="welcome" id="welcome-state">
+    <div class="welcome-avatar" id="welcome-avatar">AP</div>
+    <div class="welcome-name" id="welcome-name">Hola, Amadeo 👋</div>
+    <div class="welcome-sub" id="welcome-sub">Verificando acceso...</div>
+  </div>
+
+  <!-- Login form -->
+  <div id="login-form">
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="inp-email" placeholder="tu@email.com" value="">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="inp-pass" placeholder="••••••••" value="">
+      <div class="error-msg" id="error-msg">Email o contraseña incorrectos. Usá una cuenta demo.</div>
+    </div>
+    <button class="btn-login" id="btn-login" onclick="doLogin()">Ingresar</button>
+
+    <div class="demo-label">Acceso rápido — demo</div>
+    <div class="demo-accounts">
+      <div class="demo-btn" onclick="quickLogin('amadeo@fanchain.com','1234')">
+        <div class="demo-avatar" style="background:linear-gradient(135deg,#0d9488,#0891b2);">AP</div>
+        <div class="demo-info">
+          <div class="demo-name">Amadeo Pérez</div>
+          <div class="demo-role">🛒 Comprador · Fan Pro</div>
+        </div>
+        <span class="demo-arrow">→</span>
+      </div>
+      <div class="demo-btn" onclick="quickLogin('martin@fanchain.com','1234')">
+        <div class="demo-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">MR</div>
+        <div class="demo-info">
+          <div class="demo-name">Martín Rodríguez</div>
+          <div class="demo-role">💰 Vendedor · Fan Plus</div>
+        </div>
+        <span class="demo-arrow">→</span>
+      </div>
+      <div class="demo-btn" onclick="quickLogin('df@fanchain.com','1234')">
+        <div class="demo-avatar" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);">DF</div>
+        <div class="demo-info">
+          <div class="demo-name">DF Entertainment</div>
+          <div class="demo-role">🎪 Organizador · Verificado</div>
+        </div>
+        <span class="demo-arrow">→</span>
+      </div>
+      <div class="demo-btn" onclick="quickLogin('admin@fanchain.com','1234')">
+        <div class="demo-avatar" style="background:linear-gradient(135deg,#f97316,#ea580c);">FC</div>
+        <div class="demo-info">
+          <div class="demo-name">FanChain Admin</div>
+          <div class="demo-role">⚙️ Administrador · Acceso total</div>
+        </div>
+        <span class="demo-arrow">→</span>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div style="padding:0 24px;">
-  <div class="demo-banner">
-    <strong>¿Cómo querés ingresar?</strong> Seleccioná tu rol para explorar la experiencia completa.
-  </div>
-</div>
+<script>
+const ACCOUNTS = {
+  'amadeo@fanchain.com':  { pass:'1234', name:'Amadeo',          avatar:'AP', color:'linear-gradient(135deg,#0d9488,#0891b2)', dest:'home.html',             sub:'Comprador · Fan Pro ⭐' },
+  'martin@fanchain.com':  { pass:'1234', name:'Martín',          avatar:'MR', color:'linear-gradient(135deg,#f59e0b,#d97706)', dest:'home.html',             sub:'Vendedor · Fan Plus' },
+  'df@fanchain.com':      { pass:'1234', name:'DF Entertainment', avatar:'DF', color:'linear-gradient(135deg,#7c3aed,#6d28d9)', dest:'panel-organizador.html', sub:'Organizador verificado ✅' },
+  'admin@fanchain.com':   { pass:'1234', name:'Admin',           avatar:'FC', color:'linear-gradient(135deg,#f97316,#ea580c)', dest:'panel-admin.html',      sub:'Acceso total · FanChain' },
+};
 
-<div class="roles-label">Seleccioná tu rol</div>
-<div class="roles-grid">
+function quickLogin(email, pass) {
+  document.getElementById('inp-email').value = email;
+  document.getElementById('inp-pass').value  = pass;
+  doLogin();
+}
 
-  <a class="role-card role-comprador" href="flujo-comprador.html">
-    <div class="role-icon">🛒</div>
-    <div>
-      <div class="role-name">Comprador</div>
-      <div class="role-desc">Buscá entradas, participá en subastas y comprá con escrow automático.</div>
-    </div>
-    <div class="role-features">
-      <span class="role-feat">Pujas en vivo</span>
-      <span class="role-feat">Escrow</span>
-      <span class="role-feat">QR digital</span>
-      <span class="role-feat">Verificación</span>
-    </div>
-    <span class="role-arrow">→</span>
-  </a>
+function doLogin() {
+  const email = document.getElementById('inp-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('inp-pass').value;
+  const btn   = document.getElementById('btn-login');
+  const err   = document.getElementById('error-msg');
 
-  <a class="role-card role-vendedor" href="flujo-vendedor.html">
-    <div class="role-icon">💰</div>
-    <div>
-      <div class="role-name">Vendedor</div>
-      <div class="role-desc">Publicá tu entrada, fijá el precio y recibí el pago automáticamente al confirmarse.</div>
-    </div>
-    <div class="role-features">
-      <span class="role-feat">Publicar entrada</span>
-      <span class="role-feat">Custodia QR</span>
-      <span class="role-feat">Cobro seguro</span>
-    </div>
-    <span class="role-arrow">→</span>
-  </a>
+  err.style.display = 'none';
 
-  <a class="role-card role-organizador" href="panel-organizador.html">
-    <div class="role-icon">🎪</div>
-    <div>
-      <div class="role-name">Organizador</div>
-      <div class="role-desc">Gestioná tus eventos, controlá precios de reventa y monitoreá transacciones en tiempo real.</div>
-    </div>
-    <div class="role-features">
-      <span class="role-feat">Dashboard</span>
-      <span class="role-feat">Mapa de sectores</span>
-      <span class="role-feat">Límites de precio</span>
-    </div>
-    <span class="role-arrow">→</span>
-  </a>
+  // Validar
+  if (!email || !pass) { err.textContent = 'Completá email y contraseña.'; err.style.display = 'block'; return; }
 
-  <a class="role-card role-admin" href="panel-admin.html">
-    <div class="role-icon">⚙️</div>
-    <div>
-      <div class="role-name">Administrador</div>
-      <div class="role-desc">Panel de control completo: usuarios, disputas, comisiones y configuración global.</div>
-    </div>
-    <div class="role-features">
-      <span class="role-feat">Gestión usuarios</span>
-      <span class="role-feat">Disputas</span>
-      <span class="role-feat">Comisiones</span>
-    </div>
-    <span class="role-arrow">→</span>
-  </a>
+  const acc = ACCOUNTS[email];
+  if (!acc || acc.pass !== pass) {
+    err.textContent = 'Email o contraseña incorrectos. Usá una cuenta demo.';
+    err.style.display = 'block';
+    document.getElementById('inp-pass').value = '';
+    return;
+  }
 
-</div>
+  // Loading
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Verificando...';
 
-<footer>
-  <div class="footer-stats">
-    <div class="footer-stat">🎫 <strong>9 pantallas</strong> completadas</div>
-    <div class="footer-stat">🔒 <strong>Escrow</strong> automático</div>
-    <div class="footer-stat">🇦🇷 <strong>RENAPER</strong> verificación</div>
-    <div class="footer-stat">⛓ <strong>Blockchain</strong> visual</div>
-  </div>
-  <div class="footer-note">FanChain © 2026 · Prototipo v0.1</div>
-</footer>
+  setTimeout(() => {
+    // Mostrar welcome
+    document.getElementById('login-form').style.display = 'none';
+    const ws = document.getElementById('welcome-state');
+    ws.style.display = 'flex';
+    document.getElementById('welcome-avatar').style.background = acc.color;
+    document.getElementById('welcome-avatar').textContent = acc.avatar;
+    document.getElementById('welcome-name').textContent = 'Hola, ' + acc.name + ' 👋';
+    document.getElementById('welcome-sub').textContent = acc.sub;
 
+    // Redirigir
+    setTimeout(() => { window.location.href = acc.dest; }, 1400);
+  }, 900);
+}
+
+// Enter key
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
 </body>
 </html>
