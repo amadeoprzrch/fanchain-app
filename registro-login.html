@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FanChain — Registro y Verificación</title>
+<style>
+  :root {
+    --teal: #0d9488;
+    --teal-light: #14b8a6;
+    --teal-dark: #0f766e;
+    --teal-muted: rgba(13,148,136,0.12);
+    --teal-border: rgba(13,148,136,0.3);
+    --bg: #0b1120;
+    --surface: #131f35;
+    --surface2: #1a2a42;
+    --surface3: #1e3352;
+    --border: rgba(255,255,255,0.07);
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --green: #22c55e;
+    --red: #ef4444;
+    --gold: #f59e0b;
+    --purple: #8b5cf6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .logo {
+    font-size: 20px; font-weight: 700;
+    background: linear-gradient(135deg, var(--teal-light), #60efdf);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .header-link {
+    font-size: 13px; color: var(--text-muted); text-decoration: none;
+    padding: 6px 14px; border: 1px solid var(--border);
+    border-radius: 8px; transition: all 0.2s;
+  }
+  .header-link:hover { border-color: var(--teal-dark); color: var(--teal-light); }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── SHARED LAYOUT ── */
+  .auth-wrap {
+    min-height: calc(100vh - 57px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 16px;
+  }
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 40px;
+    width: 100%; max-width: 440px;
+  }
+  .auth-logo { font-size: 28px; margin-bottom: 20px; }
+  .auth-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .auth-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.5; }
+
+  /* ── FORM ELEMENTS ── */
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
+  .field input {
+    width: 100%; background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; font-size: 15px; color: var(--text);
+    outline: none; transition: border 0.2s;
+  }
+  .field input:focus { border-color: var(--teal); }
+  .field input::placeholder { color: var(--text-dim); }
+  .field input.error { border-color: var(--red); }
+  .field input.ok { border-color: var(--green); }
+  .field-note { font-size: 12px; color: var(--text-dim); margin-top: 5px; }
+  .field-error { font-size: 12px; color: var(--red); margin-top: 5px; display: none; }
+
+  .input-icon-wrap { position: relative; }
+  .input-icon-wrap input { padding-right: 42px; }
+  .input-icon {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 18px; cursor: pointer; color: var(--text-dim);
+    transition: color 0.2s;
+  }
+  .input-icon:hover { color: var(--text-muted); }
+  .input-status {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 16px;
+  }
+
+  .btn-primary {
+    width: 100%; background: var(--teal); color: white; border: none;
+    border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; margin-top: 4px;
+  }
+  .btn-primary:hover { background: var(--teal-light); transform: translateY(-1px); }
+  .btn-primary:disabled { background: var(--surface2); color: var(--text-dim); cursor: not-allowed; transform: none; }
+  .btn-secondary {
+    width: 100%; background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border); border-radius: 12px; padding: 13px;
+    font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-top: 8px;
+  }
+  .btn-secondary:hover { border-color: var(--teal-dark); color: var(--teal-light); }
+
+  .divider {
+    display: flex; align-items: center; gap: 12px; margin: 20px 0;
+    font-size: 12px; color: var(--text-dim);
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .link-row { text-align: center; font-size: 13px; color: var(--text-dim); margin-top: 20px; }
+  .link-row a { color: var(--teal-light); text-decoration: none; font-weight: 600; }
+  .link-row a:hover { text-decoration: underline; }
+
+  /* Password strength */
+  .pw-strength { margin-top: 8px; }
+  .pw-bars { display: flex; gap: 4px; margin-bottom: 4px; }
+  .pw-bar { flex: 1; height: 3px; border-radius: 2px; background: var(--border); transition: all 0.3s; }
+  .pw-label { font-size: 11px; color: var(--text-dim); }
+
+  /* ── CENTRO DE VERIFICACIÓN ── */
+  .centro-wrap {
+    max-width: 560px; margin: 0 auto; padding: 40px 16px 60px;
+  }
+  .centro-header { margin-bottom: 32px; }
+  .centro-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .centro-sub { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+  .access-banner {
+    background: var(--teal-muted); border: 1px solid var(--teal-border);
+    border-radius: 14px; padding: 16px 20px; margin-bottom: 28px;
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .access-banner .icon { font-size: 22px; flex-shrink: 0; }
+  .access-banner .text { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  .access-banner strong { color: var(--teal-light); }
+
+  .steps-list { display: flex; flex-direction: column; gap: 12px; }
+  .step-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px 22px;
+    display: flex; gap: 16px; align-items: center;
+    cursor: pointer; transition: all 0.2s; text-decoration: none; color: inherit;
+  }
+  .step-card:hover:not(.locked) { border-color: var(--teal-dark); background: rgba(13,148,136,0.04); }
+  .step-card.locked { cursor: not-allowed; opacity: 0.55; }
+  .step-card.current { border-color: var(--teal); background: var(--teal-muted); }
+
+  .step-icon-wrap {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .icon-done { background: rgba(34,197,94,0.15); }
+  .icon-current { background: var(--teal-muted); border: 2px solid var(--teal); }
+  .icon-todo { background: var(--surface2); border: 1.5px solid var(--border); }
+
+  .step-info { flex: 1; }
+  .step-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+  .step-desc { font-size: 13px; color: var(--text-muted); }
+  .step-tag {
+    font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 50px;
+  }
+  .tag-done { background: rgba(34,197,94,0.12); color: var(--green); }
+  .tag-current { background: rgba(20,184,166,0.15); color: var(--teal-light); }
+  .tag-todo { background: var(--surface2); color: var(--text-dim); }
+  .tag-locked { background: var(--surface2); color: var(--text-dim); }
+
+  .arrow { font-size: 18px; color: var(--text-dim); flex-shrink: 0; }
+  .step-card:not(.locked):hover .arrow { color: var(--teal-light); }
+
+  /* Access levels bar */
+  .access-levels { margin-top: 28px; }
+  .al-title { font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .al-row {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .al-icon { font-size: 18px; flex-shrink: 0; }
+  .al-text { flex: 1; color: var(--text-muted); }
+  .al-text strong { color: var(--text); }
+  .al-status { font-size: 11px; color: var(--text-dim); }
+
+  /* ── 2FA ── */
+  .otp-grid { display: flex; gap: 10px; justify-content: center; margin: 24px 0; }
+  .otp-input {
+    width: 52px; height: 60px; text-align: center; font-size: 26px; font-weight: 800;
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 12px; color: var(--text); outline: none; transition: border 0.2s;
+  }
+  .otp-input:focus { border-color: var(--teal); }
+  .otp-input.filled { border-color: var(--teal); }
+
+  /* ── RENAPER ── */
+  .upload-area {
+    border: 1.5px dashed var(--border); border-radius: 14px;
+    padding: 28px 20px; text-align: center; cursor: pointer;
+    transition: all 0.2s; margin-bottom: 12px;
+  }
+  .upload-area:hover { border-color: var(--teal-dark); background: var(--teal-muted); }
+  .upload-area.uploaded { border-color: var(--green); border-style: solid; background: rgba(34,197,94,0.05); }
+  .upload-icon { font-size: 32px; margin-bottom: 8px; }
+  .upload-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .upload-sub { font-size: 12px; color: var(--text-dim); }
+  .upload-tick { font-size: 24px; color: var(--green); }
+
+  .renaper-status {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 18px; margin: 16px 0;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .rs-icon { font-size: 22px; flex-shrink: 0; }
+  .rs-text { flex: 1; }
+  .rs-label { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .rs-sub { font-size: 12px; color: var(--text-dim); }
+  .rs-checking { display: flex; gap: 4px; align-items: center; }
+  .dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse 1.4s infinite; }
+  .dot-pulse:nth-child(2) { animation-delay: 0.2s; }
+  .dot-pulse:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+  /* ── MÉTODO DE PAGO ── */
+  .card-preview {
+    background: linear-gradient(135deg, var(--teal-dark), #0c4a6e);
+    border-radius: 16px; padding: 22px 22px 18px; margin-bottom: 20px;
+    position: relative; overflow: hidden;
+  }
+  .card-preview::before {
+    content: ''; position: absolute; top: -30px; right: -30px;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+  .card-chip { font-size: 24px; margin-bottom: 14px; }
+  .card-number { font-size: 18px; font-weight: 700; letter-spacing: 3px; margin-bottom: 14px; color: rgba(255,255,255,0.9); font-family: monospace; }
+  .card-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+  .card-holder { font-size: 12px; color: rgba(255,255,255,0.6); }
+  .card-holder strong { display: block; font-size: 14px; color: white; margin-top: 2px; }
+  .card-expiry { text-align: right; font-size: 12px; color: rgba(255,255,255,0.6); }
+  .card-expiry strong { display: block; font-size: 14px; color: white; }
+  .card-brand { font-size: 22px; }
+
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── SUCCESS MODAL ── */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(11,17,32,0.85); z-index: 100;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+  }
+  .modal-bg.show { display: flex; }
+  .modal-card {
+    background: var(--surface); border: 1px solid var(--teal-border);
+    border-radius: 24px; padding: 44px 36px; max-width: 400px;
+    width: 90%; text-align: center; animation: slideUp 0.35s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  .modal-icon { font-size: 52px; margin-bottom: 16px; }
+  .modal-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .modal-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
+  .points-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 50px; padding: 6px 16px; font-size: 13px;
+    color: var(--gold); font-weight: 700; margin-bottom: 22px;
+  }
+
+  /* Misc */
+  .note-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; font-size: 12px;
+    color: var(--text-muted); line-height: 1.6; margin-bottom: 16px;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .note-box .ni { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text-dim); text-decoration: none;
+    margin-bottom: 24px; transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--teal-light); }
+
+  @media (max-width: 500px) {
+    .auth-card { padding: 28px 20px; }
+    .otp-input { width: 42px; height: 52px; font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">⛓ FanChain</div>
+  <a class="header-link" href="flujo-comprador.html">← Volver al inicio</a>
+</header>
+
+<!-- ══════════════════════════════════════
+     PAGE 1: REGISTRO
+════════════════════════════════════════ -->
+<div class="page active" id="pageRegister">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">⛓</div>
+      <div class="auth-title">Creá tu cuenta</div>
+      <div class="auth-sub">Gratis y sin tarjeta. Podés verificar tu identidad después.</div>
+
+      <div class="field">
+        <label>Nombre completo</label>
+        <input type="text" id="regName" placeholder="Juan Pérez" oninput="validateName()">
+        <div class="field-error" id="errName">Ingresá tu nombre completo</div>
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <div class="input-icon-wrap">
+          <input type="email" id="regEmail" placeholder="juan@email.com" oninput="validateEmail()">
+          <span class="input-status" id="emailStatus"></span>
+        </div>
+        <div class="field-error" id="errEmail">Ingresá un email válido</div>
+      </div>
+
+      <div class="field">
+        <label>Contraseña</label>
+        <div class="input-icon-wrap">
+          <input type="password" id="regPw" placeholder="Mínimo 8 caracteres" oninput="checkPwStrength()">
+          <span class="input-icon" onclick="togglePw('regPw',this)">👁</span>
+        </div>
+        <div class="pw-strength">
+          <div class="pw-bars">
+            <div class="pw-bar" id="pwb1"></div>
+            <div class="pw-bar" id="pwb2"></div>
+            <div class="pw-bar" id="pwb3"></div>
+            <div class="pw-bar" id="pwb4"></div>
+          </div>
+          <div class="pw-label" id="pwLabel">Ingresá una contraseña</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Confirmá tu contraseña</label>
+        <div class="input-icon-wrap">
+          <input type="password" id="regPw2" placeholder="Repetí la contraseña" oninput="validatePw2()">
+          <span class="input-status" id="pw2Status"></span>
+        </div>
+        <div class="field-error" id="errPw2">Las contraseñas no coinciden</div>
+      </div>
+
+      <div style="font-size:12px; color:var(--text-dim); margin-bottom:16px; line-height:1.6;">
+        Al registrarte aceptás los <a href="#" style="color:var(--teal-light);">Términos y condiciones</a> y la <a href="#" style="color:var(--teal-light);">Política de privacidad</a>.
+      </div>
+
+      <button class="btn-primary" onclick="goToEmailVerify()">Crear cuenta →</button>
+
+      <div class="divider">o ingresá con</div>
+
+      <div style="display:flex; gap:10px;">
+        <button class="btn-secondary" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <span>🔵</span> Google
+        </button>
+        <button class="btn-secondary" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <span>🍎</span> Apple
+        </button>
+      </div>
+
+      <div class="link-row">¿Ya tenés cuenta? <a href="#" onclick="showPage('pageLogin')">Iniciá sesión</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 2: VERIFICAR EMAIL
+════════════════════════════════════════ -->
+<div class="page" id="pageEmailVerify">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">📬</div>
+      <div class="auth-title">Revisá tu email</div>
+      <div class="auth-sub">Te enviamos un código de 6 dígitos a <strong id="emailSentTo" style="color:var(--teal-light);">—</strong>. Revisá también la carpeta de spam.</div>
+
+      <div class="otp-grid">
+        <input class="otp-input" type="text" maxlength="1" id="otp0" oninput="otpInput(0)" onkeydown="otpKey(event,0)">
+        <input class="otp-input" type="text" maxlength="1" id="otp1" oninput="otpInput(1)" onkeydown="otpKey(event,1)">
+        <input class="otp-input" type="text" maxlength="1" id="otp2" oninput="otpInput(2)" onkeydown="otpKey(event,2)">
+        <input class="otp-input" type="text" maxlength="1" id="otp3" oninput="otpInput(3)" onkeydown="otpKey(event,3)">
+        <input class="otp-input" type="text" maxlength="1" id="otp4" oninput="otpInput(4)" onkeydown="otpKey(event,4)">
+        <input class="otp-input" type="text" maxlength="1" id="otp5" oninput="otpInput(5)" onkeydown="otpKey(event,5)">
+      </div>
+
+      <button class="btn-primary" id="btnVerifyEmail" onclick="verifyEmail()" disabled>Verificar código</button>
+
+      <div class="note-box" style="margin-top:16px;">
+        <span class="ni">💡</span>
+        <span>Para esta demo, el código es <strong style="color:var(--teal-light);">1 2 3 4 5 6</strong></span>
+      </div>
+
+      <div class="link-row">¿No recibiste el código? <a href="#" onclick="resendCode()">Reenviar</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 3: LOGIN
+════════════════════════════════════════ -->
+<div class="page" id="pageLogin">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">👋</div>
+      <div class="auth-title">Bienvenido de vuelta</div>
+      <div class="auth-sub">Ingresá con tu email y contraseña.</div>
+
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="juan@email.com">
+      </div>
+
+      <div class="field">
+        <label>Contraseña</label>
+        <div class="input-icon-wrap">
+          <input type="password" id="loginPw" placeholder="Tu contraseña">
+          <span class="input-icon" onclick="togglePw('loginPw',this)">👁</span>
+        </div>
+      </div>
+
+      <div style="text-align:right; margin-top:-8px; margin-bottom:16px;">
+        <a href="#" style="font-size:13px; color:var(--teal-light);">¿Olvidaste la contraseña?</a>
+      </div>
+
+      <button class="btn-primary" onclick="goTo2FA()">Ingresar →</button>
+
+      <div class="divider">o ingresá con</div>
+
+      <div style="display:flex; gap:10px;">
+        <button class="btn-secondary" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <span>🔵</span> Google
+        </button>
+        <button class="btn-secondary" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <span>🍎</span> Apple
+        </button>
+      </div>
+
+      <div class="link-row">¿No tenés cuenta? <a href="#" onclick="showPage('pageRegister')">Registrate gratis</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 4: 2FA
+════════════════════════════════════════ -->
+<div class="page" id="page2FA">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">🔐</div>
+      <div class="auth-title">Segundo paso de seguridad</div>
+      <div class="auth-sub">Te enviamos un código al teléfono <strong style="color:var(--teal-light);">+54 9 11 ••••-4821</strong></div>
+
+      <div class="otp-grid">
+        <input class="otp-input" type="text" maxlength="1" id="fa0" oninput="faInput(0)" onkeydown="faKey(event,0)">
+        <input class="otp-input" type="text" maxlength="1" id="fa1" oninput="faInput(1)" onkeydown="faKey(event,1)">
+        <input class="otp-input" type="text" maxlength="1" id="fa2" oninput="faInput(2)" onkeydown="faKey(event,2)">
+        <input class="otp-input" type="text" maxlength="1" id="fa3" oninput="faInput(3)" onkeydown="faKey(event,3)">
+        <input class="otp-input" type="text" maxlength="1" id="fa4" oninput="faInput(4)" onkeydown="faKey(event,4)">
+        <input class="otp-input" type="text" maxlength="1" id="fa5" oninput="faInput(5)" onkeydown="faKey(event,5)">
+      </div>
+
+      <button class="btn-primary" id="btn2FA" onclick="verify2FA()" disabled>Confirmar →</button>
+
+      <div class="note-box" style="margin-top:16px;">
+        <span class="ni">💡</span>
+        <span>Para esta demo, el código es <strong style="color:var(--teal-light);">6 5 4 3 2 1</strong></span>
+      </div>
+
+      <button class="btn-secondary" onclick="showPage('pageLogin')">← Volver al login</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 5: CENTRO DE VERIFICACIÓN
+════════════════════════════════════════ -->
+<div class="page" id="pageCentro">
+  <div class="centro-wrap">
+    <a class="back-link" href="#" onclick="showPage('pageLogin')">← Volver</a>
+
+    <div class="centro-header">
+      <div class="centro-title">Centro de verificación</div>
+      <div class="centro-sub">Completá los pasos para operar en FanChain. Podés hacerlo en el orden que quieras y en cualquier momento.</div>
+    </div>
+
+    <div class="access-banner">
+      <span class="icon">🔓</span>
+      <div class="text">
+        Tu cuenta está creada. Para <strong>comprar o vender entradas</strong> necesitás verificar tu identidad y agregar un método de pago. Podés seguir navegando mientras tanto.
+      </div>
+    </div>
+
+    <div class="steps-list" id="stepsList"></div>
+
+    <div class="access-levels">
+      <div class="al-title">Tu nivel de acceso actual</div>
+      <div id="accessLevels"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 6: VERIFICACIÓN RENAPER
+════════════════════════════════════════ -->
+<div class="page" id="pageRenaper">
+  <div class="auth-wrap" style="align-items:flex-start; padding-top:32px;">
+    <div class="auth-card" style="max-width:500px;">
+      <a class="back-link" href="#" onclick="showPage('pageCentro')">← Centro de verificación</a>
+
+      <div class="auth-logo">🪪</div>
+      <div class="auth-title">Verificá tu identidad</div>
+      <div class="auth-sub">Tus datos son procesados de forma segura y encriptada. No los compartimos con terceros.</div>
+
+      <div class="note-box">
+        <span class="ni">🔒</span>
+        <span>Verificación oficial a través de <strong style="color:var(--teal-light);">RENAPER</strong>. Solo funciona con DNI argentino vigente.</span>
+      </div>
+
+      <div id="renaperStep1">
+        <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:var(--text-muted);">PASO 1 — Foto de tu DNI</div>
+
+        <div class="upload-area" id="uFront" onclick="simulateUpload('uFront','uFrontTick','uFrontText')">
+          <div class="upload-icon">📄</div>
+          <div class="upload-title">DNI — Frente</div>
+          <div class="upload-sub" id="uFrontText">Hacé clic para subir · JPG o PNG · máx 10MB</div>
+          <div id="uFrontTick" style="display:none;"><div class="upload-tick">✅</div><div style="font-size:12px; color:var(--green); margin-top:4px;">Foto cargada correctamente</div></div>
+        </div>
+
+        <div class="upload-area" id="uBack" onclick="simulateUpload('uBack','uBackTick','uBackText')">
+          <div class="upload-icon">📄</div>
+          <div class="upload-title">DNI — Dorso</div>
+          <div class="upload-sub" id="uBackText">Hacé clic para subir · JPG o PNG · máx 10MB</div>
+          <div id="uBackTick" style="display:none;"><div class="upload-tick">✅</div><div style="font-size:12px; color:var(--green); margin-top:4px;">Foto cargada correctamente</div></div>
+        </div>
+
+        <div class="field">
+          <label>CUIL</label>
+          <input type="text" id="cuil" placeholder="20-38471923-4" oninput="formatCuil(this)">
+          <div class="field-note">Podés encontrarlo en tu DNI o en el sitio de AFIP</div>
+        </div>
+
+        <div class="upload-area" id="uSelfie" onclick="simulateUpload('uSelfie','uSelfieTick','uSelfieText')">
+          <div class="upload-icon">🤳</div>
+          <div class="upload-title">Selfie sosteniendo tu DNI</div>
+          <div class="upload-sub" id="uSelfieText">Tu cara y el frente del DNI deben verse con claridad · máx 10MB</div>
+          <div id="uSelfieTick" style="display:none;"><div class="upload-tick">✅</div><div style="font-size:12px; color:var(--green); margin-top:4px;">Selfie cargada correctamente</div></div>
+        </div>
+
+        <button class="btn-primary" onclick="startRenaperCheck()" id="btnRenaper">Enviar para verificación →</button>
+      </div>
+
+      <!-- Estado de verificación RENAPER -->
+      <div id="renaperChecking" style="display:none;">
+        <div class="renaper-status">
+          <span class="rs-icon">🔍</span>
+          <div class="rs-text">
+            <div class="rs-label">Cruzando datos con RENAPER</div>
+            <div class="rs-sub">
+              <div class="rs-checking">
+                <div class="dot-pulse"></div>
+                <div class="dot-pulse"></div>
+                <div class="dot-pulse"></div>
+                <span style="margin-left:6px; color:var(--text-dim);">Esto puede tardar unos segundos...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px; color:var(--text-dim); text-align:center; margin-top:12px; line-height:1.6;">
+          Estamos verificando tu identidad en los registros oficiales.<br>Podés cerrar esta ventana y volver más tarde.
+        </div>
+      </div>
+
+      <div id="renaperOk" style="display:none;">
+        <div class="renaper-status" style="border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.06);">
+          <span class="rs-icon">✅</span>
+          <div class="rs-text">
+            <div class="rs-label" style="color:var(--green);">Identidad verificada con éxito</div>
+            <div class="rs-sub">Tu DNI fue validado por RENAPER · Sin observaciones</div>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="completeRenaper()">Continuar →</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 7: SETUP 2FA
+════════════════════════════════════════ -->
+<div class="page" id="page2FASetup">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <a class="back-link" href="#" onclick="showPage('pageCentro')">← Centro de verificación</a>
+
+      <div class="auth-logo">🔐</div>
+      <div class="auth-title">Activá la doble seguridad</div>
+      <div class="auth-sub">Cada vez que ingreses desde un dispositivo nuevo, te pediremos un código por SMS para confirmar que sos vos.</div>
+
+      <div class="field">
+        <label>Número de teléfono</label>
+        <div style="display:flex; gap:8px;">
+          <select style="background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; padding:12px 10px; color:var(--text); outline:none; font-size:14px; width:90px;">
+            <option>🇦🇷 +54</option>
+            <option>🇧🇷 +55</option>
+            <option>🇺🇾 +598</option>
+          </select>
+          <input type="tel" id="phone2fa" placeholder="11 4567-8901" style="flex:1; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; padding:12px 14px; font-size:15px; color:var(--text); outline:none;">
+        </div>
+        <div class="field-note">Usamos este número solo para códigos de seguridad</div>
+      </div>
+
+      <button class="btn-primary" onclick="send2FACode()">Enviar código de prueba →</button>
+
+      <div id="fa2setupCode" style="display:none; margin-top:20px;">
+        <div style="font-size:13px; color:var(--text-muted); text-align:center; margin-bottom:16px;">
+          Ingresá el código que te enviamos por SMS
+        </div>
+        <div class="otp-grid">
+          <input class="otp-input" type="text" maxlength="1" id="fas0" oninput="fasInput(0)" onkeydown="fasKey(event,0)">
+          <input class="otp-input" type="text" maxlength="1" id="fas1" oninput="fasInput(1)" onkeydown="fasKey(event,1)">
+          <input class="otp-input" type="text" maxlength="1" id="fas2" oninput="fasInput(2)" onkeydown="fasKey(event,2)">
+          <input class="otp-input" type="text" maxlength="1" id="fas3" oninput="fasInput(3)" onkeydown="fasKey(event,3)">
+          <input class="otp-input" type="text" maxlength="1" id="fas4" oninput="fasInput(4)" onkeydown="fasKey(event,4)">
+          <input class="otp-input" type="text" maxlength="1" id="fas5" oninput="fasInput(5)" onkeydown="fasKey(event,5)">
+        </div>
+        <div class="note-box" style="margin-top:12px;">
+          <span class="ni">💡</span>
+          <span>Para esta demo, el código es <strong style="color:var(--teal-light);">1 1 1 1 1 1</strong></span>
+        </div>
+        <button class="btn-primary" id="btnFAS" onclick="complete2FASetup()" disabled>Activar seguridad →</button>
+      </div>
+
+      <button class="btn-secondary" onclick="showPage('pageCentro')">Hacerlo después</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE 8: MÉTODO DE PAGO
+════════════════════════════════════════ -->
+<div class="page" id="pagePago">
+  <div class="auth-wrap" style="align-items:flex-start; padding-top:32px;">
+    <div class="auth-card" style="max-width:480px;">
+      <a class="back-link" href="#" onclick="showPage('pageCentro')">← Centro de verificación</a>
+
+      <div class="auth-logo">💳</div>
+      <div class="auth-title">Agregá tu tarjeta</div>
+      <div class="auth-sub">Necesitás una tarjeta de débito o crédito para comprar y como garantía cuando vendés.</div>
+
+      <div class="card-preview" id="cardPreview">
+        <div class="card-chip">💳</div>
+        <div class="card-number" id="prevNum">•••• •••• •••• ••••</div>
+        <div class="card-bottom">
+          <div class="card-holder">
+            Titular
+            <strong id="prevName">TU NOMBRE</strong>
+          </div>
+          <div class="card-expiry">
+            Vence
+            <strong id="prevExp">MM/AA</strong>
+          </div>
+          <span class="card-brand" id="prevBrand">💳</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Número de tarjeta</label>
+        <input type="text" id="cardNum" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCard(this)">
+      </div>
+
+      <div class="field">
+        <label>Nombre del titular (tal como figura en la tarjeta)</label>
+        <input type="text" id="cardName" placeholder="JUAN A PEREZ" oninput="updateCardPreview()" style="text-transform:uppercase;">
+      </div>
+
+      <div class="card-grid">
+        <div class="field">
+          <label>Vencimiento</label>
+          <input type="text" id="cardExp" placeholder="MM/AA" maxlength="5" oninput="formatExp(this)">
+        </div>
+        <div class="field">
+          <label>Código de seguridad</label>
+          <input type="text" id="cardCvv" placeholder="•••" maxlength="4">
+        </div>
+      </div>
+
+      <div class="note-box">
+        <span class="ni">🔒</span>
+        <span>Tu tarjeta se guarda encriptada y solo se usa para transacciones que vos autorizás. <strong style="color:var(--teal-light);">No hacemos cobros automáticos.</strong></span>
+      </div>
+
+      <!-- SEPARADOR COBRO -->
+      <div style="display:flex; align-items:center; gap:10px; margin:24px 0 16px;">
+        <div style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></div>
+        <span style="font-size:0.75rem; color:var(--text-dim); white-space:nowrap;">Para recibir pagos como vendedor</span>
+        <div style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></div>
+      </div>
+
+      <div style="background:rgba(13,148,136,0.07); border:1px solid rgba(13,148,136,0.25); border-radius:12px; padding:18px; margin-bottom:18px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+          <span style="font-size:1.2rem;">🏦</span>
+          <div>
+            <div style="font-weight:700; font-size:0.9rem; color:var(--text);">Cuenta para acreditar fondos</div>
+            <div style="font-size:0.75rem; color:var(--text-dim);">Usamos esto solo cuando vendés entradas</div>
+          </div>
+        </div>
+
+        <!-- TABS CBU vs DÉBITO -->
+        <div id="payout-tabs" style="display:flex; gap:6px; margin-bottom:16px;">
+          <button id="tab-cbu" onclick="switchPayoutTab('cbu')"
+            style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--teal); background:var(--teal); color:#fff; font-size:0.8rem; font-weight:700; cursor:pointer; transition:all .2s;">
+            CBU / CVU
+          </button>
+          <button id="tab-debit" onclick="switchPayoutTab('debit')"
+            style="flex:1; padding:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--text-dim); font-size:0.8rem; font-weight:600; cursor:pointer; transition:all .2s;">
+            Tarjeta de débito
+          </button>
+        </div>
+
+        <!-- PANEL CBU -->
+        <div id="panel-cbu">
+          <div class="field" style="margin-bottom:10px;">
+            <label style="font-size:0.78rem;">CBU / CVU (22 dígitos)</label>
+            <input type="text" id="cbuInput" placeholder="0000000000000000000000" maxlength="22"
+              oninput="this.value=this.value.replace(/\D/g,'')"
+              style="letter-spacing:2px; font-family:monospace;">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label style="font-size:0.78rem;">Alias (opcional)</label>
+            <input type="text" id="cbuAlias" placeholder="mi.alias.mp"
+              style="text-transform:lowercase;">
+          </div>
+        </div>
+
+        <!-- PANEL DÉBITO (oculto por defecto) -->
+        <div id="panel-debit" style="display:none;">
+          <div class="field" style="margin-bottom:10px;">
+            <label style="font-size:0.78rem;">Número de tarjeta de débito</label>
+            <input type="text" id="debitNum" placeholder="1234 5678 9012 3456" maxlength="19"
+              oninput="formatDebit(this)">
+          </div>
+          <div class="card-grid">
+            <div class="field" style="margin-bottom:0;">
+              <label style="font-size:0.78rem;">Vencimiento</label>
+              <input type="text" id="debitExp" placeholder="MM/AA" maxlength="5" oninput="formatExp(this)">
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label style="font-size:0.78rem;">Nombre del titular</label>
+              <input type="text" id="debitName" placeholder="JUAN PEREZ" style="text-transform:uppercase;">
+            </div>
+          </div>
+        </div>
+
+        <div class="note-box" style="margin-top:14px; margin-bottom:0; background:rgba(13,148,136,0.06);">
+          <span class="ni">⚡</span>
+          <span style="font-size:0.78rem;">Las ventas se acreditan dentro de las <strong style="color:var(--teal-light);">48 hs hábiles</strong> de liberado el escrow.</span>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="savePago()">Guardar métodos de pago →</button>
+      <button class="btn-secondary" onclick="showPage('pageCentro')">Hacerlo después</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE ÉXITO -->
+<div class="modal-bg" id="successModal">
+  <div class="modal-card">
+    <div class="modal-icon" id="modalIcon">🎉</div>
+    <div class="modal-title" id="modalTitle">¡Listo!</div>
+    <div class="modal-sub" id="modalSub">—</div>
+    <div class="points-chip" id="modalPoints" style="display:none;">⭐ +200 puntos ganados</div>
+    <button class="btn-primary" onclick="closeModal()">Continuar →</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════
+//  ESTADO GLOBAL DE VERIFICACIÓN
+// ══════════════════════════════════
+const verificacion = {
+  identidad: false,
+  dobleSeguridad: false,
+  metodoPago: false,
+};
+
+// ══════════════════════════════════
+//  NAVEGACIÓN
+// ══════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+  if (id === 'pageCentro') renderCentro();
+}
+
+// ══════════════════════════════════
+//  RENDER DINÁMICO DEL CENTRO
+// ══════════════════════════════════
+function renderCentro() {
+  const { identidad, dobleSeguridad, metodoPago } = verificacion;
+  const todoCompleto = identidad && dobleSeguridad && metodoPago;
+
+  // ── Pasos ──
+  document.getElementById('stepsList').innerHTML = `
+
+    <div class="step-card" style="cursor:default;">
+      <div class="step-icon-wrap icon-done">✅</div>
+      <div class="step-info">
+        <div class="step-name">Crear cuenta</div>
+        <div class="step-desc">Email registrado y confirmado</div>
+      </div>
+      <span class="step-tag tag-done">Completado</span>
+    </div>
+
+    <div class="step-card ${identidad ? '' : 'current'}" onclick="${identidad ? '' : "showPage('pageRenaper')"}">
+      <div class="step-icon-wrap ${identidad ? 'icon-done' : 'icon-current'}">
+        ${identidad ? '✅' : '🪪'}
+      </div>
+      <div class="step-info">
+        <div class="step-name">Verificar identidad</div>
+        <div class="step-desc">DNI frente y dorso · Selfie con DNI · CUIL · Cruce con RENAPER</div>
+      </div>
+      <span class="step-tag ${identidad ? 'tag-done' : 'tag-current'}">${identidad ? 'Completado' : 'Pendiente →'}</span>
+    </div>
+
+    <div class="step-card ${!identidad ? 'locked' : dobleSeguridad ? '' : 'current'}"
+         onclick="${!identidad ? '' : dobleSeguridad ? '' : "showPage('page2FASetup')"}">
+      <div class="step-icon-wrap ${dobleSeguridad ? 'icon-done' : identidad ? 'icon-current' : 'icon-todo'}">
+        ${dobleSeguridad ? '✅' : '🔐'}
+      </div>
+      <div class="step-info">
+        <div class="step-name">Activar doble seguridad (2FA)</div>
+        <div class="step-desc">Vinculá tu número de teléfono para proteger tu cuenta</div>
+      </div>
+      <span class="step-tag ${dobleSeguridad ? 'tag-done' : identidad ? 'tag-current' : 'tag-locked'}">
+        ${dobleSeguridad ? 'Completado' : identidad ? 'Pendiente →' : '🔒 Completá identidad primero'}
+      </span>
+    </div>
+
+    <div class="step-card ${!identidad ? 'locked' : metodoPago ? '' : 'current'}"
+         onclick="${!identidad ? '' : metodoPago ? '' : "showPage('pagePago')"}">
+      <div class="step-icon-wrap ${metodoPago ? 'icon-done' : identidad ? 'icon-current' : 'icon-todo'}">
+        ${metodoPago ? '✅' : '💳'}
+      </div>
+      <div class="step-info">
+        <div class="step-name">Agregar método de pago</div>
+        <div class="step-desc">Tarjeta de débito o crédito · Necesaria para comprar y como garantía al vender</div>
+      </div>
+      <span class="step-tag ${metodoPago ? 'tag-done' : identidad ? 'tag-current' : 'tag-locked'}">
+        ${metodoPago ? 'Completado' : identidad ? 'Pendiente →' : '🔒 Completá identidad primero'}
+      </span>
+    </div>
+  `;
+
+  // ── Niveles de acceso ──
+  const nivelActual = todoCompleto ? 3 : identidad ? 2 : 1;
+
+  document.getElementById('accessLevels').innerHTML = `
+    <div class="al-row" style="${nivelActual > 0 ? 'opacity:0.45;' : ''}">
+      <span class="al-icon">👀</span>
+      <div class="al-text"><strong>Sin cuenta</strong> — Solo podés navegar y ver eventos</div>
+      <span class="al-status" style="color:var(--text-dim);">Superado</span>
+    </div>
+
+    <div class="al-row" style="${nivelActual === 1 ? 'border-color:var(--teal-border); background:var(--teal-muted);' : nivelActual > 1 ? 'opacity:0.45;' : ''}">
+      <span class="al-icon">${nivelActual >= 1 ? '✅' : '🔒'}</span>
+      <div class="al-text">
+        <strong ${nivelActual === 1 ? 'style="color:var(--teal-light);"' : ''}>Cuenta creada</strong>
+        — Podés navegar y guardar favoritos
+      </div>
+      <span class="al-status" style="${nivelActual === 1 ? 'color:var(--teal-light); font-weight:700;' : 'color:var(--text-dim);'}">
+        ${nivelActual === 1 ? 'Nivel actual' : nivelActual > 1 ? 'Superado' : 'Bloqueado'}
+      </span>
+    </div>
+
+    <div class="al-row" style="${nivelActual === 2 ? 'border-color:var(--teal-border); background:var(--teal-muted);' : nivelActual > 2 ? 'opacity:0.45;' : nivelActual < 2 ? 'opacity:0.45;' : ''}">
+      <span class="al-icon">${nivelActual >= 2 ? '✅' : '🔒'}</span>
+      <div class="al-text">
+        <strong ${nivelActual === 2 ? 'style="color:var(--teal-light);"' : ''}>Identidad verificada</strong>
+        — Podés iniciar flujo de compra
+      </div>
+      <span class="al-status" style="${nivelActual === 2 ? 'color:var(--teal-light); font-weight:700;' : 'color:var(--text-dim);'}">
+        ${nivelActual === 2 ? 'Nivel actual' : nivelActual > 2 ? 'Superado' : 'Bloqueado'}
+      </span>
+    </div>
+
+    <div class="al-row" style="${nivelActual === 3 ? 'border-color:var(--teal-border); background:var(--teal-muted);' : 'opacity:0.45;'}">
+      <span class="al-icon">${nivelActual >= 3 ? '✅' : '🔒'}</span>
+      <div class="al-text">
+        <strong ${nivelActual === 3 ? 'style="color:var(--teal-light);"' : ''}>Cuenta completa</strong>
+        — Acceso total: comprar y vender entradas
+      </div>
+      <span class="al-status" style="${nivelActual === 3 ? 'color:var(--teal-light); font-weight:700;' : 'color:var(--text-dim);'}">
+        ${nivelActual === 3 ? '🎉 Nivel actual' : 'Bloqueado'}
+      </span>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════
+//  REGISTRO
+// ══════════════════════════════════
+function validateName() {
+  const v = document.getElementById('regName').value.trim();
+  const err = document.getElementById('errName');
+  err.style.display = v.length < 2 && v.length > 0 ? 'block' : 'none';
+}
+
+function validateEmail() {
+  const v = document.getElementById('regEmail').value;
+  const st = document.getElementById('emailStatus');
+  const err = document.getElementById('errEmail');
+  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  st.textContent = v.length > 3 ? (ok ? '✅' : '❌') : '';
+  err.style.display = v.length > 3 && !ok ? 'block' : 'none';
+  document.getElementById('regEmail').className = v.length > 3 ? (ok ? 'ok' : 'error') : '';
+}
+
+function checkPwStrength() {
+  const pw = document.getElementById('regPw').value;
+  const bars = [document.getElementById('pwb1'), document.getElementById('pwb2'),
+                document.getElementById('pwb3'), document.getElementById('pwb4')];
+  const lbl = document.getElementById('pwLabel');
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const colors = ['#ef4444','#f59e0b','#3b82f6','#22c55e'];
+  const labels = ['Muy débil','Débil','Buena','Muy segura'];
+  bars.forEach((b, i) => {
+    b.style.background = i < score ? colors[score - 1] : 'var(--border)';
+  });
+  lbl.textContent = pw.length === 0 ? 'Ingresá una contraseña' : labels[score - 1] || 'Muy débil';
+  lbl.style.color = pw.length > 0 ? colors[Math.max(0, score - 1)] : 'var(--text-dim)';
+}
+
+function validatePw2() {
+  const pw1 = document.getElementById('regPw').value;
+  const pw2 = document.getElementById('regPw2').value;
+  const st = document.getElementById('pw2Status');
+  const err = document.getElementById('errPw2');
+  if (pw2.length === 0) { st.textContent = ''; err.style.display = 'none'; return; }
+  const match = pw1 === pw2;
+  st.textContent = match ? '✅' : '❌';
+  err.style.display = match ? 'none' : 'block';
+}
+
+function togglePw(id, icon) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type = 'text'; icon.textContent = '🙈'; }
+  else { inp.type = 'password'; icon.textContent = '👁'; }
+}
+
+function goToEmailVerify() {
+  const email = document.getElementById('regEmail').value || 'tu@email.com';
+  document.getElementById('emailSentTo').textContent = email;
+  showPage('pageEmailVerify');
+}
+
+// ══════════════════════════════════
+//  OTP helpers
+// ══════════════════════════════════
+function makeOtpHandlers(prefix, len, doneCallback) {
+  return {
+    input(i) {
+      const inp = document.getElementById(prefix + i);
+      inp.classList.toggle('filled', inp.value.length > 0);
+      if (inp.value && i < len - 1) document.getElementById(prefix + (i+1)).focus();
+      checkOtpDone(prefix, len, doneCallback);
+    },
+    key(e, i) {
+      if (e.key === 'Backspace' && !document.getElementById(prefix + i).value && i > 0)
+        document.getElementById(prefix + (i-1)).focus();
+    }
+  };
+}
+
+function checkOtpDone(prefix, len, callback) {
+  const done = [...Array(len)].every((_, i) => document.getElementById(prefix + i).value);
+  if (callback) callback(done);
+}
+
+const emailOtp = makeOtpHandlers('otp', 6, done => {
+  document.getElementById('btnVerifyEmail').disabled = !done;
+});
+const fa2Otp = makeOtpHandlers('fa', 6, done => {
+  document.getElementById('btn2FA').disabled = !done;
+});
+const fasOtp = makeOtpHandlers('fas', 6, done => {
+  document.getElementById('btnFAS').disabled = !done;
+});
+
+function otpInput(i) { emailOtp.input(i); }
+function otpKey(e, i) { emailOtp.key(e, i); }
+function faInput(i)  { fa2Otp.input(i); }
+function faKey(e, i) { fa2Otp.key(e, i); }
+function fasInput(i) { fasOtp.input(i); }
+function fasKey(e, i){ fasOtp.key(e, i); }
+
+function verifyEmail() {
+  const code = [...Array(6)].map((_, i) => document.getElementById('otp' + i).value).join('');
+  if (code === '123456') {
+    showModal('✅', '¡Email verificado!', 'Tu cuenta está activa. Ahora podés completar la verificación de identidad para operar.', null);
+    setTimeout(() => { closeModal(); showPage('pageCentro'); }, 2200);
+  } else {
+    alert('Código incorrecto. Para esta demo usá: 1 2 3 4 5 6');
+  }
+}
+
+function resendCode() {
+  alert('Código reenviado a tu email.');
+}
+
+function goTo2FA() {
+  showPage('page2FA');
+}
+
+function verify2FA() {
+  const code = [...Array(6)].map((_, i) => document.getElementById('fa' + i).value).join('');
+  if (code === '654321') {
+    showModal('🎉', '¡Bienvenido a FanChain!', 'Ingresaste correctamente. Podés completar tu verificación cuando quieras.', null);
+    setTimeout(() => { closeModal(); showPage('pageCentro'); }, 2200);
+  } else {
+    alert('Código incorrecto. Para esta demo usá: 6 5 4 3 2 1');
+  }
+}
+
+// ══════════════════════════════════
+//  RENAPER
+// ══════════════════════════════════
+function simulateUpload(areaId, tickId, textId) {
+  const area = document.getElementById(areaId);
+  const tick = document.getElementById(tickId);
+  const text = document.getElementById(textId);
+  if (area.classList.contains('uploaded')) return;
+  text.style.display = 'none';
+  area.querySelector('.upload-icon').style.display = 'none';
+  area.querySelector('.upload-title').style.display = 'none';
+  tick.style.display = 'block';
+  area.classList.add('uploaded');
+}
+
+function formatCuil(inp) {
+  let v = inp.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 2) v = v.slice(0,2) + '-' + v.slice(2);
+  if (v.length > 11) v = v.slice(0,11) + '-' + v.slice(11);
+  inp.value = v;
+}
+
+function startRenaperCheck() {
+  document.getElementById('renaperStep1').style.display = 'none';
+  document.getElementById('renaperChecking').style.display = 'block';
+  setTimeout(() => {
+    document.getElementById('renaperChecking').style.display = 'none';
+    document.getElementById('renaperOk').style.display = 'block';
+  }, 3000);
+}
+
+function completeRenaper() {
+  verificacion.identidad = true;
+  showModal('🪪', '¡Identidad verificada!', 'Tu DNI fue validado por RENAPER. Ahora podés iniciar flujos de compra.', '+200 puntos ganados');
+  setTimeout(() => { closeModal(); showPage('pageCentro'); }, 2500);
+}
+
+// ══════════════════════════════════
+//  2FA SETUP
+// ══════════════════════════════════
+function send2FACode() {
+  document.getElementById('fa2setupCode').style.display = 'block';
+}
+
+function complete2FASetup() {
+  const code = [...Array(6)].map((_, i) => document.getElementById('fas' + i).value).join('');
+  if (code === '111111') {
+    verificacion.dobleSeguridad = true;
+    showModal('🔐', '¡Doble seguridad activada!', 'Tu cuenta está protegida. Te pediremos este código cada vez que ingreses desde un dispositivo nuevo.', null);
+    setTimeout(() => { closeModal(); showPage('pageCentro'); }, 2200);
+  } else {
+    alert('Código incorrecto. Para esta demo usá: 1 1 1 1 1 1');
+  }
+}
+
+// ══════════════════════════════════
+//  PAGO
+// ══════════════════════════════════
+function formatCard(inp) {
+  let v = inp.value.replace(/\D/g, '').slice(0, 16);
+  v = v.match(/.{1,4}/g)?.join(' ') || v;
+  inp.value = v;
+  updateCardPreview();
+}
+
+function formatExp(inp) {
+  let v = inp.value.replace(/\D/g, '').slice(0, 4);
+  if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+  inp.value = v;
+  updateCardPreview();
+}
+
+function updateCardPreview() {
+  const num  = document.getElementById('cardNum').value  || '•••• •••• •••• ••••';
+  const name = document.getElementById('cardName').value || 'TU NOMBRE';
+  const exp  = document.getElementById('cardExp').value  || 'MM/AA';
+  document.getElementById('prevNum').textContent  = num;
+  document.getElementById('prevName').textContent = name.toUpperCase();
+  document.getElementById('prevExp').textContent  = exp;
+  const first = num.replace(/\s/g,'')[0];
+  const brands = { '4':'💳 Visa', '5':'💳 Mastercard', '3':'💳 Amex' };
+  document.getElementById('prevBrand').textContent = brands[first] || '💳';
+}
+
+let currentPayoutTab = 'cbu';
+
+function switchPayoutTab(tab) {
+  currentPayoutTab = tab;
+  const isCbu = tab === 'cbu';
+  document.getElementById('panel-cbu').style.display   = isCbu ? 'block' : 'none';
+  document.getElementById('panel-debit').style.display = isCbu ? 'none'  : 'block';
+  const tabCbu   = document.getElementById('tab-cbu');
+  const tabDebit = document.getElementById('tab-debit');
+  tabCbu.style.background   = isCbu ? 'var(--teal)' : 'transparent';
+  tabCbu.style.color        = isCbu ? '#fff' : 'var(--text-dim)';
+  tabCbu.style.borderColor  = isCbu ? 'var(--teal)' : 'rgba(255,255,255,0.15)';
+  tabDebit.style.background = isCbu ? 'transparent' : 'var(--teal)';
+  tabDebit.style.color      = isCbu ? 'var(--text-dim)' : '#fff';
+  tabDebit.style.borderColor= isCbu ? 'rgba(255,255,255,0.15)' : 'var(--teal)';
+}
+
+function formatDebit(input) {
+  let v = input.value.replace(/\D/g,'').substring(0,16);
+  input.value = v.replace(/(.{4})/g,'$1 ').trim();
+}
+
+function savePago() {
+  verificacion.metodoPago = true;
+  const hasCard = document.getElementById('cardNum').value.replace(/\s/g,'').length >= 16;
+  const hasCbu  = document.getElementById('cbuInput').value.length >= 22;
+  const hasDebit= document.getElementById('debitNum').value.replace(/\s/g,'').length >= 16;
+  const hasPayout = hasCbu || hasDebit;
+  let msg = 'Tu método de pago está guardado y listo para comprar entradas.';
+  if (hasPayout) msg += ' También registramos tu cuenta para recibir fondos de tus ventas.';
+  showModal('💳', '¡Métodos guardados!', msg, '+100 puntos ganados');
+  setTimeout(() => { closeModal(); showPage('pageCentro'); }, 2800);
+}
+
+// ══════════════════════════════════
+//  MODAL
+// ══════════════════════════════════
+function showModal(icon, title, sub, points) {
+  document.getElementById('modalIcon').textContent = icon;
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalSub').textContent = sub;
+  const pc = document.getElementById('modalPoints');
+  if (points) { pc.textContent = '⭐ ' + points; pc.style.display = 'inline-flex'; }
+  else pc.style.display = 'none';
+  document.getElementById('successModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('successModal').classList.remove('show');
+}
+</script>
+</body>
+</html>
