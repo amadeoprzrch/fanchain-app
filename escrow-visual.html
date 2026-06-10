@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FanChain — Escrow</title>
+<style>
+  :root {
+    --bg: #0b1120;
+    --surface: #131f35;
+    --surface2: #1a2a45;
+    --surface3: #1e3254;
+    --border: #1e3254;
+    --teal: #0d9488;
+    --teal2: #0f766e;
+    --teal-light: #14b8a6;
+    --teal-glow: rgba(13,148,136,0.15);
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --muted: #64748b;
+    --gold: #f59e0b;
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #7c3aed;
+    --orange: #f97316;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; }
+
+  /* ── TOPNAV ── */
+  .topnav { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; height:56px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .logo { font-size:1.15rem; font-weight:800; color:var(--teal-light); }
+  .logo span { color:var(--text); }
+  .escrow-id-badge { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:5px 12px; font-size:0.78rem; font-family:monospace; color:var(--text-dim); display:flex; align-items:center; gap:8px; }
+  .escrow-id-badge strong { color:var(--text); }
+
+  /* ── MAIN LAYOUT ── */
+  .page-wrap { max-width:1300px; margin:0 auto; padding:24px 20px; display:flex; flex-direction:column; gap:20px; }
+
+  /* ── STATUS BANNER ── */
+  .status-banner { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 22px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  .sb-left { display:flex; align-items:center; gap:16px; }
+  .status-orb { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0; }
+  .status-steps { display:flex; align-items:center; gap:0; }
+  .step-node { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .step-circle { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:800; border:2px solid; transition:all .3s; }
+  .step-label { font-size:0.6rem; color:var(--text-dim); text-align:center; max-width:60px; line-height:1.2; }
+  .step-line { width:40px; height:2px; margin-bottom:20px; transition:background .3s; }
+  .step-done   .step-circle { background:var(--teal); border-color:var(--teal); color:#fff; }
+  .step-done   .step-line   { background:var(--teal); }
+  .step-active .step-circle { background:var(--surface2); border-color:var(--gold); color:var(--gold); box-shadow:0 0 10px rgba(245,158,11,.3); }
+  .step-active .step-line   { background:var(--border); }
+  .step-pending .step-circle { background:var(--surface2); border-color:var(--border); color:var(--muted); }
+  .step-pending .step-line   { background:var(--border); }
+
+  /* ── DUAL PANEL ── */
+  .dual-panel { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .panel-head { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .panel-role { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.7px; padding:3px 9px; border-radius:20px; }
+  .role-buyer  { background:rgba(59,130,246,.12); color:#93c5fd; }
+  .role-seller { background:rgba(34,197,94,.1); color:var(--green); }
+  .panel-user { font-weight:700; font-size:0.95rem; }
+  .panel-body { padding:18px; display:flex; flex-direction:column; gap:14px; }
+
+  /* ── TICKET CARD ── */
+  .ticket-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px; display:flex; gap:14px; align-items:flex-start; }
+  .ticket-qr { width:64px; height:64px; background:var(--surface3); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; flex-shrink:0; border:1px solid var(--border); }
+  .ticket-info { flex:1; }
+  .ticket-event { font-weight:800; font-size:0.92rem; margin-bottom:2px; }
+  .ticket-detail { font-size:0.75rem; color:var(--text-dim); margin-bottom:6px; }
+  .ticket-price { font-size:1.1rem; font-weight:800; color:var(--teal-light); }
+  .ticket-status { font-size:0.7rem; color:var(--text-dim); margin-top:2px; }
+
+  /* ── ESCROW AMOUNT ── */
+  .escrow-amount-box { background:linear-gradient(135deg, rgba(13,148,136,.12), rgba(13,148,136,.06)); border:1px solid rgba(13,148,136,.3); border-radius:10px; padding:14px 16px; text-align:center; }
+  .ea-label { font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+  .ea-amount { font-size:1.8rem; font-weight:800; color:var(--teal-light); }
+  .ea-sub { font-size:0.72rem; color:var(--text-dim); margin-top:3px; }
+  .ea-lock { font-size:1.2rem; margin-bottom:4px; }
+
+  /* ── ACTION BUTTONS ── */
+  .action-zone { display:flex; flex-direction:column; gap:8px; }
+  .btn-confirm { background:var(--teal); color:#fff; border:none; border-radius:10px; padding:13px 18px; font-size:0.9rem; font-weight:700; cursor:pointer; width:100%; transition:background .2s; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn-confirm:hover { background:var(--teal2); }
+  .btn-confirm:disabled { background:var(--surface3); color:var(--muted); cursor:default; }
+  .btn-dispute { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); color:#f87171; border-radius:10px; padding:10px 18px; font-size:0.82rem; font-weight:600; cursor:pointer; width:100%; transition:all .2s; }
+  .btn-dispute:hover { background:rgba(239,68,68,.18); }
+  .btn-ghost { background:none; border:1px solid var(--border); color:var(--text-dim); border-radius:10px; padding:9px 18px; font-size:0.8rem; cursor:pointer; width:100%; transition:all .2s; }
+  .btn-ghost:hover { border-color:var(--teal); color:var(--teal-light); }
+
+  /* ── INFO ROWS ── */
+  .info-row { display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+  .info-row:last-child { border-bottom:none; }
+  .info-label { color:var(--text-dim); }
+  .info-val { font-weight:600; }
+
+  /* ── TIMELINE (panel lateral) ── */
+  .side-timeline { display:flex; flex-direction:column; gap:0; }
+  .stl-item { display:flex; gap:10px; padding:9px 0; position:relative; }
+  .stl-item:not(:last-child)::before { content:''; position:absolute; left:12px; top:34px; bottom:0; width:1px; background:var(--border); }
+  .stl-dot { width:25px; height:25px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; flex-shrink:0; z-index:1; }
+  .stl-body { flex:1; padding-top:2px; }
+  .stl-action { font-size:0.8rem; font-weight:600; }
+  .stl-time { font-size:0.69rem; color:var(--muted); margin-top:1px; }
+
+  /* ── BLOCKCHAIN SECTION ── */
+  .blockchain-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px 22px; }
+  .bc-title { font-size:0.8rem; font-weight:700; color:var(--teal-light); text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+  .bc-sub { font-size:0.75rem; color:var(--text-dim); margin-bottom:18px; }
+  .chain { display:flex; align-items:center; gap:0; overflow-x:auto; padding-bottom:8px; }
+  .chain::-webkit-scrollbar { height:4px; }
+  .chain::-webkit-scrollbar-track { background:var(--surface2); border-radius:2px; }
+  .chain::-webkit-scrollbar-thumb { background:var(--teal); border-radius:2px; }
+
+  /* ── BLOCK ── */
+  .block { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; min-width:175px; flex-shrink:0; position:relative; transition:border-color .2s, box-shadow .2s; cursor:pointer; }
+  .block:hover { border-color:var(--teal); box-shadow:0 0 16px rgba(13,148,136,.15); }
+  .block.genesis  { border-color:var(--purple); }
+  .block.latest   { border-color:var(--teal); box-shadow:0 0 20px rgba(13,148,136,.2); }
+  .block.pending-block { border-color:var(--gold); border-style:dashed; opacity:.7; }
+  .block-num { font-size:0.62rem; color:var(--muted); font-family:monospace; margin-bottom:6px; }
+  .block-icon { font-size:1.1rem; margin-bottom:4px; }
+  .block-action { font-size:0.78rem; font-weight:700; margin-bottom:6px; line-height:1.2; }
+  .block-hash { font-size:0.6rem; font-family:monospace; color:var(--teal); background:rgba(13,148,136,.06); border-radius:4px; padding:3px 6px; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:148px; }
+  .block-meta { font-size:0.65rem; color:var(--text-dim); display:flex; flex-direction:column; gap:2px; }
+  .block-ts { font-size:0.62rem; color:var(--muted); margin-top:4px; font-family:monospace; }
+  .chain-arrow { color:var(--teal); font-size:1.1rem; margin:0 6px; flex-shrink:0; opacity:.6; }
+  .chain-arrow.pending { color:var(--gold); opacity:.4; }
+
+  /* GENESIS tag */
+  .block-tag { font-size:0.58rem; font-weight:700; text-transform:uppercase; padding:2px 6px; border-radius:10px; display:inline-block; margin-bottom:5px; }
+  .tag-genesis { background:rgba(124,58,237,.2); color:#a78bfa; }
+  .tag-latest  { background:rgba(13,148,136,.2); color:var(--teal-light); }
+  .tag-pending { background:rgba(245,158,11,.15); color:var(--gold); }
+
+  /* ── BLOCK DETAIL MODAL ── */
+  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.78); z-index:500; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+  .modal-bg.open { display:flex; }
+  .modal-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; width:min(500px,94vw); overflow:hidden; }
+  .modal-head { padding:16px 20px 12px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .modal-body { padding:18px 20px; }
+  .modal-close { background:rgba(255,255,255,.07); border:none; color:var(--text); border-radius:7px; width:30px; height:30px; cursor:pointer; font-size:1rem; }
+  .hash-full { font-family:monospace; font-size:0.72rem; color:var(--teal-light); background:rgba(13,148,136,.07); border:1px solid rgba(13,148,136,.15); border-radius:6px; padding:8px 10px; word-break:break-all; line-height:1.6; }
+  .detail-row { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:0.8rem; }
+  .detail-row:last-child { border-bottom:none; }
+  .detail-label { color:var(--text-dim); flex-shrink:0; }
+  .detail-val { font-weight:600; text-align:right; word-break:break-all; }
+
+  /* ── DISPUTE PANEL ── */
+  .dispute-panel { background:rgba(239,68,68,.05); border:1px solid rgba(239,68,68,.2); border-radius:var(--radius); padding:18px 20px; display:none; }
+  .dispute-panel.open { display:block; }
+  .dispute-chat { max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; margin:14px 0; }
+  .chat-bubble { max-width:80%; padding:10px 13px; border-radius:12px; font-size:0.8rem; line-height:1.4; }
+  .bubble-buyer  { background:var(--surface2); border:1px solid var(--border); align-self:flex-start; }
+  .bubble-seller { background:rgba(34,197,94,.07); border:1px solid rgba(34,197,94,.15); align-self:flex-end; }
+  .bubble-admin  { background:rgba(13,148,136,.08); border:1px solid rgba(13,148,136,.2); align-self:center; text-align:center; font-size:0.75rem; color:var(--teal-light); max-width:90%; }
+  .chat-meta { font-size:0.65rem; color:var(--muted); margin-bottom:3px; }
+
+  /* ── RELEASED OVERLAY ── */
+  .released-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:600; align-items:center; justify-content:center; backdrop-filter:blur(6px); }
+  .released-overlay.open { display:flex; }
+  .released-box { background:var(--surface); border:1px solid rgba(34,197,94,.3); border-radius:20px; padding:40px 48px; text-align:center; max-width:420px; }
+
+  /* ── TOAST ── */
+  #toast { position:fixed; bottom:28px; right:28px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 18px; font-size:0.84rem; display:flex; align-items:center; gap:10px; box-shadow:0 8px 32px rgba(0,0,0,.5); z-index:9999; transform:translateY(80px); opacity:0; transition:all .3s cubic-bezier(.34,1.56,.64,1); pointer-events:none; }
+  #toast.show { transform:translateY(0); opacity:1; }
+
+  /* responsive */
+  @media(max-width:800px) {
+    .dual-panel { grid-template-columns:1fr; }
+    .status-steps { overflow-x:auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ TOPNAV ══ -->
+<nav class="topnav">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <div class="logo">Fan<span>Chain</span></div>
+    <div class="escrow-id-badge">🔐 Escrow <strong>#ESC-2301</strong></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div style="font-size:0.75rem;color:var(--text-dim);">Coldplay · Platea Baja · Fila 12 Butaca 44</div>
+    <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--gold);font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:20px;" id="statusPill">⏳ En custodia</div>
+  </div>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- ══ STATUS BANNER ══ -->
+  <div class="status-banner">
+    <div class="sb-left">
+      <div class="status-orb" style="background:rgba(245,158,11,.1);" id="statusOrb">⏳</div>
+      <div>
+        <div style="font-size:1.05rem;font-weight:800;" id="statusTitle">Fondos en custodia — esperando entrega de entrada</div>
+        <div style="font-size:0.76rem;color:var(--text-dim);margin-top:2px;" id="statusDesc">El dinero está bloqueado de forma segura. Se libera automáticamente cuando el comprador confirma que recibió la entrada.</div>
+      </div>
+    </div>
+    <div style="flex-shrink:0;text-align:right;">
+      <div style="font-size:0.68rem;color:var(--text-dim);">Vence en</div>
+      <div style="font-size:1.4rem;font-weight:800;color:var(--gold);font-family:monospace;" id="countdown">41:23:17</div>
+      <div style="font-size:0.65rem;color:var(--muted);">si no hay confirmación</div>
+    </div>
+  </div>
+
+  <!-- ══ STEP PROGRESS ══ -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 22px;">
+    <div style="font-size:0.68rem;color:var(--text-dim);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px;">Progreso de la transacción</div>
+    <div class="status-steps" id="stepsRow"></div>
+  </div>
+
+  <!-- ══ DUAL PANEL ══ -->
+  <div class="dual-panel">
+
+    <!-- PANEL COMPRADOR -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-role role-buyer">Comprador</span>
+        <span class="panel-user">@marinaR92</span>
+        <span style="margin-left:auto;font-size:0.72rem;color:var(--text-dim);">Fan Plus · ⭐ 4.9</span>
+      </div>
+      <div class="panel-body">
+
+        <!-- Entrada a recibir -->
+        <div>
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Entrada que vas a recibir</div>
+          <div class="ticket-card">
+            <div class="ticket-qr" id="buyerQr">🎫</div>
+            <div class="ticket-info">
+              <div class="ticket-event">Coldplay — Music of the Spheres</div>
+              <div class="ticket-detail">🏟 River Plate · Miércoles 12 Jun 2026 · 21:00hs</div>
+              <div class="ticket-detail">💺 Platea Baja · Fila 12 · Butaca 44</div>
+              <div class="ticket-price">$85.000</div>
+              <div class="ticket-status" id="buyerTicketStatus">🔒 Retenida en escrow — pendiente de entrega</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monto en escrow -->
+        <div class="escrow-amount-box">
+          <div class="ea-lock">🔐</div>
+          <div class="ea-label">Dinero en custodia</div>
+          <div class="ea-amount">$85.000</div>
+          <div class="ea-sub">Bloqueado · Se libera al vendedor cuando confirmás la recepción</div>
+        </div>
+
+        <!-- Desglose -->
+        <div style="background:var(--surface2);border-radius:8px;padding:12px 14px;">
+          <div class="info-row"><span class="info-label">Precio de la entrada</span><span class="info-val">$80.500</span></div>
+          <div class="info-row"><span class="info-label">Comisión FanChain (6%)</span><span class="info-val">$4.500</span></div>
+          <div class="info-row" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span class="info-label" style="font-weight:700;color:var(--text);">Total pagado</span><span class="info-val" style="color:var(--teal-light);font-size:1.05rem;">$85.000</span></div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="action-zone" id="buyerActions">
+          <button class="btn-confirm" id="btnConfirm" onclick="confirmReceipt()">
+            ✅ Confirmar que recibí la entrada
+          </button>
+          <button class="btn-dispute" onclick="openDispute()">
+            ⚠️ Hay un problema con la entrada
+          </button>
+          <button class="btn-ghost" onclick="showToast('Notificación enviada al vendedor','📨')">
+            📨 Pedir al vendedor que envíe la entrada
+          </button>
+        </div>
+
+        <!-- Timeline comprador -->
+        <div>
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Tu historial en esta transacción</div>
+          <div class="side-timeline" id="buyerTimeline"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PANEL VENDEDOR -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-role role-seller">Vendedor</span>
+        <span class="panel-user">@lucas_g</span>
+        <span style="margin-left:auto;font-size:0.72rem;color:var(--text-dim);">Fan Pro · ⭐ 4.7 · 12 ventas</span>
+      </div>
+      <div class="panel-body">
+
+        <!-- Entrada publicada -->
+        <div>
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Entrada que vendiste</div>
+          <div class="ticket-card">
+            <div class="ticket-qr" id="sellerQr">🎫</div>
+            <div class="ticket-info">
+              <div class="ticket-event">Coldplay — Music of the Spheres</div>
+              <div class="ticket-detail">🏟 River Plate · Miércoles 12 Jun 2026 · 21:00hs</div>
+              <div class="ticket-detail">💺 Platea Baja · Fila 12 · Butaca 44</div>
+              <div class="ticket-price">$85.000</div>
+              <div class="ticket-status" id="sellerTicketStatus">📤 Entrada entregada — esperando confirmación del comprador</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lo que vas a recibir -->
+        <div class="escrow-amount-box" style="background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(34,197,94,.04));border-color:rgba(34,197,94,.25);">
+          <div class="ea-lock">💸</div>
+          <div class="ea-label">Vas a recibir</div>
+          <div class="ea-amount" style="color:var(--green);">$80.750</div>
+          <div class="ea-sub">Después de comisión FanChain (5%) · Se acredita en tu CBU/CVU</div>
+        </div>
+
+        <!-- Desglose vendedor -->
+        <div style="background:var(--surface2);border-radius:8px;padding:12px 14px;">
+          <div class="info-row"><span class="info-label">Precio de venta</span><span class="info-val">$85.000</span></div>
+          <div class="info-row"><span class="info-label">Comisión FanChain (5%)</span><span class="info-val">− $4.250</span></div>
+          <div class="info-row" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;"><span class="info-label" style="font-weight:700;color:var(--text);">Acreditación neta</span><span class="info-val" style="color:var(--green);font-size:1.05rem;">$80.750</span></div>
+          <div class="info-row"><span class="info-label">CBU destino</span><span class="info-val" style="font-family:monospace;font-size:0.75rem;">••••••• 9021</span></div>
+          <div class="info-row"><span class="info-label">Plazo de acreditación</span><span class="info-val">Dentro de 48hs hábiles</span></div>
+        </div>
+
+        <!-- Acciones vendedor -->
+        <div class="action-zone" id="sellerActions">
+          <button class="btn-confirm" id="btnSellerDelivered" onclick="markDelivered()" style="background:var(--green);">
+            📤 Marcar entrada como entregada
+          </button>
+          <button class="btn-ghost" onclick="showToast('Recordatorio enviado al comprador','📨')">
+            🔔 Recordar al comprador que confirme
+          </button>
+          <button class="btn-dispute" onclick="openDispute()">
+            ⚠️ Reportar problema
+          </button>
+        </div>
+
+        <!-- Timeline vendedor -->
+        <div>
+          <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Tu historial en esta transacción</div>
+          <div class="side-timeline" id="sellerTimeline"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /dual-panel -->
+
+  <!-- ══ BÓVEDA DIGITAL QR ══ -->
+  <div id="vaultSection" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-size:0.92rem;font-weight:800;display:flex;align-items:center;gap:8px;">🔒 Bóveda digital FanChain <span id="vaultStatusBadge" style="font-size:0.65rem;font-weight:700;padding:2px 9px;border-radius:10px;background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.3);">EN CUSTODIA</span></div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:3px;">El QR de la entrada está custodiado por FanChain hasta que se confirme la entrega</div>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text-dim);text-align:right;">
+        <div>Hash QR: <span style="font-family:monospace;color:var(--teal-light);">4f8a2c…d91e</span></div>
+        <div style="margin-top:2px;">Depositado: <span style="color:var(--text);">hoy 14:32</span></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:center;">
+
+      <!-- VENDEDOR LADO -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-bottom:10px;">Vendedor</div>
+        <div style="font-size:2rem;margin-bottom:6px;" id="vaultSellerQr">🔲</div>
+        <div style="font-size:0.74rem;color:var(--text-dim);" id="vaultSellerLabel">QR subido y bloqueado</div>
+        <div style="margin-top:8px;">
+          <span id="vaultSellerBadge" style="font-size:0.62rem;font-weight:700;padding:2px 8px;border-radius:8px;background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.25);">✅ Depositado</span>
+        </div>
+      </div>
+
+      <!-- FLECHA CENTRAL -->
+      <div style="padding:0 16px;text-align:center;">
+        <div id="vaultArrow" style="font-size:1.8rem;color:var(--gold);">🏛</div>
+        <div style="font-size:0.62rem;color:var(--text-dim);margin-top:4px;white-space:nowrap;" id="vaultArrowLabel">En custodia</div>
+      </div>
+
+      <!-- COMPRADOR LADO -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;" id="vaultBuyerPanel">
+        <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-dim);margin-bottom:10px;">Comprador</div>
+        <div style="font-size:2rem;margin-bottom:6px;" id="vaultBuyerQr">🔒</div>
+        <div style="font-size:0.74rem;color:var(--text-dim);" id="vaultBuyerLabel">Esperando confirmación</div>
+        <div style="margin-top:8px;">
+          <span id="vaultBuyerBadge" style="font-size:0.62rem;font-weight:700;padding:2px 8px;border-radius:8px;background:rgba(100,116,139,.12);color:var(--muted);border:1px solid var(--border);">⏳ Pendiente</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- NOTA INFORMATIVA -->
+    <div style="margin-top:14px;background:rgba(13,148,136,.05);border:1px solid rgba(13,148,136,.15);border-radius:8px;padding:10px 14px;font-size:0.74rem;color:var(--text-dim);line-height:1.6;">
+      <strong style="color:var(--teal-light);">¿Cómo funciona la bóveda?</strong> El vendedor subió el QR al publicar la entrada. FanChain lo validó y lo retuvo. El vendedor ya no puede usar ni transferir ese QR — está bloqueado. Cuando el comprador confirme la recepción, el QR se transfiere automáticamente y la copia del vendedor queda invalidada.
+    </div>
+  </div>
+
+  <!-- ══ PANEL DE DISPUTA (oculto hasta que se abra) ══ -->
+  <div class="dispute-panel" id="disputePanel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.2rem;">⚠️</span>
+        <div>
+          <div style="font-weight:800;font-size:0.95rem;color:#f87171;">Disputa abierta</div>
+          <div style="font-size:0.72rem;color:var(--text-dim);">El equipo de FanChain mediará en el plazo de 4 horas</div>
+        </div>
+      </div>
+      <span style="font-size:0.7rem;color:var(--text-dim);">D-499 · Escrow congelado</span>
+    </div>
+    <div class="dispute-chat" id="disputeChat"></div>
+    <div style="display:flex;gap:8px;">
+      <input id="disputeInput" style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(239,68,68,.25);color:var(--text);border-radius:8px;padding:9px 13px;font-size:0.82rem;outline:none;" placeholder="Describí el problema…">
+      <button onclick="sendDisputeMsg()" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:8px;padding:9px 16px;font-size:0.82rem;cursor:pointer;font-weight:700;">Enviar</button>
+    </div>
+  </div>
+
+  <!-- ══ BLOCKCHAIN VISUAL ══ -->
+  <div class="blockchain-wrap">
+    <div class="bc-title">⛓ Registro inmutable en blockchain</div>
+    <div class="bc-sub">Cada acción de esta transacción genera un bloque. El hash de cada bloque incluye el hash del anterior — cualquier modificación rompe la cadena.</div>
+    <div class="chain" id="blockChain"></div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<!-- ══ MODAL: DETALLE DE BLOQUE ══ -->
+<div class="modal-bg" id="blockModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div id="bm-title" style="font-weight:800;font-size:0.98rem;"></div>
+        <div id="bm-sub" style="font-size:0.72rem;color:var(--text-dim);margin-top:2px;"></div>
+      </div>
+      <button class="modal-close" onclick="closeBlockModal()">✕</button>
+    </div>
+    <div class="modal-body" id="bm-body"></div>
+  </div>
+</div>
+
+<!-- ══ OVERLAY: LIBERADO ══ -->
+<div class="released-overlay" id="releasedOverlay">
+  <div class="released-box">
+    <div style="font-size:3.5rem;margin-bottom:16px;" id="releaseIcon">🎉</div>
+    <div style="font-size:1.4rem;font-weight:800;margin-bottom:8px;" id="releaseTitle">¡Transacción completada!</div>
+    <div style="font-size:0.85rem;color:var(--text-dim);margin-bottom:24px;line-height:1.6;" id="releaseDesc">El escrow fue liberado y los fondos se acreditarán en el CBU del vendedor dentro de las 48hs hábiles.</div>
+    <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+      <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:4px;">Hash del bloque final</div>
+      <div style="font-family:monospace;font-size:0.7rem;color:var(--green);word-break:break-all;line-height:1.5;" id="releaseFinalHash"></div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeRelease()" style="flex:1;background:var(--teal);color:#fff;border:none;border-radius:10px;padding:12px;font-size:0.88rem;font-weight:700;cursor:pointer;">Ver mi entrada 🎫</button>
+      <button onclick="closeRelease()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px;font-size:0.88rem;cursor:pointer;">Volver al inicio</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  ESTADO DE LA TRANSACCIÓN
+// ══════════════════════════════════════
+
+const STATE = {
+  step: 3, // 1=pago, 2=fondos bloqueados, 3=esperando entrega, 4=entrada entregada, 5=confirmado, 6=completado
+  sellerDelivered: true,   // el vendedor ya marcó entregada (para esta demo arranca así)
+  buyerConfirmed: false,
+  disputed: false,
+};
+
+const STEPS = [
+  { id:1, icon:'💳', label:'Pago\nrealizado'      },
+  { id:2, icon:'🔐', label:'Fondos\nbloqueados'    },
+  { id:3, icon:'📤', label:'Entrada\nentregada'    },
+  { id:4, icon:'✅', label:'Comprador\nconfirmó'   },
+  { id:5, icon:'💸', label:'Fondos\nliberados'     },
+];
+
+// ── BLOCKCHAIN DATA ──
+const CHAIN_DATA = [
+  {
+    num: '#0001',
+    tag: 'genesis',
+    icon: '🌐',
+    action: 'Contrato de escrow creado',
+    hash: 'fc3a9b2e1d7f0c84a5e6b3d92f1c8e7a4b0d5f9e2c6a1b3d8f4e7c2a9b0d1e3f',
+    prevHash: '0000000000000000000000000000000000000000000000000000000000000000',
+    actor: 'Sistema FanChain',
+    amount: null,
+    ts: '10/06/2026 · 14:02:11',
+    extra: 'Evento: Coldplay · ESC-2301 · Partes verificadas',
+  },
+  {
+    num: '#0002',
+    tag: null,
+    icon: '💳',
+    action: 'Pago recibido del comprador',
+    hash: 'a1b4c7d2e5f8091234567890abcdef1234567890abcdef1234567890abcdef12',
+    prevHash: 'fc3a9b2e1d7f0c84a5e6b3d92f1c8e7a4b0d5f9e2c6a1b3d8f4e7c2a9b0d1e3f',
+    actor: '@marinaR92',
+    amount: '$85.000',
+    ts: '10/06/2026 · 14:02:44',
+    extra: 'Tarjeta Visa ···· 4821 · Aprobado',
+  },
+  {
+    num: '#0003',
+    tag: null,
+    icon: '🔐',
+    action: 'Fondos bloqueados en custodia',
+    hash: 'b2c5d8e1f4071234567890abcdef1234567890abcdef1234567890abcdef1234',
+    prevHash: 'a1b4c7d2e5f8091234567890abcdef1234567890abcdef1234567890abcdef12',
+    actor: 'Contrato escrow',
+    amount: '$85.000',
+    ts: '10/06/2026 · 14:02:45',
+    extra: 'Fondos no accesibles hasta confirmación o fallo del plazo',
+  },
+  {
+    num: '#0004',
+    tag: null,
+    icon: '📧',
+    action: 'Notificación enviada al vendedor',
+    hash: 'c3d6e9f2051234567890abcdef1234567890abcdef1234567890abcdef123456',
+    prevHash: 'b2c5d8e1f4071234567890abcdef1234567890abcdef1234567890abcdef1234',
+    actor: 'Sistema FanChain',
+    amount: null,
+    ts: '10/06/2026 · 14:02:46',
+    extra: 'Push + email a @lucas_g · Plazo de entrega: 48hs',
+  },
+  {
+    num: '#0005',
+    tag: 'latest',
+    icon: '📤',
+    action: 'Vendedor marcó entrada como entregada',
+    hash: 'd4e7f0a3161234567890abcdef1234567890abcdef1234567890abcdef12345678',
+    prevHash: 'c3d6e9f2051234567890abcdef1234567890abcdef1234567890abcdef123456',
+    actor: '@lucas_g',
+    amount: null,
+    ts: '10/06/2026 · 14:38:29',
+    extra: 'QR enviado por canal seguro · Hash del PDF adjunto: e7f2a...',
+  },
+  {
+    num: '#0006',
+    tag: 'pending',
+    icon: '✅',
+    action: 'Confirmación del comprador',
+    hash: '????????????????????????????????????????????????????????????????',
+    prevHash: 'd4e7f0a3161234567890abcdef1234567890abcdef1234567890abcdef12345678',
+    actor: 'Pendiente',
+    amount: null,
+    ts: 'Pendiente',
+    extra: 'Esperando que @marinaR92 confirme la recepción',
+  },
+  {
+    num: '#0007',
+    tag: 'pending',
+    icon: '💸',
+    action: 'Liberación de fondos al vendedor',
+    hash: '????????????????????????????????????????????????????????????????',
+    prevHash: '????????????????????????????????????????????????????????????????',
+    actor: 'Pendiente',
+    amount: '$80.750',
+    ts: 'Pendiente',
+    extra: 'CBU ········9021 · Acreditación en 48hs hábiles',
+  },
+];
+
+// ── TIMELINES ──
+const BUYER_TIMELINE = [
+  { icon:'💳', bg:'rgba(13,148,136,.1)',   action:'Realizaste el pago de $85.000',                    time:'14:02 · hace 36 min' },
+  { icon:'🔐', bg:'rgba(245,158,11,.1)',   action:'Tus fondos quedaron en custodia segura',           time:'14:02 · hace 36 min' },
+  { icon:'📧', bg:'rgba(59,130,246,.1)',   action:'El vendedor fue notificado para enviar la entrada', time:'14:02 · hace 36 min' },
+  { icon:'📤', bg:'rgba(34,197,94,.1)',    action:'@lucas_g marcó la entrada como entregada',         time:'14:38 · hace 1 min'  },
+];
+
+const SELLER_TIMELINE = [
+  { icon:'🔔', bg:'rgba(59,130,246,.1)',   action:'Recibiste notificación de compra confirmada',       time:'14:02 · hace 36 min' },
+  { icon:'🔐', bg:'rgba(245,158,11,.1)',   action:'$85.000 bloqueados en escrow hasta entrega',        time:'14:02 · hace 36 min' },
+  { icon:'📤', bg:'rgba(34,197,94,.1)',    action:'Marcaste la entrada como entregada',                time:'14:38 · hace 1 min'  },
+  { icon:'⏳', bg:'rgba(148,163,184,.1)',  action:'Esperando confirmación del comprador…',             time:'Pendiente'           },
+];
+
+// ══════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════
+
+function renderSteps() {
+  const cont = document.getElementById('stepsRow');
+  let html = '';
+  STEPS.forEach((s, i) => {
+    const done    = s.id < STATE.step;
+    const active  = s.id === STATE.step;
+    const cls     = done ? 'step-done' : active ? 'step-active' : 'step-pending';
+    const icon    = done ? '✓' : s.icon;
+    const lineCol = done ? 'var(--teal)' : 'var(--border)';
+    html += `<div class="step-node ${cls}">
+      <div class="step-circle">${icon}</div>
+      <div class="step-label">${s.label.replace('\n','<br>')}</div>
+    </div>`;
+    if (i < STEPS.length - 1) {
+      html += `<div class="step-line" style="background:${lineCol};"></div>`;
+    }
+  });
+  cont.innerHTML = html;
+}
+
+function renderTimeline(id, data) {
+  document.getElementById(id).innerHTML = data.map((item, i) => `
+    <div class="stl-item">
+      <div class="stl-dot" style="background:${item.bg};">${item.icon}</div>
+      <div class="stl-body">
+        <div class="stl-action">${item.action}</div>
+        <div class="stl-time">${item.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderChain(data) {
+  const cont = document.getElementById('blockChain');
+  let html = '';
+  data.forEach((b, i) => {
+    const isPending = b.tag === 'pending';
+    const tagHtml = b.tag === 'genesis' ? '<span class="block-tag tag-genesis">GÉNESIS</span>'
+                  : b.tag === 'latest'  ? '<span class="block-tag tag-latest">ÚLTIMO</span>'
+                  : b.tag === 'pending' ? '<span class="block-tag tag-pending">PENDIENTE</span>'
+                  : '';
+    const hashDisplay = isPending ? '????????????????' : b.hash.substring(0,16) + '…';
+    html += `<div class="block ${b.tag||''}" onclick="openBlockModal(${i})" title="Ver detalle del bloque">
+      <div class="block-num">BLOQUE ${b.num}</div>
+      ${tagHtml}
+      <div class="block-icon">${b.icon}</div>
+      <div class="block-action">${b.action}</div>
+      <div class="block-hash">${hashDisplay}</div>
+      <div class="block-meta">
+        <span>👤 ${b.actor}</span>
+        ${b.amount ? `<span>💰 ${b.amount}</span>` : ''}
+      </div>
+      <div class="block-ts">${b.ts}</div>
+    </div>`;
+    if (i < data.length - 1) {
+      html += `<div class="chain-arrow ${data[i+1].tag==='pending' ? 'pending' : ''}">⛓</div>`;
+    }
+  });
+  cont.innerHTML = html;
+}
+
+// ══════════════════════════════════════
+//  ACCIONES
+// ══════════════════════════════════════
+
+function markDelivered() {
+  const btn = document.getElementById('btnSellerDelivered');
+  btn.disabled = true;
+  btn.innerHTML = '✅ Entrada marcada como entregada';
+  btn.style.background = 'var(--surface3)';
+  document.getElementById('sellerTicketStatus').textContent = '📤 Entrada entregada — esperando confirmación del comprador';
+
+  // Update seller timeline
+  SELLER_TIMELINE[3] = { icon:'📤', bg:'rgba(34,197,94,.1)', action:'Marcaste la entrada como entregada', time:'14:38 · ahora' };
+  renderTimeline('sellerTimeline', SELLER_TIMELINE);
+
+  // Add block
+  CHAIN_DATA[4].tag = 'latest';
+  renderChain(CHAIN_DATA);
+  showToast('Entrada marcada como entregada. Esperando confirmación del comprador.', '📤');
+}
+
+function confirmReceipt() {
+  STATE.step = 5;
+  STATE.buyerConfirmed = true;
+
+  // Update UI
+  document.getElementById('statusOrb').textContent = '🎉';
+  document.getElementById('statusOrb').style.background = 'rgba(34,197,94,.1)';
+  document.getElementById('statusTitle').textContent = '¡Transacción completada con éxito!';
+  document.getElementById('statusDesc').textContent = 'Confirmaste la recepción. Los fondos serán acreditados al vendedor en las próximas 48hs hábiles.';
+  document.getElementById('statusPill').textContent = '✅ Completado';
+  document.getElementById('statusPill').style.background = 'rgba(34,197,94,.1)';
+  document.getElementById('statusPill').style.borderColor = 'rgba(34,197,94,.3)';
+  document.getElementById('statusPill').style.color = 'var(--green)';
+  document.getElementById('countdown').style.display = 'none';
+
+  // Update ticket
+  document.getElementById('buyerTicketStatus').textContent = '✅ Entrada liberada — es tuya';
+  document.getElementById('buyerQr').textContent = '✅';
+  document.getElementById('sellerQr').textContent = '✅';
+  document.getElementById('sellerTicketStatus').textContent = '✅ Venta confirmada — fondos en proceso de acreditación';
+
+  // Update buyer actions
+  document.getElementById('buyerActions').innerHTML = `
+    <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px;text-align:center;">
+      <div style="font-size:1.6rem;margin-bottom:6px;">🎉</div>
+      <div style="font-weight:700;color:var(--green);margin-bottom:4px;">¡Entrada confirmada!</div>
+      <div style="font-size:0.75rem;color:var(--text-dim);">El QR de tu entrada ya está disponible en tu dashboard</div>
+    </div>
+    <button class="btn-ghost" onclick="showToast('Abriendo dashboard…','👤')">Ver mi entrada en el dashboard →</button>
+  `;
+  document.getElementById('sellerActions').innerHTML = `
+    <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px;text-align:center;">
+      <div style="font-size:1.6rem;margin-bottom:6px;">💸</div>
+      <div style="font-weight:700;color:var(--green);margin-bottom:4px;">$80.750 en camino a tu CBU</div>
+      <div style="font-size:0.75rem;color:var(--text-dim);">Acreditación estimada: dentro de 48hs hábiles</div>
+    </div>
+    <button class="btn-ghost" onclick="showToast('Abriendo historial de cobros…','💰')">Ver mis cobros pendientes →</button>
+  `;
+
+  // Update buyer timeline
+  BUYER_TIMELINE.push({ icon:'✅', bg:'rgba(34,197,94,.1)', action:'Confirmaste la recepción de la entrada', time:'Ahora mismo' });
+  renderTimeline('buyerTimeline', BUYER_TIMELINE);
+  SELLER_TIMELINE.push({ icon:'💸', bg:'rgba(34,197,94,.1)', action:'Fondos liberados — acreditación en 48hs', time:'Ahora mismo' });
+  renderTimeline('sellerTimeline', SELLER_TIMELINE);
+
+  renderSteps();
+
+  // Finalize blockchain
+  const finalHash = 'e5f8a1b4c7d0e3f6091234567890abcdef1234567890abcdef1234567890abcd';
+  CHAIN_DATA[5] = { ...CHAIN_DATA[5], tag:'latest', hash: finalHash, actor:'@marinaR92', ts:'10/06/2026 · 14:39:52', extra:'Comprador confirmó recepción del QR. Contrato ejecutado.' };
+  CHAIN_DATA[6] = { ...CHAIN_DATA[6], tag:null, hash:'f6091234567890abcdef1234567890abcdef1234567890abcdef1234567890ab', actor:'Contrato escrow', ts:'10/06/2026 · 14:39:53', extra:'$80.750 → CBU ········9021 · Confirmación en blockchain' };
+  renderChain(CHAIN_DATA);
+
+  // Animate vault → transfer
+  animateVaultTransfer();
+
+  // Show release overlay after short delay
+  setTimeout(() => {
+    document.getElementById('releaseFinalHash').textContent = finalHash;
+    document.getElementById('releasedOverlay').classList.add('open');
+  }, 1400);
+}
+
+function animateVaultTransfer() {
+  // Fase 1: "transfiriendo"
+  document.getElementById('vaultStatusBadge').textContent = 'TRANSFIRIENDO…';
+  document.getElementById('vaultStatusBadge').style.background = 'rgba(59,130,246,.12)';
+  document.getElementById('vaultStatusBadge').style.color = '#93c5fd';
+  document.getElementById('vaultStatusBadge').style.borderColor = 'rgba(59,130,246,.3)';
+  document.getElementById('vaultArrow').textContent = '→';
+  document.getElementById('vaultArrow').style.color = 'var(--teal-light)';
+  document.getElementById('vaultArrow').style.fontSize = '2rem';
+  document.getElementById('vaultArrowLabel').textContent = 'Transfiriendo QR';
+  document.getElementById('vaultBuyerQr').textContent = '⌛';
+  document.getElementById('vaultBuyerLabel').textContent = 'Recibiendo QR…';
+
+  // Fase 2: completado
+  setTimeout(() => {
+    document.getElementById('vaultStatusBadge').textContent = 'TRANSFERIDO ✅';
+    document.getElementById('vaultStatusBadge').style.background = 'rgba(34,197,94,.1)';
+    document.getElementById('vaultStatusBadge').style.color = 'var(--green)';
+    document.getElementById('vaultStatusBadge').style.borderColor = 'rgba(34,197,94,.25)';
+
+    document.getElementById('vaultArrow').textContent = '✅';
+    document.getElementById('vaultArrow').style.color = 'var(--green)';
+    document.getElementById('vaultArrowLabel').textContent = 'Completado';
+
+    // Comprador recibe QR
+    document.getElementById('vaultBuyerQr').textContent = '🎫';
+    document.getElementById('vaultBuyerLabel').textContent = '¡QR en tu wallet!';
+    document.getElementById('vaultBuyerBadge').textContent = '✅ Recibido';
+    document.getElementById('vaultBuyerBadge').style.background = 'rgba(34,197,94,.1)';
+    document.getElementById('vaultBuyerBadge').style.color = 'var(--green)';
+    document.getElementById('vaultBuyerBadge').style.borderColor = 'rgba(34,197,94,.25)';
+    document.getElementById('vaultBuyerPanel').style.borderColor = 'rgba(34,197,94,.3)';
+
+    // Vendedor QR invalidado
+    document.getElementById('vaultSellerQr').textContent = '🚫';
+    document.getElementById('vaultSellerLabel').textContent = 'QR invalidado';
+    document.getElementById('vaultSellerBadge').textContent = '🚫 Invalidado';
+    document.getElementById('vaultSellerBadge').style.background = 'rgba(239,68,68,.08)';
+    document.getElementById('vaultSellerBadge').style.color = '#f87171';
+    document.getElementById('vaultSellerBadge').style.borderColor = 'rgba(239,68,68,.2)';
+  }, 600);
+}
+
+// ── DISPUTA ──
+let disputeOpen = false;
+const DISPUTE_MSGS = [
+  { role:'buyer',  user:'@marinaR92', msg:'El QR que recibí no funciona, lo probé 3 veces en la app oficial de River y dice que es inválido.', time:'14:39' },
+  { role:'seller', user:'@lucas_g',   msg:'Yo lo usé el año pasado sin problemas. Puede ser que el organizador no lo haya activado todavía?', time:'14:41' },
+  { role:'admin',  user:'FanChain',   msg:'Recibimos la disputa D-499. Escrow congelado preventivamente. Estamos verificando con el organizador. Respuesta en 2hs.', time:'14:45' },
+];
+
+function openDispute() {
+  if (disputeOpen) return;
+  disputeOpen = true;
+  const panel = document.getElementById('disputePanel');
+  panel.classList.add('open');
+  panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  renderDisputeChat(DISPUTE_MSGS);
+  showToast('Disputa abierta — escrow congelado preventivamente', '⚠️');
+}
+
+function renderDisputeChat(msgs) {
+  document.getElementById('disputeChat').innerHTML = msgs.map(m => {
+    const cls = m.role==='buyer' ? 'bubble-buyer' : m.role==='seller' ? 'bubble-seller' : 'bubble-admin';
+    const meta = m.role!=='admin' ? `<div class="chat-meta">${m.user} · ${m.time}</div>` : '';
+    return `<div>${meta}<div class="chat-bubble ${cls}">${m.msg}</div></div>`;
+  }).join('');
+  const chat = document.getElementById('disputeChat');
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function sendDisputeMsg() {
+  const input = document.getElementById('disputeInput');
+  const val = input.value.trim();
+  if (!val) return;
+  DISPUTE_MSGS.push({ role:'buyer', user:'@marinaR92', msg:val, time:'ahora' });
+  renderDisputeChat(DISPUTE_MSGS);
+  input.value = '';
+}
+
+// ── BLOCK MODAL ──
+function openBlockModal(idx) {
+  const b = CHAIN_DATA[idx];
+  const isPending = b.tag === 'pending';
+  document.getElementById('bm-title').textContent = `Bloque ${b.num} — ${b.action}`;
+  document.getElementById('bm-sub').textContent = b.ts;
+  document.getElementById('bm-body').innerHTML = `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:5px;">Hash del bloque</div>
+      <div class="hash-full">${isPending ? 'No generado aún — bloque pendiente de ejecución' : b.hash}</div>
+    </div>
+    <div class="detail-row"><span class="detail-label">Hash anterior</span><span class="detail-val" style="font-family:monospace;font-size:0.72rem;color:var(--text-dim);">${isPending ? '—' : b.prevHash.substring(0,32)+'…'}</span></div>
+    <div class="detail-row"><span class="detail-label">Acción</span><span class="detail-val">${b.action}</span></div>
+    <div class="detail-row"><span class="detail-label">Actor</span><span class="detail-val">${b.actor}</span></div>
+    ${b.amount ? `<div class="detail-row"><span class="detail-label">Monto</span><span class="detail-val" style="color:var(--teal-light);">${b.amount}</span></div>` : ''}
+    <div class="detail-row"><span class="detail-label">Timestamp</span><span class="detail-val" style="font-family:monospace;">${b.ts}</span></div>
+    <div class="detail-row"><span class="detail-label">Detalle</span><span class="detail-val" style="color:var(--text-dim);">${b.extra}</span></div>
+    <div class="detail-row"><span class="detail-label">Bloque</span><span class="detail-val">${b.num} / 7</span></div>
+    ${!isPending ? `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+      <div style="font-size:0.68rem;color:var(--green);display:flex;align-items:center;gap:6px;">
+        <span>✅</span> <span>Bloque verificado — hash consistente con la cadena</span>
+      </div>
+    </div>` : `<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+      <div style="font-size:0.68rem;color:var(--gold);display:flex;align-items:center;gap:6px;">
+        <span>⏳</span> <span>Bloque pendiente — se generará cuando se ejecute esta acción</span>
+      </div>
+    </div>`}
+  `;
+  document.getElementById('blockModal').classList.add('open');
+}
+function closeBlockModal() { document.getElementById('blockModal').classList.remove('open'); }
+
+// Close modal on bg click
+document.getElementById('blockModal').addEventListener('click', function(e) {
+  if (e.target === this) closeBlockModal();
+});
+
+function closeRelease() { document.getElementById('releasedOverlay').classList.remove('open'); }
+
+// ── COUNTDOWN ──
+function startCountdown() {
+  let secs = 41 * 3600 + 23 * 60 + 17;
+  const el = document.getElementById('countdown');
+  const iv = setInterval(() => {
+    if (STATE.buyerConfirmed) { clearInterval(iv); return; }
+    secs--;
+    if (secs < 0) { clearInterval(iv); el.textContent = '00:00:00'; return; }
+    const h = String(Math.floor(secs/3600)).padStart(2,'0');
+    const m = String(Math.floor((secs%3600)/60)).padStart(2,'0');
+    const s = String(secs%60).padStart(2,'0');
+    el.textContent = `${h}:${m}:${s}`;
+  }, 1000);
+}
+
+// ── TOAST ──
+function showToast(msg, icon='✅') {
+  const t = document.getElementById('toast');
+  t.innerHTML = `<span style="font-size:1.1rem;">${icon}</span><span>${msg}</span>`;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  renderSteps();
+  renderTimeline('buyerTimeline', BUYER_TIMELINE);
+  renderTimeline('sellerTimeline', SELLER_TIMELINE);
+  renderChain(CHAIN_DATA);
+  startCountdown();
+
+  // El vendedor ya entregó (demo state): deshabilitar su botón
+  const btnDel = document.getElementById('btnSellerDelivered');
+  btnDel.disabled = true;
+  btnDel.innerHTML = '✅ Entrada ya marcada como entregada';
+  btnDel.style.background = 'var(--surface3)';
+  btnDel.style.color = 'var(--muted)';
+});
+</script>
+</body>
+</html>
